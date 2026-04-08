@@ -43,9 +43,12 @@ export default function ConfiguracoesPage() {
 
   const handleSaveColor = async () => {
     setLoadingConfig(true);
-    await salvarCor(corAtiva);
-    await salvarBg(fundoAtivo);
-    setLoadingConfig(false);
+    try {
+      await salvarCor(corAtiva);
+      await salvarBg(fundoAtivo);
+    } finally {
+      setLoadingConfig(false);
+    }
   };
 
   return (

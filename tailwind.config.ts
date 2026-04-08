@@ -10,14 +10,14 @@ const config: Config = {
     extend: {
       colors: {
         primary: {
-          DEFAULT: "#4F46E5", // Azul que você pediu
-          dark: "#4338CA",
+          DEFAULT: "var(--color-primary)",
+          dark: "var(--color-primary-dark)",
         },
         secondary: {
-          DEFAULT: "#7C3AED", // Roxo que você pediu
+          DEFAULT: "#7C3AED",
           dark: "#6D28D9",
         },
-        background: "#F9FAFB",
+        background: "var(--color-background)",
         card: "#FFFFFF",
       },
     },

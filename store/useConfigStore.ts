@@ -30,15 +30,21 @@ export const useConfigStore = create<ConfigStore>()((set) => ({
     const { data: userData } = await supabase.auth.getUser();
     if (!userData.user) return;
 
-    // Atualiza otimista
-    set({ corHexa: cor });
+    try {
+      // Atualiza otimista
+      set({ corHexa: cor });
 
-    // Tenta gravar/atualizar no Supabase via upsert
-    await supabase.from('configuracoes').upsert({
-      user_id: userData.user.id,
-      cor_hexa: cor,
-      fundo_hexa: useConfigStore.getState().bgHexa
-    });
+      // Tenta gravar/atualizar no Supabase via upsert
+      const { error } = await supabase.from('configuracoes').upsert({
+        user_id: userData.user.id,
+        cor_hexa: cor,
+        fundo_hexa: useConfigStore.getState().bgHexa
+      }, { onConflict: 'user_id' });
+      
+      if (error) throw error;
+    } catch (err) {
+      console.error("Erro ao salvar cor:", err);
+    }
   },
 
   salvarBg: async (bg) => {
@@ -46,12 +52,18 @@ export const useConfigStore = create<ConfigStore>()((set) => ({
     const { data: userData } = await supabase.auth.getUser();
     if (!userData.user) return;
 
-    set({ bgHexa: bg });
+    try {
+      set({ bgHexa: bg });
 
-    await supabase.from('configuracoes').upsert({
-      user_id: userData.user.id,
-      cor_hexa: useConfigStore.getState().corHexa,
-      fundo_hexa: bg
-    });
+      const { error } = await supabase.from('configuracoes').upsert({
+        user_id: userData.user.id,
+        cor_hexa: useConfigStore.getState().corHexa,
+        fundo_hexa: bg
+      }, { onConflict: 'user_id' });
+
+      if (error) throw error;
+    } catch (err) {
+      console.error("Erro ao salvar background:", err);
+    }
   }
 }));
