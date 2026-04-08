@@ -10,24 +10,27 @@ import { ModalTransacao } from "@/components/financeiro/ModalTransacao";
 export default function FinanceiroPage() {
   const { transacoes, removeTransacao } = useFinanceiroStore();
   const [contaVisualizacao, setContaVisualizacao] = useState<'Empresa' | 'Particular'>('Empresa');
-  const [periodo, setPeriodo] = useState<7 | 14 | 30>(7);
-  const [dataManual, setDataManual] = useState<string>("");
+  const [periodo, setPeriodo] = useState<7 | 14 | 30 | 'custom'>(7);
+  const [dataInicioManual, setDataInicioManual] = useState<string>("");
+  const [dataFimManual, setDataFimManual] = useState<string>("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [transEdit, setTransEdit] = useState<Transacao | null>(null);
 
   const transacoesFiltradas = transacoes.filter(t => {
     const matchConta = t.conta === contaVisualizacao;
+    const dataT = new Date(t.data);
     
     // Filtro de Data
-    const dateLimit = new Date();
-    if (dataManual) {
-      const [year, month, day] = dataManual.split('-').map(Number);
-      dateLimit.setFullYear(year, month - 1, day);
-      dateLimit.setHours(0, 0, 0, 0);
-    } else {
-      dateLimit.setDate(dateLimit.getDate() - periodo);
+    if (periodo === 'custom' && dataInicioManual && dataFimManual) {
+      const start = new Date(dataInicioManual + 'T00:00:00');
+      const end = new Date(dataFimManual + 'T23:59:59');
+      return matchConta && dataT >= start && dataT <= end;
     }
-    const matchData = new Date(t.data) >= dateLimit;
+
+    const dateLimit = new Date();
+    dateLimit.setDate(dateLimit.getDate() - (periodo as number));
+    dateLimit.setHours(0,0,0,0);
+    const matchData = dataT >= dateLimit;
 
     return matchConta && matchData;
   });
@@ -67,37 +70,52 @@ export default function FinanceiroPage() {
           </button>
         </div>
 
-        <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-none items-center">
+        <div className="flex flex-wrap gap-2 items-center">
           {[7, 14, 30].map(dia => (
             <button 
               key={dia}
               onClick={() => {
                 setPeriodo(dia as any);
-                setDataManual("");
+                setDataInicioManual("");
+                setDataFimManual("");
               }}
-              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition flex-shrink-0 ${periodo === dia && !dataManual ? 'bg-primary text-white shadow-md shadow-primary/20' : 'bg-white border border-gray-100 text-gray-400 hover:bg-gray-50'}`}
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition flex-shrink-0 ${periodo === dia ? 'bg-primary text-white shadow-md shadow-primary/20' : 'bg-white border border-gray-100 text-gray-400 hover:bg-gray-50'}`}
             >
               {dia} dias
             </button>
           ))}
-          <div className="relative flex-shrink-0 h-[38px]">
-             <button 
-              className={`px-4 h-full rounded-xl text-xs font-bold transition flex items-center gap-2 ${dataManual ? 'bg-primary text-white shadow-md shadow-primary/20' : 'bg-white border border-gray-100 text-gray-400 hover:bg-gray-50'}`}
-            >
-              <Calendar size={14} />
-              {dataManual ? new Date(dataManual + 'T00:00:00').toLocaleDateString('pt-BR') : 'Personalizado'}
-            </button>
+          <button 
+            onClick={() => setPeriodo('custom')}
+            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition flex-shrink-0 flex items-center gap-2 ${periodo === 'custom' ? 'bg-primary text-white shadow-md shadow-primary/20' : 'bg-white border border-gray-100 text-gray-400 hover:bg-gray-50'}`}
+          >
+            <Calendar size={14} />
+            {periodo === 'custom' && dataInicioManual && dataFimManual ? `${format(parseISO(dataInicioManual), "dd/MM")} - ${format(parseISO(dataFimManual), "dd/MM")}` : 'Personalizado'}
+          </button>
+        </div>
+      </div>
+
+      {periodo === 'custom' && (
+        <div className="flex items-center gap-3 mb-8 animate-in fade-in slide-in-from-top-2 max-w-sm">
+          <div className="flex-1">
+            <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1 ml-1">Início</label>
             <input 
-              type="date"
-              className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-              onChange={(e) => {
-                setDataManual(e.target.value);
-                setPeriodo(7);
-              }}
+              type="date" 
+              value={dataInicioManual} 
+              onChange={e => setDataInicioManual(e.target.value)}
+              className="w-full px-4 py-2 rounded-xl border border-gray-100 bg-white text-xs font-bold text-gray-700 outline-none focus:border-primary transition-all shadow-sm"
+            />
+          </div>
+          <div className="flex-1">
+            <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1 ml-1">Fim</label>
+            <input 
+              type="date" 
+              value={dataFimManual} 
+              onChange={e => setDataFimManual(e.target.value)}
+              className="w-full px-4 py-2 rounded-xl border border-gray-100 bg-white text-xs font-bold text-gray-700 outline-none focus:border-primary transition-all shadow-sm"
             />
           </div>
         </div>
-      </div>
+      )}
 
       {/* Cards de Resumo */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">

@@ -16,8 +16,9 @@ export default function DashboardPage() {
   const { servicos } = useServicosStore();
   const { clientes } = useClientesStore();
 
-  const [periodo, setPeriodo] = useState<7 | 14 | 30>(7);
-  const [dataManual, setDataManual] = useState<string>("");
+  const [periodo, setPeriodo] = useState<7 | 14 | 30 | 'custom'>(7);
+  const [dataInicioManual, setDataInicioManual] = useState<string>("");
+  const [dataFimManual, setDataFimManual] = useState<string>("");
 
   // -- FINANCEIRO (Mensal) --
   const currentMonth = new Date().getMonth();
@@ -34,15 +35,20 @@ export default function DashboardPage() {
   const totalMetodos = Math.max(porPix + porDinheiro + porCartao, 1);
 
   // -- EVOLUÇÃO (Agendamentos) --
-  const dateLimit = new Date();
-  if (dataManual) {
-    const [year, month, day] = dataManual.split('-').map(Number);
-    dateLimit.setFullYear(year, month - 1, day);
-    dateLimit.setHours(0, 0, 0, 0);
-  } else {
-    dateLimit.setDate(dateLimit.getDate() - periodo);
-  }
-  const agndsPeriodo = agendamentos.filter(a => new Date(a.dataInicio) >= dateLimit);
+  const agndsPeriodo = agendamentos.filter(a => {
+    const dataA = new Date(a.dataInicio);
+    
+    if (periodo === 'custom' && dataInicioManual && dataFimManual) {
+      const start = new Date(dataInicioManual + 'T00:00:00');
+      const end = new Date(dataFimManual + 'T23:59:59');
+      return dataA >= start && dataA <= end;
+    }
+    
+    const dateLimit = new Date();
+    dateLimit.setDate(dateLimit.getDate() - (periodo as number));
+    dateLimit.setHours(0,0,0,0);
+    return dataA >= dateLimit;
+  });
 
   const aprovadosTot = agndsPeriodo.filter(a => a.status === 'concluido' || a.status === 'agendado').reduce((acc, curr) => acc + curr.valorTotal, 0);
   const pendentesTot = agndsPeriodo.filter(a => a.status === 'pendente').reduce((acc, curr) => acc + curr.valorTotal, 0);
@@ -193,36 +199,51 @@ export default function DashboardPage() {
         </div>
 
         {/* Toggles */}
-        <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-none">
+        <div className="flex flex-wrap gap-2 mb-6">
           {[7, 14, 30].map(dia => (
             <button 
               key={dia}
               onClick={() => {
                 setPeriodo(dia as any);
-                setDataManual("");
+                setDataInicioManual("");
+                setDataFimManual("");
               }}
-              className={`px-4 py-2 rounded-full text-xs font-bold transition flex-shrink-0 ${periodo === dia && !dataManual ? 'bg-primary text-white shadow-md shadow-primary/20' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}`}
+              className={`px-4 py-2 rounded-full text-xs font-bold transition flex-shrink-0 ${periodo === dia ? 'bg-primary text-white shadow-md shadow-primary/20' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}`}
             >
               {dia} dias
             </button>
           ))}
-          <div className="relative flex-shrink-0">
-             <button 
-              className={`px-4 py-2 rounded-full text-xs font-bold transition flex items-center gap-2 ${dataManual ? 'bg-primary text-white shadow-md shadow-primary/20' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}`}
-            >
-              <Calendar size={14} />
-              {dataManual ? new Date(dataManual + 'T00:00:00').toLocaleDateString('pt-BR') : 'Personalizado'}
-            </button>
-            <input 
-              type="date"
-              className="absolute inset-0 opacity-0 cursor-pointer w-full"
-              onChange={(e) => {
-                setDataManual(e.target.value);
-                setPeriodo(7); // reset periodo logicamente mas o view prioriza dataManual
-              }}
-            />
-          </div>
+          <button 
+            onClick={() => setPeriodo('custom')}
+            className={`px-4 py-2 rounded-full text-xs font-bold transition flex-shrink-0 flex items-center gap-2 ${periodo === 'custom' ? 'bg-primary text-white shadow-md shadow-primary/20' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}`}
+          >
+            <Calendar size={14} />
+            Personalizado
+          </button>
         </div>
+
+        {periodo === 'custom' && (
+          <div className="flex items-center gap-3 mb-8 animate-in fade-in slide-in-from-top-2">
+            <div className="flex-1">
+              <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1 ml-1">Início</label>
+              <input 
+                type="date" 
+                value={dataInicioManual} 
+                onChange={e => setDataInicioManual(e.target.value)}
+                className="w-full px-4 py-2 rounded-xl border border-gray-100 bg-gray-50/50 text-xs font-bold text-gray-700 outline-none focus:border-primary focus:bg-white transition-all shadow-sm"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1 ml-1">Fim</label>
+              <input 
+                type="date" 
+                value={dataFimManual} 
+                onChange={e => setDataFimManual(e.target.value)}
+                className="w-full px-4 py-2 rounded-xl border border-gray-100 bg-gray-50/50 text-xs font-bold text-gray-700 outline-none focus:border-primary focus:bg-white transition-all shadow-sm"
+              />
+            </div>
+          </div>
+        )}
 
         {/* 3 Status Cards (Estilo Dark Colors na imagem mas usamos tailwind padrao q fica dark automatico no darkmode) */}
         <div className="grid grid-cols-3 gap-3 mb-8">
