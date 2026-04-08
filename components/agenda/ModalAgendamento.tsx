@@ -5,7 +5,7 @@ import { Modal } from "@/components/ui/Modal";
 import { useAgendaStore, Agendamento } from "@/store/useAgendaStore";
 import { useServicosStore } from "@/store/useServicosStore";
 import { useClientesStore } from "@/store/useClientesStore";
-import { UserPlus } from "lucide-react";
+import { UserPlus, Check } from "lucide-react";
 import { ModalCliente } from "@/components/clientes/ModalCliente";
 
 interface ModalAgendamentoProps {
@@ -25,11 +25,13 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
   const [servico, setServico] = useState("");
   const [dataInicio, setDataInicio] = useState("");
   const [horaInicio, setHoraInicio] = useState("");
-  const [horaFim, setHoraFim] = useState("");
+  const [duracao, setDuracao] = useState("01:00");
   const [valorTotal, setValorTotal] = useState("");
   const [valorSinal, setValorSinal] = useState("");
+  const [metodoSinal, setMetodoSinal] = useState<'Pix' | 'Dinheiro' | 'Cartão'>('Pix');
   const [cor, setCor] = useState("bg-primary");
   const [isClientModalOpen, setIsClientModalOpen] = useState(false);
+  const [showClientes, setShowClientes] = useState(false);
 
   useEffect(() => {
     if (initialData && isOpen) {
@@ -43,12 +45,18 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
       const [data, hora] = initialData.dataInicio.split('T');
       setDataInicio(data);
       if (hora) setHoraInicio(hora.substring(0, 5));
+
+      // Calcula duração do initialData
+      const start = new Date(initialData.dataInicio);
+      const end = new Date(initialData.dataFim);
+      const diffMs = end.getTime() - start.getTime();
+      const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+      const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+      setDuracao(`${String(diffHrs).padStart(2, '0')}:${String(diffMins).padStart(2, '0')}`);
       
-      const [_, horaF] = initialData.dataFim.split('T');
-      if (horaF) setHoraFim(horaF.substring(0, 5));
     } else if (isOpen) {
       setClienteNome(""); setTelefone(""); setServico("");
-      setDataInicio(""); setHoraInicio(""); setHoraFim("");
+      setDataInicio(""); setHoraInicio(""); setDuracao("01:00");
       setValorTotal(""); setValorSinal("");
       setCor("bg-primary");
     }
@@ -57,7 +65,16 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
   const handleSave = async () => {
     // Monta dados (conversões básicas)
     const dateTimeInicio = dataInicio && horaInicio ? `${dataInicio}T${horaInicio}:00` : new Date().toISOString();
-    const dateTimeFim = dataInicio && horaFim ? `${dataInicio}T${horaFim}:00` : dateTimeInicio;
+    
+    // Calcula fim baseado na duração
+    let dateTimeFim = dateTimeInicio;
+    if (dataInicio && horaInicio && duracao) {
+       const [dHours, dMins] = duracao.split(':').map(Number);
+       const dateF = new Date(dateTimeInicio);
+       dateF.setHours(dateF.getHours() + dHours);
+       dateF.setMinutes(dateF.getMinutes() + dMins);
+       dateTimeFim = dateF.toISOString();
+    }
     
     const nomeFinal = clienteNome || "Cliente Avulso";
     const telefoneFinal = telefone || "";
@@ -97,6 +114,7 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
         valorTotal: Number(valorTotal) || 0,
         valorSinal: Number(valorSinal) || 0,
         status: "agendado",
+        metodoSinal,
         cor
       });
     }
@@ -110,10 +128,19 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
         
         {/* Cliente & Serviço */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
+          <div className="relative">
             <label className="block text-sm font-semibold text-gray-700 mb-1">Nome do Cliente</label>
             <div className="flex gap-2">
-              <input type="text" value={clienteNome} onChange={e => setClienteNome(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-primary" placeholder="Buscar ou novo" />
+              <input 
+                type="text" 
+                value={clienteNome} 
+                onChange={e => {
+                   setClienteNome(e.target.value);
+                   setShowClientes(e.target.value.length > 0);
+                }} 
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-primary" 
+                placeholder="Buscar ou novo" 
+              />
               <button 
                 type="button" 
                 onClick={() => setIsClientModalOpen(true)}
@@ -123,6 +150,32 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
                 <UserPlus size={20} />
               </button>
             </div>
+
+            {/* Sugestões de Clientes */}
+            {showClientes && (
+               <div className="absolute z-[60] left-0 right-14 mt-1 bg-white border border-gray-100 rounded-xl shadow-xl max-h-48 overflow-y-auto">
+                  {clientes
+                    .filter(c => c.nome.toLowerCase().includes(clienteNome.toLowerCase()))
+                    .map(c => (
+                       <button
+                         key={c.id}
+                         onClick={() => {
+                            setClienteNome(c.nome);
+                            setTelefone(c.telefone);
+                            setShowClientes(false);
+                         }}
+                         className="w-full text-left px-4 py-3 hover:bg-gray-50 flex flex-col border-b border-gray-50 last:border-0"
+                       >
+                          <span className="font-bold text-gray-800">{c.nome}</span>
+                          <span className="text-xs text-gray-400">{c.telefone}</span>
+                       </button>
+                    ))
+                  }
+                  {clientes.filter(c => c.nome.toLowerCase().includes(clienteNome.toLowerCase())).length === 0 && (
+                     <div className="px-4 py-3 text-xs text-gray-400 italic">Nenhum cliente encontrado.</div>
+                  )}
+               </div>
+            )}
           </div>
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">Whatsapp</label>
@@ -162,8 +215,24 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
             <input type="time" value={horaInicio} onChange={e => setHoraInicio(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-primary bg-white appearance-none min-w-0" />
           </div>
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Término</label>
-            <input type="time" value={horaFim} onChange={e => setHoraFim(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-primary bg-white appearance-none min-w-0" />
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Duração</label>
+            <select 
+              value={duracao} 
+              onChange={e => setDuracao(e.target.value)} 
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-primary bg-white appearance-none min-w-0"
+            >
+              <option value="00:30">30 min</option>
+              <option value="01:00">1 hora</option>
+              <option value="01:30">1h 30min</option>
+              <option value="02:00">2 horas</option>
+              <option value="02:30">2h 30min</option>
+              <option value="03:00">3 horas</option>
+              <option value="04:00">4 horas</option>
+              <option value="05:00">5 horas</option>
+              <option value="06:00">6 horas</option>
+              <option value="07:00">7 horas</option>
+              <option value="08:00">8 horas</option>
+            </select>
           </div>
         </div>
 
@@ -175,10 +244,30 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
             <label className="block text-sm font-semibold text-gray-700 mb-1">Valor Total (R$)</label>
             <input type="number" value={valorTotal} onChange={e => setValorTotal(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-primary font-medium text-primary" placeholder="0,00" />
           </div>
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Valor do Sinal (R$)</label>
-            <input type="number" value={valorSinal} onChange={e => setValorSinal(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-green-500 font-medium text-green-600" placeholder="0,00" />
-            <p className="text-xs text-gray-400 mt-1">O sinal entra logo como receita.</p>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Valor do Sinal (R$)</label>
+              <input type="number" value={valorSinal} onChange={e => setValorSinal(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-green-500 font-medium text-green-600" placeholder="0,00" />
+            </div>
+            
+            {Number(valorSinal) > 0 && (
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Forma de Pagamento do Sinal</label>
+                <div className="flex gap-2">
+                  {['Pix', 'Dinheiro', 'Cartão'].map(m => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => setMetodoSinal(m as any)}
+                      className={`flex-1 py-2 px-3 rounded-xl border text-sm font-bold transition ${metodoSinal === m ? 'bg-green-500 text-white border-green-500 shadow-md shadow-green-200' : 'bg-white text-gray-500 border-gray-100 hover:bg-gray-50'}`}
+                    >
+                      {m}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            <p className="text-xs text-gray-400">O sinal entra logo como receita.</p>
           </div>
         </div>
 
@@ -192,10 +281,12 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
               <button 
                 key={c} 
                 onClick={() => setCor(c)} 
-                className={`w-10 h-10 rounded-full ${c} ${cor === c ? 'ring-4 ring-offset-2 ring-primary/30' : 'opacity-80 hover:opacity-100 hover:scale-110'} transition`} 
+                className={`w-10 h-10 rounded-full ${c} ${cor === c ? 'ring-4 ring-offset-2 ring-primary/30 border-2 border-white' : 'opacity-80 hover:opacity-100 hover:scale-110'} transition flex items-center justify-center text-white`} 
                 type="button"
                 title={c}
-              />
+              >
+                {cor === c && <Check size={20} strokeWidth={3} />}
+              </button>
             ))}
           </div>
           <p className="text-xs text-gray-400 mt-2">Personalize a etiqueta desse serviço pra bater o olho fácil no calendário.</p>

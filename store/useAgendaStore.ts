@@ -14,6 +14,7 @@ export interface Agendamento {
   status: 'agendado' | 'pendente' | 'concluido' | 'cancelado';
   cor?: string;
   telefone?: string;
+  metodoSinal?: 'Dinheiro' | 'Cartão' | 'Pix';
 }
 
 interface AgendaStore {
@@ -22,7 +23,7 @@ interface AgendaStore {
   addAgendamento: (agendamento: Omit<Agendamento, 'id'>) => Promise<void>;
   updateAgendamento: (id: string, data: Partial<Agendamento>) => Promise<void>;
   removeAgendamento: (id: string) => Promise<void>;
-  concluirAtendimento: (id: string) => Promise<void>;
+  concluirAtendimento: (id: string, metodo: 'Dinheiro' | 'Cartão' | 'Pix') => Promise<void>;
 }
 
 export const useAgendaStore = create<AgendaStore>()((set) => ({
@@ -49,7 +50,7 @@ export const useAgendaStore = create<AgendaStore>()((set) => ({
           categoria: 'Sinal de Tatuagem',
           descricao: `Sinal - ${dataToInsert.clienteNome} (${dataToInsert.servico})`,
           valor: dataToInsert.valorSinal,
-          metodo: 'Pix',
+          metodo: dataToInsert.metodoSinal || 'Pix',
           data: new Date().toISOString(),
           conta: 'Empresa'
         });
@@ -82,7 +83,7 @@ export const useAgendaStore = create<AgendaStore>()((set) => ({
      set((state) => ({ agendamentos: state.agendamentos.filter(a => a.id !== id) }));
   },
 
-  concluirAtendimento: async (id) => {
+  concluirAtendimento: async (id, metodo: 'Dinheiro' | 'Cartão' | 'Pix') => {
      const state = useAgendaStore.getState();
      const agendamento = state.agendamentos.find(a => a.id === id);
      if (!agendamento || agendamento.status === 'concluido') return;
@@ -95,7 +96,7 @@ export const useAgendaStore = create<AgendaStore>()((set) => ({
           categoria: 'Sessão Concluída',
           descricao: `Restante - ${agendamento.clienteNome} (${agendamento.servico})`,
           valor: valorRestante,
-          metodo: 'Pix',
+          metodo: metodo || 'Pix',
           data: new Date().toISOString(),
           conta: 'Empresa'
         });

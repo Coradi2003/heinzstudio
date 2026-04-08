@@ -5,7 +5,7 @@ import { useFinanceiroStore } from "@/store/useFinanceiroStore";
 import { useProdutosStore } from "@/store/useProdutosStore";
 import { useServicosStore } from "@/store/useServicosStore";
 import { useClientesStore } from "@/store/useClientesStore";
-import { Users, FileText, Wrench, Box, TrendingUp, TrendingDown, BarChart2, CheckCircle2, Clock, XCircle, QrCode, Banknote, CreditCard, Calendar } from "lucide-react";
+import { Users, FileText, Wrench, Box, TrendingUp, TrendingDown, BarChart2, CheckCircle2, Clock, XCircle, QrCode, Banknote, CreditCard, Calendar, Gift } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -48,10 +48,25 @@ export default function DashboardPage() {
   const pendentesTot = agndsPeriodo.filter(a => a.status === 'pendente').reduce((acc, curr) => acc + curr.valorTotal, 0);
   const rejeitadosTot = agndsPeriodo.filter(a => a.status === 'cancelado').reduce((acc, curr) => acc + curr.valorTotal, 0);
 
+  const maxVal = Math.max(aprovadosTot, pendentesTot, rejeitadosTot, 1);
+
   const pendentesCount = agendamentos.filter(a => a.status === 'pendente' || a.status === 'agendado').length;
   const concluidosCount = agendamentos.filter(a => a.status === 'concluido').length;
 
-  const maxVal = Math.max(aprovadosTot, pendentesTot, rejeitadosTot, 1);
+  // -- ANIVERSARIANTES DO DIA --
+  const hoje = new Date();
+  const diaHoje = hoje.getDate();
+  const mesHoje = hoje.getMonth() + 1;
+
+  const aniversariantes = clientes.filter(c => {
+    if (!c.dataNascimento) return false;
+    // Formato esperado: YYYY-MM-DD
+    const parts = c.dataNascimento.split('-');
+    if (parts.length !== 3) return false;
+    const mes = parseInt(parts[1]);
+    const dia = parseInt(parts[2]);
+    return dia === diaHoje && mes === mesHoje;
+  });
 
   return (
     <div className="min-h-screen p-4 md:p-6 lg:p-8 max-w-lg mx-auto md:max-w-4xl space-y-4 mb-20 md:mb-0">
@@ -85,6 +100,27 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* 1.2 Alerta de Aniversário */}
+      {aniversariantes.length > 0 && (
+        <Link href="/clientes" className="block">
+          <div className="bg-gradient-to-r from-pink-500 to-purple-600 p-4 rounded-[24px] shadow-md text-white flex items-center gap-4 animate-pulse-subtle hover:scale-[1.02] transition pointer-events-auto">
+            <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+              <Gift size={24} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-bold uppercase tracking-wider opacity-90">Aniversariante(s) do Dia!</p>
+              <h3 className="font-bold truncate">
+                {aniversariantes.map(c => c.nome).join(", ")}
+              </h3>
+              <p className="text-[10px] opacity-80 mt-0.5 whitespace-nowrap">Clique para ver no cadastro!</p>
+            </div>
+            <div className="px-3 py-1 bg-white/20 rounded-full text-[10px] font-bold uppercase tracking-widest whitespace-nowrap">
+              Ver lista
+            </div>
+          </div>
+        </Link>
+      )}
 
       {/* 1.5 Bloco de Entradas por Método */}
       <div className="bg-white rounded-[28px] p-5 shadow-sm border border-gray-100/50">

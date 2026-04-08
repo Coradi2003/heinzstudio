@@ -13,13 +13,14 @@ interface ModalDiaSelecionadoProps {
   onClose: () => void;
   selectedDate: Date;
   agendamentos: Agendamento[];
-  concluirAtendimento: (id: string) => void;
+  concluirAtendimento: (id: string, metodo: 'Pix' | 'Dinheiro' | 'Cartão') => void;
   removeAgendamento: (id: string) => void;
 }
 
 export function ModalDiaSelecionado({ isOpen, onClose, selectedDate, agendamentos, concluirAtendimento, removeAgendamento }: ModalDiaSelecionadoProps) {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [agendamentoParaEditar, setAgendamentoParaEditar] = useState<Agendamento | null>(null);
+  const [concluindoId, setConcluindoId] = useState<string | null>(null);
 
   const agendamentosDia = agendamentos
     .filter(a => isSameDay(parseISO(a.dataInicio), selectedDate))
@@ -61,12 +62,40 @@ export function ModalDiaSelecionado({ isOpen, onClose, selectedDate, agendamento
                 </button>
                 
                 {agendamento.status !== 'concluido' && (
-                  <button 
-                    onClick={() => concluirAtendimento(agendamento.id)}
-                    className="flex-1 flex justify-center items-center gap-1.5 text-xs font-bold text-primary bg-primary/10 hover:bg-primary/20 p-2.5 rounded-lg transition"
-                  >
-                    <CheckCircle2 size={14} /> Concluir Sessão
-                  </button>
+                  <div className="w-full flex flex-col gap-2 mt-2">
+                    {concluindoId === agendamento.id ? (
+                      <div className="bg-gray-50 p-3 rounded-xl border border-gray-100 flex flex-col gap-3 animate-in fade-in slide-in-from-top-2">
+                        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Qual a forma de pagamento do restante?</p>
+                        <div className="flex gap-2">
+                          {(['Pix', 'Dinheiro', 'Cartão'] as const).map(metodo => (
+                            <button
+                              key={metodo}
+                              onClick={() => {
+                                concluirAtendimento(agendamento.id, metodo);
+                                setConcluindoId(null);
+                              }}
+                              className="flex-1 py-2 px-1 rounded-lg bg-white border border-gray-200 text-[10px] font-bold text-gray-700 hover:border-primary hover:text-primary transition"
+                            >
+                              {metodo}
+                            </button>
+                          ))}
+                        </div>
+                        <button 
+                          onClick={() => setConcluindoId(null)}
+                          className="text-[9px] font-bold text-gray-400 hover:text-gray-600 uppercase"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    ) : (
+                      <button 
+                        onClick={() => setConcluindoId(agendamento.id)}
+                        className="flex-1 flex justify-center items-center gap-1.5 text-xs font-bold text-primary bg-primary/10 hover:bg-primary/20 p-2.5 rounded-lg transition"
+                      >
+                        <CheckCircle2 size={14} /> Concluir Sessão
+                      </button>
+                    )}
+                  </div>
                 )}
                 <button 
                   onClick={() => {

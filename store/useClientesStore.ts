@@ -7,6 +7,7 @@ export interface Cliente {
   telefone: string;
   notas: string;
   ultimaVisita: string;
+  dataNascimento?: string | null;
 }
 
 interface ClientesStore {

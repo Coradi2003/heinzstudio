@@ -10,22 +10,24 @@ export function ModalCliente({ isOpen, onClose, initialData }: Props) {
   const [nome, setNome] = useState("");
   const [telefone, setTelefone] = useState("");
   const [notas, setNotas] = useState("");
+  const [dataNascimento, setDataNascimento] = useState("");
 
   useEffect(() => {
     if (initialData) {
       setNome(initialData.nome);
       setTelefone(initialData.telefone || "");
       setNotas(initialData.notas || "");
+      setDataNascimento(initialData.dataNascimento || "");
     } else {
-      setNome(""); setTelefone(""); setNotas("");
+      setNome(""); setTelefone(""); setNotas(""); setDataNascimento("");
     }
   }, [initialData, isOpen]);
 
   const handleSave = () => {
     if (initialData) {
-      updateCliente(initialData.id, { nome, telefone, notas });
+      updateCliente(initialData.id, { nome, telefone, notas, dataNascimento });
     } else {
-      addCliente({ nome, telefone, notas, ultimaVisita: new Date().toISOString() });
+      addCliente({ nome, telefone, notas, dataNascimento, ultimaVisita: new Date().toISOString() });
     }
     onClose();
   };
@@ -40,6 +42,10 @@ export function ModalCliente({ isOpen, onClose, initialData }: Props) {
         <div>
            <label className="block text-sm font-semibold mb-1 text-gray-700">Whatsapp (Opcional)</label>
            <input type="text" placeholder="(00) 00000-0000" value={telefone} onChange={e => setTelefone(e.target.value)} className="w-full px-4 py-3 rounded-xl border focus:border-primary outline-none" />
+        </div>
+        <div>
+           <label className="block text-sm font-semibold mb-1 text-gray-700">Data de Nascimento</label>
+           <input type="date" value={dataNascimento} onChange={e => setDataNascimento(e.target.value)} className="w-full px-4 py-3 rounded-xl border focus:border-primary outline-none" />
         </div>
         <div>
            <label className="block text-sm font-semibold mb-1 text-gray-700">Anotações / Preferências</label>

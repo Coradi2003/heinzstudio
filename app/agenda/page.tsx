@@ -98,11 +98,15 @@ export default function AgendaPage() {
                     {format(day, 'd')}
                   </span>
                   
-                  {/* Tarja colorida e contador */}
+                  {/* Indicadores de cor dos agendamentos */}
                   {qty > 0 && (
-                    <div className={`mt-auto w-full flex items-center gap-1`}>
-                      <div className={`h-1.5 w-full rounded-full ${statusColors[randomStatus]}`}></div>
-                      <span className="text-[10px] font-bold text-gray-400">{qty}</span>
+                    <div className="mt-auto w-full flex flex-wrap gap-1 items-center">
+                      <div className="flex -space-x-1 overflow-hidden">
+                        {dayAgendamentos.slice(0, 3).map(a => (
+                          <div key={a.id} className={`h-1.5 w-3 rounded-full border border-white ${a.cor || 'bg-primary'}`} title={a.clienteNome}></div>
+                        ))}
+                      </div>
+                      {qty > 3 && <span className="text-[9px] font-bold text-gray-400">+{qty - 3}</span>}
                     </div>
                   )}
                 </div>
