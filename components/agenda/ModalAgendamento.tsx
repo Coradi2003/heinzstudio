@@ -299,15 +299,19 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
             >
               <option value="00:30">30 min</option>
               <option value="01:00">1 hora</option>
-              <option value="01:30">1h 30min</option>
               <option value="02:00">2 horas</option>
-              <option value="02:30">2h 30min</option>
               <option value="03:00">3 horas</option>
               <option value="04:00">4 horas</option>
               <option value="05:00">5 horas</option>
               <option value="06:00">6 horas</option>
               <option value="07:00">7 horas</option>
               <option value="08:00">8 horas</option>
+              <option value="09:00">9 horas</option>
+              <option value="10:00">10 horas</option>
+              <option value="12:00">12 horas</option>
+              <option value="15:00">15 horas</option>
+              <option value="18:00">18 horas</option>
+              <option value="24:00">24 horas</option>
             </select>
           </div>
         </div>

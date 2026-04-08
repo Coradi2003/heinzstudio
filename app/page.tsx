@@ -20,9 +20,31 @@ export default function DashboardPage() {
   const [dataInicioManual, setDataInicioManual] = useState<string>("");
   const [dataFimManual, setDataFimManual] = useState<string>("");
 
-  // -- FINANCEIRO (Mensal) --
-  const currentMonth = new Date().getMonth();
-  const baseTrans = transacoes.filter(t => new Date(t.data).getMonth() === currentMonth);
+  // -- LOGICA DE FILTRO DE DATA --
+  const getPeriodoDatas = () => {
+    if (periodo === 'custom' && dataInicioManual && dataFimManual) {
+      return {
+        start: new Date(dataInicioManual + 'T00:00:00'),
+        end: new Date(dataFimManual + 'T23:59:59')
+      };
+    }
+    const start = new Date();
+    start.setDate(start.getDate() - (periodo as number));
+    start.setHours(0,0,0,0);
+
+    // Para gráficos e financeiro, o fim é agora. 
+    // Para agendamentos futuros (pendentes), o filtro de cards usará apenas o start.
+    return { start, end: new Date() };
+  };
+
+  const { start, end } = getPeriodoDatas();
+
+  // -- FINANCEIRO (Baseado no Período) --
+  const baseTrans = transacoes.filter(t => {
+    const d = new Date(t.data);
+    return d >= start && d <= end;
+  });
+  
   const receitas = baseTrans.filter(t => t.tipo === 'receita');
   const faturamento = receitas.reduce((a,b) => a + b.valor, 0);
   const despesas = baseTrans.filter(t => t.tipo === 'despesa').reduce((a,b) => a + b.valor, 0);
@@ -34,24 +56,24 @@ export default function DashboardPage() {
   const porCartao = receitas.filter(t => t.metodo === 'Cartão').reduce((a,b) => a + b.valor, 0);
   const totalMetodos = Math.max(porPix + porDinheiro + porCartao, 1);
 
-  // -- EVOLUÇÃO (Agendamentos) --
+  // -- EVOLUÇÃO (Agendamentos - Gráfico usa o período fechado) --
   const agndsPeriodo = agendamentos.filter(a => {
-    const dataA = new Date(a.dataInicio);
-    
-    if (periodo === 'custom' && dataInicioManual && dataFimManual) {
-      const start = new Date(dataInicioManual + 'T00:00:00');
-      const end = new Date(dataFimManual + 'T23:59:59');
-      return dataA >= start && dataA <= end;
-    }
-    
-    const dateLimit = new Date();
-    dateLimit.setDate(dateLimit.getDate() - (periodo as number));
-    dateLimit.setHours(0,0,0,0);
-    return dataA >= dateLimit;
+    const d = new Date(a.dataInicio);
+    return d >= start && d <= end;
   });
 
-  const aprovadosTot = agndsPeriodo.filter(a => a.status === 'concluido' || a.status === 'agendado').reduce((acc, curr) => acc + curr.valorTotal, 0);
-  const pendentesTot = agndsPeriodo.filter(a => a.status === 'pendente').reduce((acc, curr) => acc + curr.valorTotal, 0);
+  // -- CARDS DE STATUS --
+  // Aprovados: O que foi concluído no período selecionado
+  const aprovadosTot = agndsPeriodo.filter(a => a.status === 'concluido').reduce((acc, curr) => acc + curr.valorTotal, 0);
+  
+  // Pendentes: O que está agendado/pendente a partir do início do período (inclui futuro)
+  const agndsFuturos = agendamentos.filter(a => {
+    const d = new Date(a.dataInicio);
+    return d >= start && (a.status === 'agendado' || a.status === 'pendente');
+  });
+  const pendentesTot = agndsFuturos.reduce((acc, curr) => acc + (curr.valorTotal - (curr.valorSinal || 0)), 0);
+  
+  // Rejeitados: Cancelados no período
   const rejeitadosTot = agndsPeriodo.filter(a => a.status === 'cancelado').reduce((acc, curr) => acc + curr.valorTotal, 0);
 
   const maxVal = Math.max(aprovadosTot, pendentesTot, rejeitadosTot, 1);
@@ -140,8 +162,8 @@ export default function DashboardPage() {
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex justify-between items-center mb-1">
-                <span className="text-xs font-bold text-gray-600">Pix</span>
-                <span className="text-xs font-bold text-gray-800">{porPix.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                <span className="text-xs font-bold text-gray-700">Pix</span>
+                <span className="text-xs font-extrabold text-gray-900">{porPix.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
               </div>
               <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
                 <div className="h-full bg-emerald-400 rounded-full transition-all duration-700" style={{ width: `${(porPix/totalMetodos)*100}%` }}></div>
@@ -156,8 +178,8 @@ export default function DashboardPage() {
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex justify-between items-center mb-1">
-                <span className="text-xs font-bold text-gray-600">Dinheiro</span>
-                <span className="text-xs font-bold text-gray-800">{porDinheiro.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                <span className="text-xs font-bold text-gray-700">Dinheiro</span>
+                <span className="text-xs font-extrabold text-gray-900">{porDinheiro.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
               </div>
               <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
                 <div className="h-full bg-yellow-400 rounded-full transition-all duration-700" style={{ width: `${(porDinheiro/totalMetodos)*100}%` }}></div>
@@ -172,8 +194,8 @@ export default function DashboardPage() {
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex justify-between items-center mb-1">
-                <span className="text-xs font-bold text-gray-600">Cartão</span>
-                <span className="text-xs font-bold text-gray-800">{porCartao.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+                <span className="text-xs font-bold text-gray-700">Cartão</span>
+                <span className="text-xs font-extrabold text-gray-900">{porCartao.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
               </div>
               <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
                 <div className="h-full bg-blue-400 rounded-full transition-all duration-700" style={{ width: `${(porCartao/totalMetodos)*100}%` }}></div>
@@ -247,28 +269,28 @@ export default function DashboardPage() {
 
         {/* 3 Status Cards (Estilo Dark Colors na imagem mas usamos tailwind padrao q fica dark automatico no darkmode) */}
         <div className="grid grid-cols-3 gap-3 mb-8">
-          <div className="bg-[#f0fdf4] dark-theme:bg-green-900/10 border border-[#bbf7d0] dark-theme:border-green-900/30 rounded-2xl p-3 flex flex-col items-center justify-center text-center">
-            <div className="border border-green-200 rounded-full p-1 mb-2">
+          <div className="bg-[#f0fdf4] border border-[#bbf7d0] rounded-2xl p-3 flex flex-col items-center justify-center text-center shadow-sm">
+            <div className="bg-white/60 rounded-full p-1 mb-2">
                <CheckCircle2 size={12} className="text-green-600" />
             </div>
-            <p className="text-[9px] font-bold text-gray-500 uppercase mb-1 whitespace-nowrap">Aprovados</p>
-            <p className="text-sm font-bold text-gray-800">{aprovadosTot.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0})}</p>
+            <p className="text-[9px] font-bold text-green-700 uppercase mb-1 whitespace-nowrap">Aprovados</p>
+            <p className="text-sm font-black text-green-900">{aprovadosTot.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0})}</p>
           </div>
 
-          <div className="bg-[#fefce8] dark-theme:bg-yellow-900/10 border border-[#fef08a] dark-theme:border-yellow-900/30 rounded-2xl p-3 flex flex-col items-center justify-center text-center">
-            <div className="border border-yellow-200 rounded-full p-1 mb-2">
+          <div className="bg-[#fefce8] border border-[#fef08a] rounded-2xl p-3 flex flex-col items-center justify-center text-center shadow-sm">
+            <div className="bg-white/60 rounded-full p-1 mb-2">
                <Clock size={12} className="text-yellow-600" />
             </div>
-            <p className="text-[9px] font-bold text-gray-500 uppercase mb-1 whitespace-nowrap">Pendentes</p>
-            <p className="text-sm font-bold text-gray-800">{pendentesTot.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0})}</p>
+            <p className="text-[9px] font-bold text-yellow-700 uppercase mb-1 whitespace-nowrap">Pendentes</p>
+            <p className="text-sm font-black text-yellow-900">{pendentesTot.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0})}</p>
           </div>
 
-          <div className="bg-[#fef2f2] dark-theme:bg-red-900/10 border border-[#fecaca] dark-theme:border-red-900/30 rounded-2xl p-3 flex flex-col items-center justify-center text-center">
-            <div className="border border-red-200 rounded-full p-1 mb-2">
+          <div className="bg-[#fef2f2] border border-[#fecaca] rounded-2xl p-3 flex flex-col items-center justify-center text-center shadow-sm">
+            <div className="bg-white/60 rounded-full p-1 mb-2">
                <XCircle size={12} className="text-red-500" />
             </div>
-            <p className="text-[9px] font-bold text-gray-500 uppercase mb-1 whitespace-nowrap">Rejeitados</p>
-            <p className="text-sm font-bold text-gray-800">{rejeitadosTot.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0})}</p>
+            <p className="text-[9px] font-bold text-red-700 uppercase mb-1 whitespace-nowrap">Rejeitados</p>
+            <p className="text-sm font-black text-red-900">{rejeitadosTot.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0})}</p>
           </div>
         </div>
 
