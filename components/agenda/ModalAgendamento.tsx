@@ -91,15 +91,15 @@ export function ModalAgendamento({ isOpen, onClose }: ModalAgendamentoProps) {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">Data</label>
-            <input type="date" value={dataInicio} onChange={e => setDataInicio(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-primary" />
+            <input type="date" value={dataInicio} onChange={e => setDataInicio(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-primary bg-white appearance-none min-w-0" />
           </div>
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">Início</label>
-            <input type="time" value={horaInicio} onChange={e => setHoraInicio(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-primary" />
+            <input type="time" value={horaInicio} onChange={e => setHoraInicio(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-primary bg-white appearance-none min-w-0" />
           </div>
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">Término</label>
-            <input type="time" value={horaFim} onChange={e => setHoraFim(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-primary" />
+            <input type="time" value={horaFim} onChange={e => setHoraFim(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-primary bg-white appearance-none min-w-0" />
           </div>
         </div>
 
