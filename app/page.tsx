@@ -3,12 +3,15 @@
 import { useAgendaStore } from "@/store/useAgendaStore";
 import { useFinanceiroStore } from "@/store/useFinanceiroStore";
 import { useProdutosStore } from "@/store/useProdutosStore";
+import { useServicosStore } from "@/store/useServicosStore";
 import { Users, Scissors, Package, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
+import Link from "next/link";
 
 export default function DashboardPage() {
   const { agendamentos } = useAgendaStore();
   const { transacoes } = useFinanceiroStore();
   const { produtos } = useProdutosStore();
+  const { servicos } = useServicosStore();
 
   const currentMonth = new Date().getMonth();
   const baseTrans = transacoes.filter(t => new Date(t.data).getMonth() === currentMonth);
@@ -66,29 +69,29 @@ export default function DashboardPage() {
         {/* System Summaries */}
         <h3 className="text-xl font-bold text-gray-800 mb-4 mt-10">Resumo do Sistema</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-50 flex justify-between items-center group cursor-pointer hover:shadow-md transition-shadow">
+          <Link href="/clientes" className="bg-white p-6 rounded-2xl shadow-sm border border-gray-50 flex justify-between items-center group cursor-pointer hover:shadow-md transition-shadow">
             <div>
               <p className="text-gray-500 font-medium mb-1">Total de Clientes</p>
               <h4 className="text-3xl font-bold text-gray-800">{totalClientes}</h4>
             </div>
             <Users className="text-gray-300 group-hover:text-primary transition-colors" size={40} />
-          </div>
+          </Link>
 
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-50 flex justify-between items-center group cursor-pointer hover:shadow-md transition-shadow">
+          <Link href="/servicos" className="bg-white p-6 rounded-2xl shadow-sm border border-gray-50 flex justify-between items-center group cursor-pointer hover:shadow-md transition-shadow">
             <div>
               <p className="text-gray-500 font-medium mb-1">Serviços Listados</p>
-              <h4 className="text-3xl font-bold text-gray-800">4</h4>
+              <h4 className="text-3xl font-bold text-gray-800">{servicos.length}</h4>
             </div>
             <Scissors className="text-gray-300 group-hover:text-primary transition-colors" size={40} />
-          </div>
+          </Link>
 
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-50 flex justify-between items-center group cursor-pointer hover:shadow-md transition-shadow">
+          <Link href="/produtos" className="bg-white p-6 rounded-2xl shadow-sm border border-gray-50 flex justify-between items-center group cursor-pointer hover:shadow-md transition-shadow">
             <div>
               <p className="text-gray-500 font-medium mb-1">Produtos Únicos</p>
               <h4 className="text-3xl font-bold text-gray-800">{produtos.length}</h4>
             </div>
             <Package className="text-gray-300 group-hover:text-primary transition-colors" size={40} />
-          </div>
+          </Link>
         </div>
 
       </div>

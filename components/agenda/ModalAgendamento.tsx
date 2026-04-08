@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { useAgendaStore } from "@/store/useAgendaStore";
+import { useServicosStore } from "@/store/useServicosStore";
 
 interface ModalAgendamentoProps {
   isOpen: boolean;
@@ -11,6 +12,7 @@ interface ModalAgendamentoProps {
 
 export function ModalAgendamento({ isOpen, onClose }: ModalAgendamentoProps) {
   const addAgendamento = useAgendaStore((state) => state.addAgendamento);
+  const { servicos } = useServicosStore();
   
   // States - Tudo opcional
   const [clienteNome, setClienteNome] = useState("");
@@ -64,7 +66,22 @@ export function ModalAgendamento({ isOpen, onClose }: ModalAgendamentoProps) {
           </div>
           <div className="md:col-span-2">
             <label className="block text-sm font-semibold text-gray-700 mb-1">Serviço</label>
-            <input type="text" value={servico} onChange={e => setServico(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-primary" placeholder="Tatuagem, Fechamento..." />
+            <select 
+              value={servico} 
+              onChange={e => {
+                setServico(e.target.value);
+                // Auto-preencher valor se for um serviço oficial
+                const offSrv = servicos.find(s => s.nome === e.target.value);
+                if (offSrv) setValorTotal(offSrv.valorBase.toString());
+              }} 
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-primary bg-white appearance-none"
+            >
+              <option value="" disabled>Selecione um serviço da sua base...</option>
+              {servicos.map(s => (
+                <option key={s.id} value={s.nome}>{s.nome} (R$ {s.valorBase})</option>
+              ))}
+              <option value="Outro (Avulso)">Outro serviço não listado...</option>
+            </select>
           </div>
         </div>
 
