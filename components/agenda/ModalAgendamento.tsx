@@ -8,6 +8,7 @@ import { useClientesStore } from "@/store/useClientesStore";
 import { UserPlus, Check, Camera, X, Loader2, Image as ImageIcon, RotateCw } from "lucide-react";
 import { ModalCliente } from "@/components/clientes/ModalCliente";
 import { createClient } from "@/lib/supabase";
+import { ptBR } from "date-fns/locale";
 import { addDays, addWeeks, addMonths, parseISO, format as formatDate } from "date-fns";
 
 interface ModalAgendamentoProps {
@@ -17,7 +18,7 @@ interface ModalAgendamentoProps {
 }
 
 export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendamentoProps) {
-  const { addAgendamento, updateAgendamento } = useAgendaStore();
+  const { agendamentos, addAgendamento, updateAgendamento } = useAgendaStore();
   const { servicos } = useServicosStore();
   const { clientes, addCliente } = useClientesStore();
   
@@ -99,6 +100,50 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
     const nomeFinal = clienteNome || "Cliente Avulso";
     const telefoneFinal = telefone || "";
 
+    // -- VALIDAÇÃO DE CONFLITO --
+    const checkConflict = (startStr: string, endStr: string) => {
+      const startNew = new Date(startStr).getTime();
+      const endNew = new Date(endStr).getTime();
+
+      return agendamentos.find(a => {
+        // Ignorar se estivermos editando o próprio agendamento
+        if (initialData && a.id === initialData.id) return false;
+        // Ignorar cancelados
+        if (a.status === 'cancelado') return false;
+
+        const startEx = new Date(a.dataInicio).getTime();
+        const endEx = new Date(a.dataFim).getTime();
+        
+        // Lógica de Sobreposição: (Inicio1 < Fim2) && (Fim1 > Inicio2)
+        return (startNew < endEx) && (endNew > startEx);
+      });
+    };
+
+    // Testar conflitos antes de começar a salvar
+    const totalAdicionar = !initialData && repetir ? Math.max(1, repeticoes + 1) : 1;
+    const seriesData: {s: string, e: string}[] = [];
+
+    for (let i = 0; i < totalAdicionar; i++) {
+        let s = dateTimeInicio;
+        let e = dateTimeFim;
+        if (i > 0) {
+            const baseStart = parseISO(dateTimeInicio);
+            const baseEnd = parseISO(dateTimeFim);
+            const nextStart = frequencia === 'diario' ? addDays(baseStart, i) : (frequencia === 'semanal' ? addWeeks(baseStart, i) : addMonths(baseStart, i));
+            const nextEnd = frequencia === 'diario' ? addDays(baseEnd, i) : (frequencia === 'semanal' ? addWeeks(baseEnd, i) : addMonths(baseEnd, i));
+            s = nextStart.toISOString();
+            e = nextEnd.toISOString();
+        }
+        
+        const conflito = checkConflict(s, e);
+        if (conflito) {
+            const dataFormatada = formatDate(new Date(s), "dd/MM 'às' HH:mm", { locale: ptBR });
+            alert(`HORÁRIO INDISPONÍVEL!\n\nNo dia ${dataFormatada} já existe um agendamento para "${conflito.clienteNome}".\n\nPor favor, escolha outro horário.`);
+            return;
+        }
+        seriesData.push({ s, e });
+    }
+
     // Cadastro Inteligente de Clientes
     if (clienteNome && clienteNome.trim() !== "") {
        const clientExists = clientes.find(c => c.nome.toLowerCase() === clienteNome.trim().toLowerCase());
@@ -115,13 +160,12 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
     setIsSaving(true);
     try {
       if (initialData) {
-        // ... (Update existing appointment logic remains same)
         await updateAgendamento(initialData.id, {
           clienteNome: nomeFinal,
           telefone: telefoneFinal,
           servico: servico || "Sessão de Tatuagem",
-          dataInicio: dateTimeInicio,
-          dataFim: dateTimeFim,
+          dataInicio: seriesData[0].s,
+          dataFim: seriesData[0].e,
           valorTotal: Number(valorTotal) || 0,
           valorSinal: Number(valorSinal) || 0,
           cor,
@@ -129,43 +173,17 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
           imagem: imagens[0] || null
         });
       } else {
-        // CRIAÇÃO (Pode ser múltipla)
-        const totalAdicionar = repetir ? Math.max(1, repeticoes + 1) : 1;
-        
-        for (let i = 0; i < totalAdicionar; i++) {
-          let currentStart = dateTimeInicio;
-          let currentEnd = dateTimeFim;
-
-          if (i > 0) {
-            const baseStart = parseISO(dateTimeInicio);
-            const baseEnd = parseISO(dateTimeFim);
-            let nextStart, nextEnd;
-
-            if (frequencia === 'diario') {
-                nextStart = addDays(baseStart, i);
-                nextEnd = addDays(baseEnd, i);
-            } else if (frequencia === 'semanal') {
-                nextStart = addWeeks(baseStart, i);
-                nextEnd = addWeeks(baseEnd, i);
-            } else {
-                nextStart = addMonths(baseStart, i);
-                nextEnd = addMonths(baseEnd, i);
-            }
-
-            currentStart = nextStart.toISOString();
-            currentEnd = nextEnd.toISOString();
-          }
-
+        for (let i = 0; i < seriesData.length; i++) {
           await addAgendamento({
             clienteNome: nomeFinal,
             telefone: telefoneFinal,
             servico: servico || "Sessão de Tatuagem",
-            dataInicio: currentStart,
-            dataFim: currentEnd,
+            dataInicio: seriesData[i].s,
+            dataFim: seriesData[i].e,
             imagens,
             imagem: imagens[0] || null,
             valorTotal: Number(valorTotal) || 0,
-            valorSinal: i === 0 ? (Number(valorSinal) || 0) : 0, // Apenas o primeiro tem sinal
+            valorSinal: i === 0 ? (Number(valorSinal) || 0) : 0,
             status: "agendado",
             metodoSinal,
             cor
