@@ -98,23 +98,23 @@ export default function FinanceiroPage() {
           {transacoesFiltradas.length > 0 ? (
             <div className="divide-y divide-gray-50">
               {transacoesFiltradas.map((t) => (
-                <div key={t.id} className="p-6 flex items-center justify-between hover:bg-gray-50 transition group">
+                <div key={t.id} className="p-4 md:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-gray-50 transition group">
                   <div className="flex items-center gap-4">
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center ${t.tipo === 'receita' ? 'bg-green-50 text-green-500' : 'bg-red-50 text-red-500'}`}>
+                    <div className={`w-12 h-12 rounded-full shrink-0 flex items-center justify-center ${t.tipo === 'receita' ? 'bg-green-50 text-green-500' : 'bg-red-50 text-red-500'}`}>
                       {t.tipo === 'receita' ? <ArrowUpRight size={24} /> : <ArrowDownRight size={24} />}
                     </div>
                     <div>
                       <h4 className="font-bold text-gray-900">{t.descricao}</h4>
-                      <div className="flex items-center gap-2 text-sm mt-1">
+                      <div className="flex flex-wrap items-center gap-1.5 md:gap-2 text-xs md:text-sm mt-1">
                         <span className="text-gray-500">{format(parseISO(t.data), "dd/MM/yyyy • HH:mm", { locale: ptBR })}</span>
-                        <span className="text-gray-300">•</span>
+                        <span className="text-gray-300 hidden md:inline">•</span>
                         <span className="font-medium text-gray-600 px-2 py-0.5 bg-gray-100 rounded-md">{t.categoria}</span>
-                        <span className="text-gray-300">•</span>
+                        <span className="text-gray-300 hidden md:inline">•</span>
                         <span className="font-medium text-gray-600">{t.metodo}</span>
                       </div>
                     </div>
                   </div>
-                  <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-6 mt-4 md:mt-0">
+                  <div className="flex items-center justify-between md:justify-end gap-3 md:gap-6 mt-2 md:mt-0 pt-3 md:pt-0 border-t md:border-0 border-gray-100 w-full md:w-auto pl-16 md:pl-0">
                     <div className={`text-xl font-bold ${t.tipo === 'receita' ? 'text-green-600' : 'text-red-600'}`}>
                       {t.tipo === 'receita' ? '+' : '-'} {t.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                     </div>

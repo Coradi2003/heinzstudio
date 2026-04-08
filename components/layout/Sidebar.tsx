@@ -48,12 +48,12 @@ export function Sidebar() {
     <>
       {/* MOBILE TOP BAR */}
       <div className="md:hidden flex items-center justify-between p-4 bg-white border-b border-gray-100 w-full shrink-0">
-        <div className="flex items-center gap-3">
-           <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-md shadow-primary/20 ring-1 ring-primary/5">
+        <Link href="/" className="flex items-center gap-3 group">
+           <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-md shadow-primary/20 ring-1 ring-primary/5 group-hover:scale-105 transition-transform duration-300">
              <Image src="/logo.jpeg" alt="Heinz Studio" fill className="object-cover" sizes="40px" />
            </div>
            <span className="font-black text-lg text-gray-900 tracking-tight uppercase">Heinz Studio</span>
-        </div>
+        </Link>
         <button onClick={() => setIsOpen(true)} className="p-2 bg-gray-50 rounded-xl text-gray-700 hover:bg-gray-100">
           <Menu size={24} />
         </button>
@@ -76,8 +76,8 @@ export function Sidebar() {
         </button>
 
         {/* Logo and Branding */}
-      <div className="pt-10 pb-8 border-b border-gray-50 flex flex-col items-center justify-center gap-4">
-        <div className="relative w-28 h-28 rounded-full overflow-hidden border-4 border-white shadow-xl shadow-primary/20 ring-2 ring-primary/5 transition hover:scale-105 duration-300">
+      <Link href="/" onClick={() => setIsOpen(false)} className="pt-10 pb-8 border-b border-gray-50 flex flex-col items-center justify-center gap-4 group">
+        <div className="relative w-28 h-28 rounded-full overflow-hidden border-4 border-white shadow-xl shadow-primary/20 ring-2 ring-primary/5 group-hover:scale-105 transition-transform duration-300">
            <Image 
              src="/logo.jpeg" 
              alt="Heinz Studio" 
@@ -87,8 +87,8 @@ export function Sidebar() {
              priority
            />
         </div>
-        <span className="font-black text-xl text-gray-900 tracking-tight uppercase">Heinz Studio</span>
-      </div>
+        <span className="font-black text-xl text-gray-900 tracking-tight uppercase group-hover:text-primary transition-colors">Heinz Studio</span>
+      </Link>
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-1.5">

@@ -32,13 +32,16 @@ export const useProdutosStore = create<ProdutosStore>()((set) => ({
     const { data: userData } = await supabase.auth.getUser();
     if (!userData.user) return;
 
-    const { data: insertedData } = await supabase
+    const { data: insertedData, error } = await supabase
       .from('produtos')
       .insert([{ ...data, user_id: userData.user.id }])
       .select()
       .single();
 
-    if (insertedData) {
+    if (error) {
+      alert("ERRO AO SALVAR PRODUTO: " + error.message);
+      console.error(error);
+    } else if (insertedData) {
       set((state) => ({ produtos: [...state.produtos, insertedData as Produto] }));
     }
   },
