@@ -44,6 +44,11 @@ export function ModalDiaSelecionado({ isOpen, onClose, selectedDate, agendamento
               <div className="pl-3 mb-3">
                 <p className="text-sm font-medium text-gray-600">{agendamento.servico}</p>
                 <p className="text-xs text-gray-400 mt-0.5">R$ {agendamento.valorTotal}</p>
+                {agendamento.imagem && (
+                  <div className="mt-3 w-20 h-20 rounded-xl overflow-hidden shadow-sm border border-gray-100">
+                    <img src={agendamento.imagem} alt="Referência" className="w-full h-full object-cover" />
+                  </div>
+                )}
               </div>
               
               <div className="flex flex-wrap md:flex-nowrap gap-2 pl-3 border-t border-gray-50 pt-3 mt-3">

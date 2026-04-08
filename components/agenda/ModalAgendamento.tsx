@@ -5,8 +5,9 @@ import { Modal } from "@/components/ui/Modal";
 import { useAgendaStore, Agendamento } from "@/store/useAgendaStore";
 import { useServicosStore } from "@/store/useServicosStore";
 import { useClientesStore } from "@/store/useClientesStore";
-import { UserPlus, Check } from "lucide-react";
+import { UserPlus, Check, Camera, X, Loader2, Image as ImageIcon } from "lucide-react";
 import { ModalCliente } from "@/components/clientes/ModalCliente";
+import { createClient } from "@/lib/supabase";
 
 interface ModalAgendamentoProps {
   isOpen: boolean;
@@ -30,6 +31,8 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
   const [valorSinal, setValorSinal] = useState("");
   const [metodoSinal, setMetodoSinal] = useState<'Pix' | 'Dinheiro' | 'Cartão'>('Pix');
   const [cor, setCor] = useState("bg-primary");
+  const [imagem, setImagem] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const [isClientModalOpen, setIsClientModalOpen] = useState(false);
   const [showClientes, setShowClientes] = useState(false);
 
@@ -41,6 +44,7 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
       setValorTotal(initialData.valorTotal.toString());
       setValorSinal(initialData.valorSinal.toString());
       setCor(initialData.cor || "bg-primary");
+      setImagem(initialData.imagem || null);
       
       const [data, hora] = initialData.dataInicio.split('T');
       setDataInicio(data);
@@ -59,6 +63,7 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
       setDataInicio(""); setHoraInicio(""); setDuracao("01:00");
       setValorTotal(""); setValorSinal("");
       setCor("bg-primary");
+      setImagem(null);
     }
   }, [initialData, isOpen]);
 
@@ -101,7 +106,8 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
         dataFim: dateTimeFim,
         valorTotal: Number(valorTotal) || 0,
         valorSinal: Number(valorSinal) || 0,
-        cor
+        cor,
+        imagem
       });
     } else {
       await addAgendamento({
@@ -110,7 +116,7 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
         servico: servico || "Sessão de Tatuagem",
         dataInicio: dateTimeInicio,
         dataFim: dateTimeFim,
-        imagem: null,
+        imagem,
         valorTotal: Number(valorTotal) || 0,
         valorSinal: Number(valorSinal) || 0,
         status: "agendado",
@@ -120,6 +126,60 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
     }
 
     onClose();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      // 1. Converter para WebP no navegador
+      const webpBlob = await new Promise<Blob>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+              ctx.drawImage(img, 0, 0);
+              canvas.toBlob((blob) => {
+                if (blob) resolve(blob);
+                else reject(new Error("Falha na conversão WebP"));
+              }, 'image/webp', 0.8);
+            }
+          };
+          img.src = event.target?.result as string;
+        };
+        reader.readAsDataURL(file);
+      });
+
+      // 2. Upload para Supabase Storage
+      const supabase = createClient();
+      const fileName = `${Date.now()}-${file.name.split('.')[0]}.webp`;
+      const { data, error } = await supabase.storage
+        .from('agendamentos')
+        .upload(fileName, webpBlob, {
+          contentType: 'image/webp'
+        });
+
+      if (error) throw error;
+
+      // 3. Pegar URL Pública
+      const { data: { publicUrl } } = supabase.storage
+        .from('agendamentos')
+        .getPublicUrl(fileName);
+
+      setImagem(publicUrl);
+    } catch (err) {
+      console.error("Erro no upload:", err);
+      alert("Falha ao subir imagem. Verifique se criou o bucket 'agendamentos' no Supabase.");
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
@@ -269,6 +329,42 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
             )}
             <p className="text-xs text-gray-400">O sinal entra logo como receita.</p>
           </div>
+        </div>
+
+        <hr className="border-gray-100" />
+
+        {/* Upload de Referência / Imagem */}
+        <div>
+           <label className="block text-sm font-semibold text-gray-700 mb-2">Referência / Imagem do Projeto</label>
+           {imagem ? (
+              <div className="relative w-full aspect-video rounded-2xl overflow-hidden group">
+                 <img src={imagem} alt="Referência" className="w-full h-full object-cover" />
+                 <button 
+                  onClick={() => setImagem(null)}
+                  className="absolute top-2 right-2 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg transform translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all"
+                 >
+                    <X size={16} />
+                 </button>
+              </div>
+           ) : (
+             <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-100 rounded-2xl bg-gray-50/50 hover:bg-gray-50 hover:border-primary/30 transition cursor-pointer relative overflow-hidden">
+                {isUploading ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <Loader2 size={32} className="text-primary animate-spin" />
+                    <span className="text-xs font-bold text-gray-400">Convertendo para WebP...</span>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                      <Camera size={20} />
+                    </div>
+                    <span className="text-xs font-bold text-gray-400">Clique para anexar imagem</span>
+                    <span className="text-[10px] text-gray-300">Aceita JPG, PNG (Auto-WebP)</span>
+                  </div>
+                )}
+                <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" disabled={isUploading} />
+             </label>
+           )}
         </div>
 
         <hr className="border-gray-100" />
