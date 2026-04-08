@@ -10,7 +10,9 @@ export default function ConfiguracoesPage() {
   const router = useRouter();
   const supabase = createClient();
   const salvarCor = useConfigStore(state => state.salvarCor);
+  const salvarBg = useConfigStore(state => state.salvarBg);
   const corSalva = useConfigStore(state => state.corHexa);
+  const bgSalvo = useConfigStore(state => state.bgHexa);
   const [loadingConfig, setLoadingConfig] = useState(false);
   const cores = [
     { nome: "Índigo & Roxo", bg: "bg-[#4F46E5]" },
@@ -20,10 +22,19 @@ export default function ConfiguracoesPage() {
   ];
   
   const [corAtiva, setCorAtiva] = useState(cores[0].bg);
+  
+  const fundos = [
+    { nome: "Soft White", bg: "#F9FAFB" },
+    { nome: "Cinza Escuro", bg: "#1F2937" },
+    { nome: "Preto Dark", bg: "#111827" },
+    { nome: "Deep Black", bg: "#000000" },
+  ];
+  const [fundoAtivo, setFundoAtivo] = useState(fundos[0].bg);
 
   useEffect(() => {
     if (corSalva) setCorAtiva(corSalva);
-  }, [corSalva]);
+    if (bgSalvo) setFundoAtivo(bgSalvo);
+  }, [corSalva, bgSalvo]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -33,6 +44,7 @@ export default function ConfiguracoesPage() {
   const handleSaveColor = async () => {
     setLoadingConfig(true);
     await salvarCor(corAtiva);
+    await salvarBg(fundoAtivo);
     setLoadingConfig(false);
   };
 
@@ -68,8 +80,31 @@ export default function ConfiguracoesPage() {
           </div>
 
           <button onClick={handleSaveColor} className="w-full bg-primary text-white font-bold py-3.5 rounded-xl transition hover:opacity-90">
-             {loadingConfig ? "Salvando..." : "Salvar Preferência"}
+             {loadingConfig ? "Salvando..." : "Salvar Preferências"}
           </button>
+        </div>
+
+        {/* Bloco de Fundos */}
+        <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 h-fit">
+          <div className="flex items-center gap-2 mb-6 text-gray-800 font-bold text-lg">
+            <Palette size={20} className="text-gray-500" /> Cor do Fundo Mestre
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            {fundos.map(f => (
+              <div 
+                key={f.bg}
+                onClick={() => setFundoAtivo(f.bg)}
+                className={`p-4 rounded-xl border flex items-center justify-between cursor-pointer transition ${fundoAtivo === f.bg ? 'border-primary ring-1 ring-primary bg-primary/5' : 'border-gray-100 hover:border-gray-200'}`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-6 h-6 rounded-full border border-gray-200" style={{ backgroundColor: f.bg }}></div>
+                  <span className="text-sm font-semibold text-gray-700">{f.nome}</span>
+                </div>
+                {fundoAtivo === f.bg && <CheckCircle2 size={16} className="text-primary" />}
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Zona de Perigo / Conta */}

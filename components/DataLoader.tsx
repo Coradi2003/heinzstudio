@@ -17,6 +17,7 @@ export function DataLoader() {
   const carregarClientes = useClientesStore(state => state.carregarClientes);
 
   const corHexa = useConfigStore(state => state.corHexa);
+  const bgHexa = useConfigStore(state => state.bgHexa);
 
   // Injetar Variaveis de Cor no DOM
   useEffect(() => {
@@ -31,8 +32,13 @@ export function DataLoader() {
        } else if (corHexa === 'bg-red-600') {
           document.documentElement.style.setProperty('--color-primary', '#DC2626');
        }
+       
+       // Seta Cor de Fundo
+       const targetBg = bgHexa || '#F9FAFB';
+       document.documentElement.style.setProperty('--color-background', targetBg);
+       document.body.style.backgroundColor = targetBg;
     }
-  }, [corHexa]);
+  }, [corHexa, bgHexa]);
 
   useEffect(() => {
     carregarAgendamentos();
