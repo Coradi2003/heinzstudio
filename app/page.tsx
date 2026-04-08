@@ -237,13 +237,22 @@ export default function DashboardPage() {
       </div>
 
       {/* 3. Grid de Atributos */}
-      <div className="grid grid-cols-2 gap-3 md:gap-4 pt-2">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 pt-2">
+        
+        <Link href="/clientes" className="bg-white rounded-3xl p-4 flex flex-col items-center justify-center text-center shadow-sm border border-gray-100/50 gap-2 hover:bg-gray-50 transition">
+          <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center text-purple-500">
+            <Users size={18} strokeWidth={2.5}/>
+          </div>
+          <h3 className="text-xl font-bold text-gray-800">{clientes.length}</h3>
+          <p className="text-[10px] uppercase font-bold text-gray-400">Clientes</p>
+        </Link>
+
         <Link href="/agenda" className="bg-white rounded-3xl p-4 flex flex-col items-center justify-center text-center shadow-sm border border-gray-100/50 gap-2 hover:bg-gray-50 transition">
           <div className="w-10 h-10 rounded-full bg-yellow-50 flex items-center justify-center text-yellow-600">
             <Clock size={18} strokeWidth={2.5}/>
           </div>
           <h3 className="text-xl font-bold text-gray-800">{pendentesCount}</h3>
-          <p className="text-[10px] uppercase font-bold text-gray-400">Agendamentos Pendentes</p>
+          <p className="text-[10px] uppercase font-bold text-gray-400">Pendentes</p>
         </Link>
 
         <Link href="/agenda" className="bg-white rounded-3xl p-4 flex flex-col items-center justify-center text-center shadow-sm border border-gray-100/50 gap-2 hover:bg-gray-50 transition">
@@ -251,8 +260,25 @@ export default function DashboardPage() {
             <CheckCircle2 size={18} strokeWidth={2.5}/>
           </div>
           <h3 className="text-xl font-bold text-gray-800">{concluidosCount}</h3>
-          <p className="text-[10px] uppercase font-bold text-gray-400">Agendamentos Concluídos</p>
+          <p className="text-[10px] uppercase font-bold text-gray-400">Concluídos</p>
         </Link>
+
+        <Link href="/servicos" className="bg-white rounded-3xl p-4 flex flex-col items-center justify-center text-center shadow-sm border border-gray-100/50 gap-2 hover:bg-gray-50 transition">
+          <div className="w-10 h-10 rounded-full bg-yellow-50 flex items-center justify-center text-yellow-500">
+            <Wrench size={18} strokeWidth={2.5}/>
+          </div>
+          <h3 className="text-xl font-bold text-gray-800">{servicos.length}</h3>
+          <p className="text-[10px] uppercase font-bold text-gray-400">Serviços</p>
+        </Link>
+
+        <Link href="/produtos" className="bg-white rounded-3xl p-4 flex flex-col items-center justify-center text-center shadow-sm border border-gray-100/50 gap-2 hover:bg-gray-50 transition">
+          <div className="w-10 h-10 rounded-full bg-cyan-50 flex items-center justify-center text-cyan-500">
+            <Box size={18} strokeWidth={2.5}/>
+          </div>
+          <h3 className="text-xl font-bold text-gray-800">{produtos.length}</h3>
+          <p className="text-[10px] uppercase font-bold text-gray-400">Produtos</p>
+        </Link>
+
       </div>
     </div>
   );
