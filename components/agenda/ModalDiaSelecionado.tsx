@@ -3,8 +3,10 @@
 import { Modal } from "@/components/ui/Modal";
 import { format, isToday, parseISO, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { User, CheckCircle2, MessageCircle, Trash2 } from "lucide-react";
+import { User, CheckCircle2, MessageCircle, Trash2, Pencil } from "lucide-react";
 import { Agendamento } from "@/store/useAgendaStore";
+import { useState } from "react";
+import { ModalAgendamento } from "./ModalAgendamento";
 
 interface ModalDiaSelecionadoProps {
   isOpen: boolean;
@@ -16,6 +18,9 @@ interface ModalDiaSelecionadoProps {
 }
 
 export function ModalDiaSelecionado({ isOpen, onClose, selectedDate, agendamentos, concluirAtendimento, removeAgendamento }: ModalDiaSelecionadoProps) {
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [agendamentoParaEditar, setAgendamentoParaEditar] = useState<Agendamento | null>(null);
+
   const agendamentosDia = agendamentos
     .filter(a => isSameDay(parseISO(a.dataInicio), selectedDate))
     .sort((a,b) => parseISO(a.dataInicio).getTime() - parseISO(b.dataInicio).getTime());
@@ -64,6 +69,16 @@ export function ModalDiaSelecionado({ isOpen, onClose, selectedDate, agendamento
                   </button>
                 )}
                 <button 
+                  onClick={() => {
+                    setAgendamentoParaEditar(agendamento);
+                    setIsEditModalOpen(true);
+                  }}
+                  className="flex justify-center items-center p-2.5 rounded-lg bg-blue-50 text-blue-500 hover:bg-blue-100 transition"
+                  title="Editar Agendamento"
+                >
+                  <Pencil size={16} />
+                </button>
+                <button 
                   onClick={() => { if(confirm('Cancelar e Excluir Agendamento?')) removeAgendamento(agendamento.id) }}
                   className="flex justify-center items-center p-2.5 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-700 transition"
                   title="Deletar Agendamento"
@@ -82,6 +97,12 @@ export function ModalDiaSelecionado({ isOpen, onClose, selectedDate, agendamento
           </div>
         )}
       </div>
+
+      <ModalAgendamento 
+        isOpen={isEditModalOpen} 
+        onClose={() => setIsEditModalOpen(false)} 
+        initialData={agendamentoParaEditar}
+      />
     </Modal>
   );
 }

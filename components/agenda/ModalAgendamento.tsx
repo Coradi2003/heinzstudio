@@ -1,18 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Modal } from "@/components/ui/Modal";
-import { useAgendaStore } from "@/store/useAgendaStore";
+import { useAgendaStore, Agendamento } from "@/store/useAgendaStore";
 import { useServicosStore } from "@/store/useServicosStore";
 import { useClientesStore } from "@/store/useClientesStore";
+import { UserPlus } from "lucide-react";
+import { ModalCliente } from "@/components/clientes/ModalCliente";
 
 interface ModalAgendamentoProps {
   isOpen: boolean;
   onClose: () => void;
+  initialData?: Agendamento | null;
 }
 
-export function ModalAgendamento({ isOpen, onClose }: ModalAgendamentoProps) {
-  const addAgendamento = useAgendaStore((state) => state.addAgendamento);
+export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendamentoProps) {
+  const { addAgendamento, updateAgendamento } = useAgendaStore();
   const { servicos } = useServicosStore();
   const { clientes, addCliente } = useClientesStore();
   
@@ -26,8 +29,32 @@ export function ModalAgendamento({ isOpen, onClose }: ModalAgendamentoProps) {
   const [valorTotal, setValorTotal] = useState("");
   const [valorSinal, setValorSinal] = useState("");
   const [cor, setCor] = useState("bg-primary");
+  const [isClientModalOpen, setIsClientModalOpen] = useState(false);
 
-  const handleSave = () => {
+  useEffect(() => {
+    if (initialData && isOpen) {
+      setClienteNome(initialData.clienteNome);
+      setTelefone(initialData.telefone || "");
+      setServico(initialData.servico);
+      setValorTotal(initialData.valorTotal.toString());
+      setValorSinal(initialData.valorSinal.toString());
+      setCor(initialData.cor || "bg-primary");
+      
+      const [data, hora] = initialData.dataInicio.split('T');
+      setDataInicio(data);
+      if (hora) setHoraInicio(hora.substring(0, 5));
+      
+      const [_, horaF] = initialData.dataFim.split('T');
+      if (horaF) setHoraFim(horaF.substring(0, 5));
+    } else if (isOpen) {
+      setClienteNome(""); setTelefone(""); setServico("");
+      setDataInicio(""); setHoraInicio(""); setHoraFim("");
+      setValorTotal(""); setValorSinal("");
+      setCor("bg-primary");
+    }
+  }, [initialData, isOpen]);
+
+  const handleSave = async () => {
     // Monta dados (conversões básicas)
     const dateTimeInicio = dataInicio && horaInicio ? `${dataInicio}T${horaInicio}:00` : new Date().toISOString();
     const dateTimeFim = dataInicio && horaFim ? `${dataInicio}T${horaFim}:00` : dateTimeInicio;
@@ -48,36 +75,54 @@ export function ModalAgendamento({ isOpen, onClose }: ModalAgendamentoProps) {
        }
     }
 
-    addAgendamento({
-      clienteNome: nomeFinal,
-      telefone: telefoneFinal,
-      servico: servico || "Sessão de Tatuagem",
-      dataInicio: dateTimeInicio,
-      dataFim: dateTimeFim,
-      imagem: null,
-      valorTotal: Number(valorTotal) || 0,
-      valorSinal: Number(valorSinal) || 0,
-      status: "agendado",
-      cor
-    });
+    if (initialData) {
+      await updateAgendamento(initialData.id, {
+        clienteNome: nomeFinal,
+        telefone: telefoneFinal,
+        servico: servico || "Sessão de Tatuagem",
+        dataInicio: dateTimeInicio,
+        dataFim: dateTimeFim,
+        valorTotal: Number(valorTotal) || 0,
+        valorSinal: Number(valorSinal) || 0,
+        cor
+      });
+    } else {
+      await addAgendamento({
+        clienteNome: nomeFinal,
+        telefone: telefoneFinal,
+        servico: servico || "Sessão de Tatuagem",
+        dataInicio: dateTimeInicio,
+        dataFim: dateTimeFim,
+        imagem: null,
+        valorTotal: Number(valorTotal) || 0,
+        valorSinal: Number(valorSinal) || 0,
+        status: "agendado",
+        cor
+      });
+    }
 
     onClose();
-    // Limpar o form
-    setClienteNome(""); setTelefone(""); setServico("");
-    setDataInicio(""); setHoraInicio(""); setHoraFim("");
-    setValorTotal(""); setValorSinal("");
-    setCor("bg-primary");
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Novo Agendamento">
+    <Modal isOpen={isOpen} onClose={onClose} title={initialData ? "Editar Agendamento" : "Novo Agendamento"}>
       <div className="space-y-6">
         
         {/* Cliente & Serviço */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">Nome do Cliente</label>
-            <input type="text" value={clienteNome} onChange={e => setClienteNome(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-primary" placeholder="Buscar ou novo" />
+            <div className="flex gap-2">
+              <input type="text" value={clienteNome} onChange={e => setClienteNome(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-primary" placeholder="Buscar ou novo" />
+              <button 
+                type="button" 
+                onClick={() => setIsClientModalOpen(true)}
+                className="w-12 h-12 flex items-center justify-center bg-primary/10 text-primary rounded-xl hover:bg-primary/20 transition shrink-0"
+                title="Novo Cliente"
+              >
+                <UserPlus size={20} />
+              </button>
+            </div>
           </div>
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">Whatsapp</label>
@@ -162,6 +207,7 @@ export function ModalAgendamento({ isOpen, onClose }: ModalAgendamentoProps) {
         <button onClick={onClose} className="px-6 py-3 rounded-xl font-semibold text-gray-600 hover:bg-gray-100 transition">Cancelar</button>
         <button onClick={handleSave} className="bg-primary text-white px-8 py-3 rounded-xl font-bold shadow-md shadow-primary/20 hover:opacity-90 transition">Agendar</button>
       </div>
+      <ModalCliente isOpen={isClientModalOpen} onClose={() => setIsClientModalOpen(false)} />
     </Modal>
   );
 }
