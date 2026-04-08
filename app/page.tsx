@@ -5,7 +5,7 @@ import { useFinanceiroStore } from "@/store/useFinanceiroStore";
 import { useProdutosStore } from "@/store/useProdutosStore";
 import { useServicosStore } from "@/store/useServicosStore";
 import { useClientesStore } from "@/store/useClientesStore";
-import { Users, FileText, Wrench, Briefcase, Box, TrendingUp, TrendingDown, BarChart2, CheckCircle2, Clock, XCircle, QrCode, Banknote, CreditCard } from "lucide-react";
+import { Users, FileText, Wrench, Briefcase, Box, TrendingUp, TrendingDown, BarChart2, CheckCircle2, Clock, XCircle, QrCode, Banknote, CreditCard, Calendar } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -17,6 +17,7 @@ export default function DashboardPage() {
   const { clientes } = useClientesStore();
 
   const [periodo, setPeriodo] = useState<7 | 14 | 30>(7);
+  const [dataManual, setDataManual] = useState<string>("");
 
   // -- FINANCEIRO (Mensal) --
   const currentMonth = new Date().getMonth();
@@ -34,7 +35,13 @@ export default function DashboardPage() {
 
   // -- EVOLUÇÃO (Orçamentos/Agendamentos) --
   const dateLimit = new Date();
-  dateLimit.setDate(dateLimit.getDate() - periodo);
+  if (dataManual) {
+    const [year, month, day] = dataManual.split('-').map(Number);
+    dateLimit.setFullYear(year, month - 1, day);
+    dateLimit.setHours(0, 0, 0, 0);
+  } else {
+    dateLimit.setDate(dateLimit.getDate() - periodo);
+  }
 
   const agndsPeriodo = agendamentos.filter(a => new Date(a.dataInicio) >= dateLimit);
 
@@ -133,52 +140,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* 2. Grid de Atributos */}
-      <div className="grid grid-cols-3 gap-3 md:gap-4 pt-2">
-        
-        <Link href="/clientes" className="bg-white rounded-3xl p-4 flex flex-col items-center justify-center text-center shadow-sm border border-gray-100/50 gap-2 hover:bg-gray-50 transition">
-          <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center text-purple-500">
-            <Users size={18} strokeWidth={2.5}/>
-          </div>
-          <h3 className="text-xl font-bold text-gray-800">{clientes.length}</h3>
-          <p className="text-[10px] uppercase font-bold text-gray-400">Clientes</p>
-        </Link>
-
-        <Link href="/agenda" className="bg-white rounded-3xl p-4 flex flex-col items-center justify-center text-center shadow-sm border border-gray-100/50 gap-2 hover:bg-gray-50 transition">
-          <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-500">
-            <FileText size={18} strokeWidth={2.5}/>
-          </div>
-          <h3 className="text-xl font-bold text-gray-800">{agendamentos.length}</h3>
-          <p className="text-[10px] uppercase font-bold text-gray-400">Orçamentos</p>
-        </Link>
-
-        <Link href="/servicos" className="bg-white rounded-3xl p-4 flex flex-col items-center justify-center text-center shadow-sm border border-gray-100/50 gap-2 hover:bg-gray-50 transition">
-          <div className="w-10 h-10 rounded-full bg-yellow-50 flex items-center justify-center text-yellow-500">
-            <Wrench size={18} strokeWidth={2.5}/>
-          </div>
-          <h3 className="text-xl font-bold text-gray-800">{servicos.length}</h3>
-          <p className="text-[10px] uppercase font-bold text-gray-400">Serviços</p>
-        </Link>
-
-        <div className="bg-white rounded-3xl p-4 flex flex-col items-center justify-center text-center shadow-sm border border-gray-100/50 gap-2 cursor-not-allowed opacity-80">
-          <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center text-emerald-500">
-            <Briefcase size={18} strokeWidth={2.5}/>
-          </div>
-          <h3 className="text-xl font-bold text-gray-800">0</h3>
-          <p className="text-[10px] uppercase font-bold text-gray-400">Contratos</p>
-        </div>
-
-        <Link href="/produtos" className="bg-white rounded-3xl p-4 flex flex-col items-center justify-center text-center shadow-sm border border-gray-100/50 gap-2 hover:bg-gray-50 transition">
-          <div className="w-10 h-10 rounded-full bg-cyan-50 flex items-center justify-center text-cyan-500">
-            <Box size={18} strokeWidth={2.5}/>
-          </div>
-          <h3 className="text-xl font-bold text-gray-800">{produtos.length}</h3>
-          <p className="text-[10px] uppercase font-bold text-gray-400">Produtos</p>
-        </Link>
-
-      </div>
-
-      {/* 3. Evolução dos Orçamentos */}
+      {/* 2. Evolução dos Orçamentos */}
       <div className="bg-white rounded-[28px] p-6 shadow-sm border border-gray-100/50 mt-4">
         
         {/* Cabeçalho */}
@@ -193,16 +155,37 @@ export default function DashboardPage() {
         </div>
 
         {/* Toggles */}
-        <div className="flex gap-2 mb-6">
+        <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-none">
           {[7, 14, 30].map(dia => (
             <button 
               key={dia}
-              onClick={() => setPeriodo(dia as any)}
-              className={`px-4 py-2 rounded-full text-xs font-bold transition ${periodo === dia ? 'bg-primary text-white shadow-md shadow-primary/20' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}`}
+              onClick={() => {
+                setPeriodo(dia as any);
+                setDataManual("");
+              }}
+              className={`px-4 py-2 rounded-full text-xs font-bold transition flex-shrink-0 ${periodo === dia && !dataManual ? 'bg-primary text-white shadow-md shadow-primary/20' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}`}
             >
               {dia} dias
             </button>
           ))}
+          <div className="relative flex-shrink-0">
+             <button 
+              onClick={() => (document.getElementById('custom-date') as HTMLInputElement)?.showPicker()}
+              className={`px-4 py-2 rounded-full text-xs font-bold transition flex items-center gap-2 ${dataManual ? 'bg-primary text-white shadow-md shadow-primary/20' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}`}
+            >
+              <Calendar size={14} />
+              {dataManual ? new Date(dataManual + 'T00:00:00').toLocaleDateString('pt-BR') : 'Personalizado'}
+            </button>
+            <input 
+              id="custom-date"
+              type="date"
+              className="absolute inset-0 opacity-0 cursor-pointer pointer-events-none"
+              onChange={(e) => {
+                setDataManual(e.target.value);
+                setPeriodo(7); // reset periodo logicamente mas o view prioriza dataManual
+              }}
+            />
+          </div>
         </div>
 
         {/* 3 Status Cards (Estilo Dark Colors na imagem mas usamos tailwind padrao q fica dark automatico no darkmode) */}
@@ -250,6 +233,51 @@ export default function DashboardPage() {
             <div className="w-8 bg-red-500 rounded-t-md transition-all duration-700 shadow-sm" style={{ height: `${Math.max((rejeitadosTot/maxVal)*100, 5)}%` }}></div>
           </div>
         </div>
+
+      </div>
+
+      {/* 3. Grid de Atributos */}
+      <div className="grid grid-cols-3 gap-3 md:gap-4 pt-2">
+        
+        <Link href="/clientes" className="bg-white rounded-3xl p-4 flex flex-col items-center justify-center text-center shadow-sm border border-gray-100/50 gap-2 hover:bg-gray-50 transition">
+          <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center text-purple-500">
+            <Users size={18} strokeWidth={2.5}/>
+          </div>
+          <h3 className="text-xl font-bold text-gray-800">{clientes.length}</h3>
+          <p className="text-[10px] uppercase font-bold text-gray-400">Clientes</p>
+        </Link>
+
+        <Link href="/agenda" className="bg-white rounded-3xl p-4 flex flex-col items-center justify-center text-center shadow-sm border border-gray-100/50 gap-2 hover:bg-gray-50 transition">
+          <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-500">
+            <FileText size={18} strokeWidth={2.5}/>
+          </div>
+          <h3 className="text-xl font-bold text-gray-800">{agendamentos.length}</h3>
+          <p className="text-[10px] uppercase font-bold text-gray-400">Orçamentos</p>
+        </Link>
+
+        <Link href="/servicos" className="bg-white rounded-3xl p-4 flex flex-col items-center justify-center text-center shadow-sm border border-gray-100/50 gap-2 hover:bg-gray-50 transition">
+          <div className="w-10 h-10 rounded-full bg-yellow-50 flex items-center justify-center text-yellow-500">
+            <Wrench size={18} strokeWidth={2.5}/>
+          </div>
+          <h3 className="text-xl font-bold text-gray-800">{servicos.length}</h3>
+          <p className="text-[10px] uppercase font-bold text-gray-400">Serviços</p>
+        </Link>
+
+        <div className="bg-white rounded-3xl p-4 flex flex-col items-center justify-center text-center shadow-sm border border-gray-100/50 gap-2 cursor-not-allowed opacity-80">
+          <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center text-emerald-500">
+            <Briefcase size={18} strokeWidth={2.5}/>
+          </div>
+          <h3 className="text-xl font-bold text-gray-800">0</h3>
+          <p className="text-[10px] uppercase font-bold text-gray-400">Contratos</p>
+        </div>
+
+        <Link href="/produtos" className="bg-white rounded-3xl p-4 flex flex-col items-center justify-center text-center shadow-sm border border-gray-100/50 gap-2 hover:bg-gray-50 transition">
+          <div className="w-10 h-10 rounded-full bg-cyan-50 flex items-center justify-center text-cyan-500">
+            <Box size={18} strokeWidth={2.5}/>
+          </div>
+          <h3 className="text-xl font-bold text-gray-800">{produtos.length}</h3>
+          <p className="text-[10px] uppercase font-bold text-gray-400">Produtos</p>
+        </Link>
 
       </div>
 
