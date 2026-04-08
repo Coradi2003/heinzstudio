@@ -123,7 +123,7 @@ export function ModalAgendamento({ isOpen, onClose }: ModalAgendamentoProps) {
         {/* Cores */}
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">Classificação de Cor</label>
-          <div className="flex gap-4">
+          <div className="flex flex-wrap gap-3">
             {['bg-primary', 'bg-green-500', 'bg-yellow-500', 'bg-red-500', 'bg-blue-500'].map(c => (
               <button 
                 key={c} 
