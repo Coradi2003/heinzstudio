@@ -5,9 +5,10 @@ import { Modal } from "@/components/ui/Modal";
 import { useAgendaStore, Agendamento } from "@/store/useAgendaStore";
 import { useServicosStore } from "@/store/useServicosStore";
 import { useClientesStore } from "@/store/useClientesStore";
-import { UserPlus, Check, Camera, X, Loader2, Image as ImageIcon } from "lucide-react";
+import { UserPlus, Check, Camera, X, Loader2, Image as ImageIcon, RotateCw } from "lucide-react";
 import { ModalCliente } from "@/components/clientes/ModalCliente";
 import { createClient } from "@/lib/supabase";
+import { addDays, addWeeks, addMonths, parseISO, format as formatDate } from "date-fns";
 
 interface ModalAgendamentoProps {
   isOpen: boolean;
@@ -36,6 +37,11 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
   const [isSaving, setIsSaving] = useState(false);
   const [isClientModalOpen, setIsClientModalOpen] = useState(false);
   const [showClientes, setShowClientes] = useState(false);
+
+  // States de Repetição
+  const [repetir, setRepetir] = useState(false);
+  const [frequencia, setFrequencia] = useState<'diario' | 'semanal' | 'mensal'>('semanal');
+  const [repeticoes, setRepeticoes] = useState(1);
 
   useEffect(() => {
     if (initialData && isOpen) {
@@ -71,6 +77,8 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
       setValorTotal(""); setValorSinal("");
       setCor("bg-primary");
       setImagens([]);
+      setRepetir(false);
+      setRepeticoes(1);
     }
   }, [initialData, isOpen]);
 
@@ -107,6 +115,7 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
     setIsSaving(true);
     try {
       if (initialData) {
+        // ... (Update existing appointment logic remains same)
         await updateAgendamento(initialData.id, {
           clienteNome: nomeFinal,
           telefone: telefoneFinal,
@@ -117,23 +126,51 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
           valorSinal: Number(valorSinal) || 0,
           cor,
           imagens,
-          imagem: imagens[0] || null // Retrocompatibilidade
+          imagem: imagens[0] || null
         });
       } else {
-        await addAgendamento({
-          clienteNome: nomeFinal,
-          telefone: telefoneFinal,
-          servico: servico || "Sessão de Tatuagem",
-          dataInicio: dateTimeInicio,
-          dataFim: dateTimeFim,
-          imagens,
-          imagem: imagens[0] || null,
-          valorTotal: Number(valorTotal) || 0,
-          valorSinal: Number(valorSinal) || 0,
-          status: "agendado",
-          metodoSinal,
-          cor
-        });
+        // CRIAÇÃO (Pode ser múltipla)
+        const totalAdicionar = repetir ? Math.max(1, repeticoes + 1) : 1;
+        
+        for (let i = 0; i < totalAdicionar; i++) {
+          let currentStart = dateTimeInicio;
+          let currentEnd = dateTimeFim;
+
+          if (i > 0) {
+            const baseStart = parseISO(dateTimeInicio);
+            const baseEnd = parseISO(dateTimeFim);
+            let nextStart, nextEnd;
+
+            if (frequencia === 'diario') {
+                nextStart = addDays(baseStart, i);
+                nextEnd = addDays(baseEnd, i);
+            } else if (frequencia === 'semanal') {
+                nextStart = addWeeks(baseStart, i);
+                nextEnd = addWeeks(baseEnd, i);
+            } else {
+                nextStart = addMonths(baseStart, i);
+                nextEnd = addMonths(baseEnd, i);
+            }
+
+            currentStart = nextStart.toISOString();
+            currentEnd = nextEnd.toISOString();
+          }
+
+          await addAgendamento({
+            clienteNome: nomeFinal,
+            telefone: telefoneFinal,
+            servico: servico || "Sessão de Tatuagem",
+            dataInicio: currentStart,
+            dataFim: currentEnd,
+            imagens,
+            imagem: imagens[0] || null,
+            valorTotal: Number(valorTotal) || 0,
+            valorSinal: i === 0 ? (Number(valorSinal) || 0) : 0, // Apenas o primeiro tem sinal
+            status: "agendado",
+            metodoSinal,
+            cor
+          });
+        }
       }
       onClose();
     } catch (err) {
@@ -393,12 +430,69 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
         </div>
 
         <hr className="border-gray-100" />
+        
+        {/* Repetição */}
+        <div className="bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
+           <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                 <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                    <RotateCw size={16} />
+                 </div>
+                 <span className="text-sm font-bold text-gray-700">Repetir Agendamento</span>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" checked={repetir} onChange={e => setRepetir(e.target.checked)} className="sr-only peer" />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+              </label>
+           </div>
+           
+           {repetir && (
+             <div className="grid grid-cols-2 gap-4 mt-4 animate-in fade-in slide-in-from-top-2">
+               <div>
+                  <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1 ml-1">Frequência</label>
+                  <select 
+                    value={frequencia} 
+                    onChange={e => setFrequencia(e.target.value as any)}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-xs font-bold text-gray-700 outline-none focus:border-primary"
+                  >
+                    <option value="diario">Diário</option>
+                    <option value="semanal">Semanal</option>
+                    <option value="mensal">Mensal</option>
+                  </select>
+               </div>
+               <div>
+                  <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1 ml-1">Vezes (Extras)</label>
+                  <input 
+                    type="number" 
+                    min={1} 
+                    max={50}
+                    value={repeticoes} 
+                    onChange={e => setRepeticoes(Number(e.target.value))}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-xs font-bold text-gray-700 outline-none focus:border-primary"
+                  />
+               </div>
+               <p className="col-span-2 text-[10px] text-gray-400 ml-1">Serão criados {repeticoes + 1} agendamentos no total.</p>
+             </div>
+           )}
+        </div>
+
+        <hr className="border-gray-100" />
 
         {/* Cores */}
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">Classificação de Cor</label>
           <div className="flex flex-wrap gap-3">
-            {['bg-primary', 'bg-green-500', 'bg-yellow-500', 'bg-red-500', 'bg-blue-500'].map(c => (
+            {[
+              "bg-primary", 
+              "bg-red-500", 
+              "bg-yellow-400", 
+              "bg-orange-500", 
+              "bg-blue-300", 
+              "bg-blue-600", 
+              "bg-blue-900",
+              "bg-green-500",
+              "bg-purple-500"
+            ].map(c => (
               <button 
                 key={c} 
                 onClick={() => setCor(c)} 
