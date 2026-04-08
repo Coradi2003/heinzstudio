@@ -31,7 +31,7 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
   const [valorSinal, setValorSinal] = useState("");
   const [metodoSinal, setMetodoSinal] = useState<'Pix' | 'Dinheiro' | 'Cartão'>('Pix');
   const [cor, setCor] = useState("bg-primary");
-  const [imagem, setImagem] = useState<string | null>(null);
+  const [imagens, setImagens] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isClientModalOpen, setIsClientModalOpen] = useState(false);
@@ -45,7 +45,13 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
       setValorTotal(initialData.valorTotal.toString());
       setValorSinal(initialData.valorSinal.toString());
       setCor(initialData.cor || "bg-primary");
-      setImagem(initialData.imagem || null);
+      
+      const imgs = initialData.imagens || [];
+      if (initialData.imagem && !imgs.includes(initialData.imagem)) {
+        setImagens([initialData.imagem, ...imgs]);
+      } else {
+        setImagens(imgs);
+      }
       
       const [data, hora] = initialData.dataInicio.split('T');
       setDataInicio(data);
@@ -64,7 +70,7 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
       setDataInicio(""); setHoraInicio(""); setDuracao("01:00");
       setValorTotal(""); setValorSinal("");
       setCor("bg-primary");
-      setImagem(null);
+      setImagens([]);
     }
   }, [initialData, isOpen]);
 
@@ -110,7 +116,8 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
           valorTotal: Number(valorTotal) || 0,
           valorSinal: Number(valorSinal) || 0,
           cor,
-          imagem
+          imagens,
+          imagem: imagens[0] || null // Retrocompatibilidade
         });
       } else {
         await addAgendamento({
@@ -119,7 +126,8 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
           servico: servico || "Sessão de Tatuagem",
           dataInicio: dateTimeInicio,
           dataFim: dateTimeFim,
-          imagem,
+          imagens,
+          imagem: imagens[0] || null,
           valorTotal: Number(valorTotal) || 0,
           valorSinal: Number(valorSinal) || 0,
           status: "agendado",
@@ -181,7 +189,7 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
         .from('agendamentos')
         .getPublicUrl(fileName);
 
-      setImagem(publicUrl);
+      setImagens(prev => [...prev, publicUrl]);
     } catch (err) {
       console.error("Erro no upload:", err);
       alert("Falha ao subir imagem. Verifique se criou o bucket 'agendamentos' no Supabase.");
@@ -343,36 +351,41 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
 
         {/* Upload de Referência / Imagem */}
         <div>
-           <label className="block text-sm font-semibold text-gray-700 mb-2">Referência / Imagem do Projeto</label>
-           {imagem ? (
-              <div className="relative w-full aspect-video rounded-2xl overflow-hidden group">
-                 <img src={imagem} alt="Referência" className="w-full h-full object-cover" />
-                 <button 
-                  onClick={() => setImagem(null)}
-                  className="absolute top-2 right-2 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg transform translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all"
-                 >
-                    <X size={16} />
-                 </button>
-              </div>
-           ) : (
-             <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-100 rounded-2xl bg-gray-50/50 hover:bg-gray-50 hover:border-primary/30 transition cursor-pointer relative overflow-hidden">
+           <label className="block text-sm font-semibold text-gray-700 mb-2">Referências / Imagens do Projeto</label>
+           
+           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-3">
+             {imagens.map((img, idx) => (
+                <div key={idx} className="relative aspect-square rounded-2xl overflow-hidden group border border-gray-100 shadow-sm">
+                   <img src={img} alt={`Ref ${idx}`} className="w-full h-full object-cover" />
+                   <button 
+                    onClick={() => setImagens(prev => prev.filter((_, i) => i !== idx))}
+                    className="absolute top-2 right-2 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg transform translate-y-1 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all"
+                   >
+                      <X size={14} />
+                   </button>
+                </div>
+             ))}
+
+             {/* Botão de Upload Sempre Disponível */}
+             <label className="flex flex-col items-center justify-center aspect-square border-2 border-dashed border-gray-100 rounded-2xl bg-gray-50/50 hover:bg-gray-50 hover:border-primary/30 transition cursor-pointer relative overflow-hidden">
                 {isUploading ? (
-                  <div className="flex flex-col items-center gap-2">
-                    <Loader2 size={32} className="text-primary animate-spin" />
-                    <span className="text-xs font-bold text-gray-400">Convertendo para WebP...</span>
+                  <div className="flex flex-col items-center gap-1 p-2 text-center">
+                    <Loader2 size={24} className="text-primary animate-spin" />
+                    <span className="text-[10px] font-bold text-gray-400">Convertendo...</span>
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                      <Camera size={20} />
+                  <div className="flex flex-col items-center gap-1">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                      <Camera size={16} />
                     </div>
-                    <span className="text-xs font-bold text-gray-400">Clique para anexar imagem</span>
-                    <span className="text-[10px] text-gray-300">Aceita JPG, PNG (Auto-WebP)</span>
+                    <span className="text-[10px] font-bold text-gray-400">Adicionar</span>
                   </div>
                 )}
                 <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" disabled={isUploading} />
              </label>
-           )}
+           </div>
+           
+           <p className="text-[10px] text-gray-300">Você pode enviar várias imagens. Elas serão convertidas automaticamente para WebP.</p>
         </div>
 
         <hr className="border-gray-100" />

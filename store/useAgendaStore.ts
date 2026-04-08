@@ -9,6 +9,7 @@ export interface Agendamento {
   dataInicio: string; // ISO String
   dataFim: string; // ISO String
   imagem: string | null;
+  imagens?: string[]; // Nova galeria
   valorTotal: number;
   valorSinal: number;
   status: 'agendado' | 'pendente' | 'concluido' | 'cancelado';

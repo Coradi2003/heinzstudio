@@ -98,15 +98,13 @@ export default function AgendaPage() {
                     {format(day, 'd')}
                   </span>
                   
-                  {/* Indicadores de cor dos agendamentos */}
+                  {/* Indicadores de cor dos agendamentos empilhados verticalmente */}
                   {qty > 0 && (
-                    <div className="mt-auto w-full flex flex-wrap gap-1 items-center">
-                      <div className="flex -space-x-1 overflow-hidden">
-                        {dayAgendamentos.slice(0, 3).map(a => (
-                          <div key={a.id} className={`h-1.5 w-3 rounded-full border border-white ${a.cor || 'bg-primary'}`} title={a.clienteNome}></div>
+                    <div className="mt-auto w-full flex flex-col items-end gap-0.5 pr-0.5 pb-0.5">
+                        {dayAgendamentos.slice(0, 4).map(a => (
+                          <div key={a.id} className={`h-1 w-2.5 rounded-full ${a.cor || 'bg-primary'}`} title={a.clienteNome}></div>
                         ))}
-                      </div>
-                      {qty > 3 && <span className="text-[9px] font-bold text-gray-400">+{qty - 3}</span>}
+                        {qty > 4 && <span className="text-[7px] font-bold text-gray-400 leading-none">+{qty - 4}</span>}
                     </div>
                   )}
                 </div>

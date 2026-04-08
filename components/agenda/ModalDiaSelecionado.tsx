@@ -44,8 +44,24 @@ export function ModalDiaSelecionado({ isOpen, onClose, selectedDate, agendamento
               <div className="pl-3 mb-3">
                 <p className="text-sm font-medium text-gray-600">{agendamento.servico}</p>
                 <p className="text-xs text-gray-400 mt-0.5">R$ {agendamento.valorTotal}</p>
-                {agendamento.imagem && (
-                  <div className="mt-4 w-full max-w-[200px] aspect-square rounded-2xl overflow-hidden shadow-md border border-gray-100 cursor-pointer hover:opacity-90 transition group relative" onClick={() => window.open(agendamento.imagem!, '_blank')}>
+                {/* Galeria de Imagens do Agendamento */}
+                {(agendamento.imagens && agendamento.imagens.length > 0) ? (
+                  <div className="mt-4 grid grid-cols-3 gap-2">
+                    {agendamento.imagens.map((img, idx) => (
+                      <div 
+                        key={idx} 
+                        className="aspect-square rounded-xl overflow-hidden shadow-md border border-gray-100 cursor-pointer hover:opacity-80 transition relative group" 
+                        onClick={() => window.open(img, '_blank')}
+                      >
+                         <img src={img} alt={`Ref ${idx}`} className="w-full h-full object-cover" />
+                         <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                            <ImageIcon className="text-white" size={16} />
+                         </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : agendamento.imagem && (
+                  <div className="mt-4 w-32 aspect-square rounded-2xl overflow-hidden shadow-md border border-gray-100 cursor-pointer hover:opacity-90 transition group relative" onClick={() => window.open(agendamento.imagem!, '_blank')}>
                     <img src={agendamento.imagem} alt="Referência" className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
                       <ImageIcon className="text-white" size={24} />
