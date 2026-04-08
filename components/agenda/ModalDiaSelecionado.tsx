@@ -3,7 +3,7 @@
 import { Modal } from "@/components/ui/Modal";
 import { format, isToday, parseISO, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { User, CheckCircle2, MessageCircle, Trash2, Pencil } from "lucide-react";
+import { User, CheckCircle2, MessageCircle, Trash2, Pencil, Image as ImageIcon } from "lucide-react";
 import { Agendamento } from "@/store/useAgendaStore";
 import { useState } from "react";
 import { ModalAgendamento } from "./ModalAgendamento";
@@ -45,8 +45,11 @@ export function ModalDiaSelecionado({ isOpen, onClose, selectedDate, agendamento
                 <p className="text-sm font-medium text-gray-600">{agendamento.servico}</p>
                 <p className="text-xs text-gray-400 mt-0.5">R$ {agendamento.valorTotal}</p>
                 {agendamento.imagem && (
-                  <div className="mt-3 w-20 h-20 rounded-xl overflow-hidden shadow-sm border border-gray-100">
+                  <div className="mt-4 w-full max-w-[200px] aspect-square rounded-2xl overflow-hidden shadow-md border border-gray-100 cursor-pointer hover:opacity-90 transition group relative" onClick={() => window.open(agendamento.imagem!, '_blank')}>
                     <img src={agendamento.imagem} alt="Referência" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                      <ImageIcon className="text-white" size={24} />
+                    </div>
                   </div>
                 )}
               </div>

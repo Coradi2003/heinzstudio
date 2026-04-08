@@ -64,13 +64,18 @@ export const useAgendaStore = create<AgendaStore>()((set) => ({
      if (inserted) {
         set((state) => ({ agendamentos: [...state.agendamentos, inserted as Agendamento] }));
      } else if (error) {
-        console.error(error);
+        console.error("Erro ao adicionar agendamento:", error);
+        throw error;
      }
   },
 
   updateAgendamento: async (id, dataToUpdate) => {
      const supabase = createClient();
-     await supabase.from('agendamentos').update(dataToUpdate).eq('id', id);
+     const { error } = await supabase.from('agendamentos').update(dataToUpdate).eq('id', id);
+     if (error) {
+        console.error("Erro ao atualizar agendamento:", error);
+        throw error;
+     }
      
      set((state) => ({
        agendamentos: state.agendamentos.map(a => a.id === id ? { ...a, ...dataToUpdate } : a)

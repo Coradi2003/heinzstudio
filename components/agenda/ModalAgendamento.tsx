@@ -33,6 +33,7 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
   const [cor, setCor] = useState("bg-primary");
   const [imagem, setImagem] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [isClientModalOpen, setIsClientModalOpen] = useState(false);
   const [showClientes, setShowClientes] = useState(false);
 
@@ -97,35 +98,42 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
        }
     }
 
-    if (initialData) {
-      await updateAgendamento(initialData.id, {
-        clienteNome: nomeFinal,
-        telefone: telefoneFinal,
-        servico: servico || "Sessão de Tatuagem",
-        dataInicio: dateTimeInicio,
-        dataFim: dateTimeFim,
-        valorTotal: Number(valorTotal) || 0,
-        valorSinal: Number(valorSinal) || 0,
-        cor,
-        imagem
-      });
-    } else {
-      await addAgendamento({
-        clienteNome: nomeFinal,
-        telefone: telefoneFinal,
-        servico: servico || "Sessão de Tatuagem",
-        dataInicio: dateTimeInicio,
-        dataFim: dateTimeFim,
-        imagem,
-        valorTotal: Number(valorTotal) || 0,
-        valorSinal: Number(valorSinal) || 0,
-        status: "agendado",
-        metodoSinal,
-        cor
-      });
+    setIsSaving(true);
+    try {
+      if (initialData) {
+        await updateAgendamento(initialData.id, {
+          clienteNome: nomeFinal,
+          telefone: telefoneFinal,
+          servico: servico || "Sessão de Tatuagem",
+          dataInicio: dateTimeInicio,
+          dataFim: dateTimeFim,
+          valorTotal: Number(valorTotal) || 0,
+          valorSinal: Number(valorSinal) || 0,
+          cor,
+          imagem
+        });
+      } else {
+        await addAgendamento({
+          clienteNome: nomeFinal,
+          telefone: telefoneFinal,
+          servico: servico || "Sessão de Tatuagem",
+          dataInicio: dateTimeInicio,
+          dataFim: dateTimeFim,
+          imagem,
+          valorTotal: Number(valorTotal) || 0,
+          valorSinal: Number(valorSinal) || 0,
+          status: "agendado",
+          metodoSinal,
+          cor
+        });
+      }
+      onClose();
+    } catch (err) {
+      console.error(err);
+      alert("Falha ao salvar agendamento. Verifique se rodou o comando SQL para adicionar a coluna 'imagem' na tabela 'agendamentos'.");
+    } finally {
+      setIsSaving(false);
     }
-
-    onClose();
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -391,8 +399,21 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
       </div>
 
       <div className="mt-8 flex justify-end gap-3">
-        <button onClick={onClose} className="px-6 py-3 rounded-xl font-semibold text-gray-600 hover:bg-gray-100 transition">Cancelar</button>
-        <button onClick={handleSave} className="bg-primary text-white px-8 py-3 rounded-xl font-bold shadow-md shadow-primary/20 hover:opacity-90 transition">Agendar</button>
+        <button onClick={onClose} disabled={isSaving} className="px-6 py-3 rounded-xl font-semibold text-gray-600 hover:bg-gray-100 transition">Cancelar</button>
+        <button 
+          onClick={handleSave} 
+          disabled={isSaving || isUploading}
+          className="bg-primary text-white px-8 py-3 rounded-xl font-bold shadow-md shadow-primary/20 hover:opacity-90 transition flex items-center gap-2"
+        >
+          {isSaving ? (
+            <>
+              <Loader2 size={18} className="animate-spin" />
+              <span>Salvando...</span>
+            </>
+          ) : (
+            <span>{initialData ? "Atualizar" : "Agendar"}</span>
+          )}
+        </button>
       </div>
       <ModalCliente isOpen={isClientModalOpen} onClose={() => setIsClientModalOpen(false)} />
     </Modal>
