@@ -95,23 +95,23 @@ export default function FinanceiroPage() {
       </div>
 
       {periodo === 'custom' && (
-        <div className="flex flex-col sm:grid sm:grid-cols-2 gap-3 mb-8 animate-in fade-in slide-in-from-top-2 max-w-sm">
-          <div>
-            <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1 ml-1">Início</label>
+        <div className="grid grid-cols-2 gap-3 mb-8 animate-in fade-in slide-in-from-top-2 max-w-sm">
+          <div className="space-y-1">
+            <label className="block text-[10px] uppercase font-bold text-gray-400 ml-1">Início</label>
             <input 
               type="date" 
               value={dataInicioManual} 
               onChange={e => setDataInicioManual(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-gray-100 bg-white text-xs font-bold text-gray-700 outline-none focus:border-primary transition-all shadow-sm h-10"
+              className="w-full h-11 px-4 rounded-2xl border border-gray-700/50 bg-gray-800/40 text-sm font-bold text-gray-200 outline-none focus:border-primary transition-all shadow-inner appearance-none"
             />
           </div>
-          <div>
-            <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1 ml-1">Fim</label>
+          <div className="space-y-1">
+            <label className="block text-[10px] uppercase font-bold text-gray-400 ml-1">Fim</label>
             <input 
               type="date" 
               value={dataFimManual} 
               onChange={e => setDataFimManual(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-gray-100 bg-white text-xs font-bold text-gray-700 outline-none focus:border-primary transition-all shadow-sm h-10"
+              className="w-full h-11 px-4 rounded-2xl border border-gray-100 bg-white text-sm font-bold text-gray-200 outline-none focus:border-primary transition-all shadow-inner appearance-none"
             />
           </div>
         </div>

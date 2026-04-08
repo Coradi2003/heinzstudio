@@ -484,6 +484,7 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
           <div className="flex flex-wrap gap-3">
             {[
               "bg-primary", 
+              "bg-white",
               "bg-red-500", 
               "bg-yellow-400", 
               "bg-orange-500", 
@@ -496,11 +497,11 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
               <button 
                 key={c} 
                 onClick={() => setCor(c)} 
-                className={`w-10 h-10 rounded-full ${c} ${cor === c ? 'ring-4 ring-offset-2 ring-primary/30 border-2 border-white' : 'opacity-80 hover:opacity-100 hover:scale-110'} transition flex items-center justify-center text-white`} 
+                className={`w-10 h-10 rounded-full ${c} ${c === 'bg-white' ? 'border border-gray-200' : ''} ${cor === c ? 'ring-4 ring-offset-2 ring-primary/30 border-2 border-white' : 'opacity-80 hover:opacity-100 hover:scale-110'} transition flex items-center justify-center text-white`} 
                 type="button"
                 title={c}
               >
-                {cor === c && <Check size={20} strokeWidth={3} />}
+                {cor === c && <Check size={20} strokeWidth={3} className={c === 'bg-white' ? 'text-gray-400' : ''} />}
               </button>
             ))}
           </div>
