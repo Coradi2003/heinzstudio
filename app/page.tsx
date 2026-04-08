@@ -73,8 +73,12 @@ export default function DashboardPage() {
   });
   const pendentesTot = agndsFuturos.reduce((acc, curr) => acc + (curr.valorTotal - (curr.valorSinal || 0)), 0);
   
-  // Rejeitados: Cancelados no período
-  const rejeitadosTot = agndsPeriodo.filter(a => a.status === 'cancelado').reduce((acc, curr) => acc + curr.valorTotal, 0);
+  // Rejeitados: Cancelados a partir do início do período (inclui futuro)
+  const agndsRejeitados = agendamentos.filter(a => {
+    const d = new Date(a.dataInicio);
+    return d >= start && a.status === 'cancelado';
+  });
+  const rejeitadosTot = agndsRejeitados.reduce((acc, curr) => acc + curr.valorTotal, 0);
 
   const maxVal = Math.max(aprovadosTot, pendentesTot, rejeitadosTot, 1);
 
