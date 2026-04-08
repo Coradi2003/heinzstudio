@@ -94,7 +94,8 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
        const dateF = new Date(dateTimeInicio);
        dateF.setHours(dateF.getHours() + dHours);
        dateF.setMinutes(dateF.getMinutes() + dMins);
-       dateTimeFim = dateF.toISOString();
+       // Usar format do date-fns para manter o formato local e evitar o "Z" do toISOString
+       dateTimeFim = formatDate(dateF, "yyyy-MM-dd'T'HH:mm:ss");
     }
     
     const nomeFinal = clienteNome || "Cliente Avulso";
@@ -131,8 +132,8 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
             const baseEnd = parseISO(dateTimeFim);
             const nextStart = frequencia === 'diario' ? addDays(baseStart, i) : (frequencia === 'semanal' ? addWeeks(baseStart, i) : addMonths(baseStart, i));
             const nextEnd = frequencia === 'diario' ? addDays(baseEnd, i) : (frequencia === 'semanal' ? addWeeks(baseEnd, i) : addMonths(baseEnd, i));
-            s = nextStart.toISOString();
-            e = nextEnd.toISOString();
+            s = formatDate(nextStart, "yyyy-MM-dd'T'HH:mm:ss");
+            e = formatDate(nextEnd, "yyyy-MM-dd'T'HH:mm:ss");
         }
         
         const conflito = checkConflict(s, e);
