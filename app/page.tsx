@@ -42,12 +42,14 @@ export default function DashboardPage() {
   } else {
     dateLimit.setDate(dateLimit.getDate() - periodo);
   }
-
   const agndsPeriodo = agendamentos.filter(a => new Date(a.dataInicio) >= dateLimit);
 
   const aprovadosTot = agndsPeriodo.filter(a => a.status === 'concluido' || a.status === 'agendado').reduce((acc, curr) => acc + curr.valorTotal, 0);
   const pendentesTot = agndsPeriodo.filter(a => a.status === 'pendente').reduce((acc, curr) => acc + curr.valorTotal, 0);
   const rejeitadosTot = agndsPeriodo.filter(a => a.status === 'cancelado').reduce((acc, curr) => acc + curr.valorTotal, 0);
+
+  const pendentesCount = agendamentos.filter(a => a.status === 'pendente' || a.status === 'agendado').length;
+  const concluidosCount = agendamentos.filter(a => a.status === 'concluido').length;
 
   const maxVal = Math.max(aprovadosTot, pendentesTot, rejeitadosTot, 1);
 
@@ -140,7 +142,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* 2. Evolução dos Orçamentos */}
+      {/* 2. Evolução dos Agendamentos */}
       <div className="bg-white rounded-[28px] p-6 shadow-sm border border-gray-100/50 mt-4">
         
         {/* Cabeçalho */}
@@ -235,44 +237,23 @@ export default function DashboardPage() {
       </div>
 
       {/* 3. Grid de Atributos */}
-      <div className="grid grid-cols-3 gap-3 md:gap-4 pt-2">
-        
-        <Link href="/clientes" className="bg-white rounded-3xl p-4 flex flex-col items-center justify-center text-center shadow-sm border border-gray-100/50 gap-2 hover:bg-gray-50 transition">
-          <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center text-purple-500">
-            <Users size={18} strokeWidth={2.5}/>
+      <div className="grid grid-cols-2 gap-3 md:gap-4 pt-2">
+        <Link href="/agenda" className="bg-white rounded-3xl p-4 flex flex-col items-center justify-center text-center shadow-sm border border-gray-100/50 gap-2 hover:bg-gray-50 transition">
+          <div className="w-10 h-10 rounded-full bg-yellow-50 flex items-center justify-center text-yellow-600">
+            <Clock size={18} strokeWidth={2.5}/>
           </div>
-          <h3 className="text-xl font-bold text-gray-800">{clientes.length}</h3>
-          <p className="text-[10px] uppercase font-bold text-gray-400">Clientes</p>
+          <h3 className="text-xl font-bold text-gray-800">{pendentesCount}</h3>
+          <p className="text-[10px] uppercase font-bold text-gray-400">Agendamentos Pendentes</p>
         </Link>
 
         <Link href="/agenda" className="bg-white rounded-3xl p-4 flex flex-col items-center justify-center text-center shadow-sm border border-gray-100/50 gap-2 hover:bg-gray-50 transition">
-          <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-500">
-            <FileText size={18} strokeWidth={2.5}/>
+          <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center text-green-500">
+            <CheckCircle2 size={18} strokeWidth={2.5}/>
           </div>
-          <h3 className="text-xl font-bold text-gray-800">{agendamentos.length}</h3>
-          <p className="text-[10px] uppercase font-bold text-gray-400">Agendamentos</p>
+          <h3 className="text-xl font-bold text-gray-800">{concluidosCount}</h3>
+          <p className="text-[10px] uppercase font-bold text-gray-400">Agendamentos Concluídos</p>
         </Link>
-
-        <Link href="/servicos" className="bg-white rounded-3xl p-4 flex flex-col items-center justify-center text-center shadow-sm border border-gray-100/50 gap-2 hover:bg-gray-50 transition">
-          <div className="w-10 h-10 rounded-full bg-yellow-50 flex items-center justify-center text-yellow-500">
-            <Wrench size={18} strokeWidth={2.5}/>
-          </div>
-          <h3 className="text-xl font-bold text-gray-800">{servicos.length}</h3>
-          <p className="text-[10px] uppercase font-bold text-gray-400">Serviços</p>
-        </Link>
-
-
-
-        <Link href="/produtos" className="bg-white rounded-3xl p-4 flex flex-col items-center justify-center text-center shadow-sm border border-gray-100/50 gap-2 hover:bg-gray-50 transition">
-          <div className="w-10 h-10 rounded-full bg-cyan-50 flex items-center justify-center text-cyan-500">
-            <Box size={18} strokeWidth={2.5}/>
-          </div>
-          <h3 className="text-xl font-bold text-gray-800">{produtos.length}</h3>
-          <p className="text-[10px] uppercase font-bold text-gray-400">Produtos</p>
-        </Link>
-
       </div>
-
     </div>
   );
 }
