@@ -138,8 +138,10 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
         const conflito = checkConflict(s, e);
         if (conflito) {
             const dataFormatada = formatDate(new Date(s), "dd/MM 'às' HH:mm", { locale: ptBR });
-            alert(`HORÁRIO INDISPONÍVEL!\n\nNo dia ${dataFormatada} já existe um agendamento para "${conflito.clienteNome}".\n\nPor favor, escolha outro horário.`);
-            return;
+            const prosseguir = confirm(`CONFLITO DE HORÁRIO!\n\nNo dia ${dataFormatada} já existe um agendamento para "${conflito.clienteNome}".\n\nVocê realmente deseja agendar este horário assim mesmo?`);
+            if (!prosseguir) return;
+            // Se aceitou, não precisa avisar dos outros conflitos na mesma série de uma vez (opcional)
+            // mas vou deixar avisar cada um pra ele ter certeza de onde está batendo.
         }
         seriesData.push({ s, e });
     }
