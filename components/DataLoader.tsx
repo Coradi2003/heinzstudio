@@ -33,10 +33,15 @@ export function DataLoader() {
           document.documentElement.style.setProperty('--color-primary', '#DC2626');
        }
        
-       // Seta Cor de Fundo
+       // Seta Cor de Fundo e Ativa Sub-Temas
        const targetBg = bgHexa || '#F9FAFB';
        document.documentElement.style.setProperty('--color-background', targetBg);
-       document.body.style.backgroundColor = targetBg;
+       
+       if (targetBg === '#000000' || targetBg === '#111827' || targetBg === '#1F2937') {
+           document.documentElement.classList.add('dark-theme');
+       } else {
+           document.documentElement.classList.remove('dark-theme');
+       }
     }
   }, [corHexa, bgHexa]);
 

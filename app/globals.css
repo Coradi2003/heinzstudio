@@ -14,3 +14,32 @@ body {
   color: #111827; /* text-gray-900 */
   -webkit-font-smoothing: antialiased;
 }
+
+/* === DARK THEME SMART OVERRIDES === */
+.dark-theme body, .dark-theme main { background-color: var(--color-background) !important; color: #F3F4F6 !important; }
+
+/* Blocks and Backgrounds */
+.dark-theme .bg-white { background-color: #1F2937 !important; border-color: #374151 !important; }
+.dark-theme .bg-gray-50 { background-color: #374151 !important; border-color: #4B5563 !important; }
+.dark-theme .bg-gray-100 { background-color: #4B5563 !important; }
+
+/* Texts */
+.dark-theme .text-gray-900 { color: #F9FAFB !important; }
+.dark-theme .text-gray-800 { color: #f3f4f6 !important; }
+.dark-theme .text-gray-700 { color: #D1D5DB !important; }
+.dark-theme .text-gray-600 { color: #9CA3AF !important; }
+.dark-theme .text-gray-500 { color: #9CA3AF !important; }
+.dark-theme .text-gray-400 { color: #6B7280 !important; }
+
+/* Borders */
+.dark-theme .border-gray-50 { border-color: #374151 !important; }
+.dark-theme .border-gray-100 { border-color: #374151 !important; }
+.dark-theme .border-gray-200 { border-color: #4B5563 !important; }
+
+/* Form Elements */
+.dark-theme input, .dark-theme select, .dark-theme textarea { 
+  background-color: #374151 !important; 
+  color: #F9FAFB !important; 
+  border-color: #4B5563 !important; 
+}
+
