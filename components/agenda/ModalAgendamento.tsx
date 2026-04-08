@@ -21,6 +21,7 @@ export function ModalAgendamento({ isOpen, onClose }: ModalAgendamentoProps) {
   const [horaFim, setHoraFim] = useState("");
   const [valorTotal, setValorTotal] = useState("");
   const [valorSinal, setValorSinal] = useState("");
+  const [cor, setCor] = useState("bg-primary");
 
   const handleSave = () => {
     // Monta dados (conversões básicas)
@@ -35,7 +36,8 @@ export function ModalAgendamento({ isOpen, onClose }: ModalAgendamentoProps) {
       imagem: null,
       valorTotal: Number(valorTotal) || 0,
       valorSinal: Number(valorSinal) || 0,
-      status: "agendado"
+      status: "agendado",
+      cor
     });
 
     onClose();
@@ -43,6 +45,7 @@ export function ModalAgendamento({ isOpen, onClose }: ModalAgendamentoProps) {
     setClienteNome(""); setTelefone(""); setServico("");
     setDataInicio(""); setHoraInicio(""); setHoraFim("");
     setValorTotal(""); setValorSinal("");
+    setCor("bg-primary");
   };
 
   return (
@@ -96,6 +99,25 @@ export function ModalAgendamento({ isOpen, onClose }: ModalAgendamentoProps) {
             <input type="number" value={valorSinal} onChange={e => setValorSinal(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-green-500 font-medium text-green-600" placeholder="0,00" />
             <p className="text-xs text-gray-400 mt-1">O sinal entra logo como receita.</p>
           </div>
+        </div>
+
+        <hr className="border-gray-100" />
+
+        {/* Cores */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">Classificação de Cor</label>
+          <div className="flex gap-4">
+            {['bg-primary', 'bg-green-500', 'bg-yellow-500', 'bg-red-500', 'bg-blue-500'].map(c => (
+              <button 
+                key={c} 
+                onClick={() => setCor(c)} 
+                className={`w-10 h-10 rounded-full ${c} ${cor === c ? 'ring-4 ring-offset-2 ring-primary/30' : 'opacity-80 hover:opacity-100 hover:scale-110'} transition`} 
+                type="button"
+                title={c}
+              />
+            ))}
+          </div>
+          <p className="text-xs text-gray-400 mt-2">Personalize a etiqueta desse serviço pra bater o olho fácil no calendário.</p>
         </div>
 
       </div>
