@@ -13,6 +13,7 @@ export interface Agendamento {
   valorSinal: number;
   status: 'agendado' | 'pendente' | 'concluido' | 'cancelado';
   cor?: string;
+  telefone?: string;
 }
 
 interface AgendaStore {

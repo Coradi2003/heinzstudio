@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { useAgendaStore } from "@/store/useAgendaStore";
 import { useServicosStore } from "@/store/useServicosStore";
+import { useClientesStore } from "@/store/useClientesStore";
 
 interface ModalAgendamentoProps {
   isOpen: boolean;
@@ -13,6 +14,7 @@ interface ModalAgendamentoProps {
 export function ModalAgendamento({ isOpen, onClose }: ModalAgendamentoProps) {
   const addAgendamento = useAgendaStore((state) => state.addAgendamento);
   const { servicos } = useServicosStore();
+  const { clientes, addCliente } = useClientesStore();
   
   // States - Tudo opcional
   const [clienteNome, setClienteNome] = useState("");
@@ -29,9 +31,26 @@ export function ModalAgendamento({ isOpen, onClose }: ModalAgendamentoProps) {
     // Monta dados (conversões básicas)
     const dateTimeInicio = dataInicio && horaInicio ? `${dataInicio}T${horaInicio}:00` : new Date().toISOString();
     const dateTimeFim = dataInicio && horaFim ? `${dataInicio}T${horaFim}:00` : dateTimeInicio;
+    
+    const nomeFinal = clienteNome || "Cliente Avulso";
+    const telefoneFinal = telefone || "";
+
+    // Cadastro Inteligente de Clientes
+    if (clienteNome && clienteNome.trim() !== "") {
+       const clientExists = clientes.find(c => c.nome.toLowerCase() === clienteNome.trim().toLowerCase());
+       if (!clientExists) {
+          addCliente({
+            nome: clienteNome.trim(),
+            telefone: telefoneFinal,
+            notas: "Cadastrado automaticamente via agendamento.",
+            ultimaVisita: new Date().toISOString()
+          });
+       }
+    }
 
     addAgendamento({
-      clienteNome: clienteNome || "Cliente Avulso",
+      clienteNome: nomeFinal,
+      telefone: telefoneFinal,
       servico: servico || "Sessão de Tatuagem",
       dataInicio: dateTimeInicio,
       dataFim: dateTimeFim,

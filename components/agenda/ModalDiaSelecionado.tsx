@@ -41,7 +41,17 @@ export function ModalDiaSelecionado({ isOpen, onClose, selectedDate, agendamento
               </div>
               
               <div className="flex flex-wrap md:flex-nowrap gap-2 pl-3 border-t border-gray-50 pt-3 mt-3">
-                <button className="flex-1 flex justify-center items-center gap-1.5 text-xs font-bold text-green-600 bg-green-50 hover:bg-green-100 p-2.5 rounded-lg transition">
+                <button 
+                  onClick={() => {
+                    const numberOnly = (agendamento.telefone || '').replace(/\D/g, '');
+                    if (numberOnly) {
+                      window.open(`https://wa.me/55${numberOnly}`, '_blank');
+                    } else {
+                      alert('Este cliente não possui telefone cadastrado.');
+                    }
+                  }}
+                  className="flex-1 flex justify-center items-center gap-1.5 text-xs font-bold text-green-600 bg-green-50 hover:bg-green-100 p-2.5 rounded-lg transition"
+                >
                   <MessageCircle size={14} /> WhatsApp
                 </button>
                 
