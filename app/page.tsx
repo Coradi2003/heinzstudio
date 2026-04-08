@@ -5,7 +5,7 @@ import { useFinanceiroStore } from "@/store/useFinanceiroStore";
 import { useProdutosStore } from "@/store/useProdutosStore";
 import { useServicosStore } from "@/store/useServicosStore";
 import { useClientesStore } from "@/store/useClientesStore";
-import { Users, FileText, Wrench, Briefcase, Box, TrendingUp, TrendingDown, BarChart2, CheckCircle2, Clock, XCircle, QrCode, Banknote, CreditCard, Calendar } from "lucide-react";
+import { Users, FileText, Wrench, Box, TrendingUp, TrendingDown, BarChart2, CheckCircle2, Clock, XCircle, QrCode, Banknote, CreditCard, Calendar } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -33,7 +33,7 @@ export default function DashboardPage() {
   const porCartao = receitas.filter(t => t.metodo === 'Cartão').reduce((a,b) => a + b.valor, 0);
   const totalMetodos = Math.max(porPix + porDinheiro + porCartao, 1);
 
-  // -- EVOLUÇÃO (Orçamentos/Agendamentos) --
+  // -- EVOLUÇÃO (Agendamentos) --
   const dateLimit = new Date();
   if (dataManual) {
     const [year, month, day] = dataManual.split('-').map(Number);
@@ -149,7 +149,7 @@ export default function DashboardPage() {
              <BarChart2 size={24} />
           </div>
           <div>
-            <h3 className="font-bold text-gray-800 text-lg leading-tight">Evolução dos Orçamentos</h3>
+            <h3 className="font-bold text-gray-800 text-lg leading-tight">Evolução dos Agendamentos</h3>
             <p className="text-xs text-gray-400">Valores por período</p>
           </div>
         </div>
@@ -170,16 +170,14 @@ export default function DashboardPage() {
           ))}
           <div className="relative flex-shrink-0">
              <button 
-              onClick={() => (document.getElementById('custom-date') as HTMLInputElement)?.showPicker()}
               className={`px-4 py-2 rounded-full text-xs font-bold transition flex items-center gap-2 ${dataManual ? 'bg-primary text-white shadow-md shadow-primary/20' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}`}
             >
               <Calendar size={14} />
               {dataManual ? new Date(dataManual + 'T00:00:00').toLocaleDateString('pt-BR') : 'Personalizado'}
             </button>
             <input 
-              id="custom-date"
               type="date"
-              className="absolute inset-0 opacity-0 cursor-pointer pointer-events-none"
+              className="absolute inset-0 opacity-0 cursor-pointer w-full"
               onChange={(e) => {
                 setDataManual(e.target.value);
                 setPeriodo(7); // reset periodo logicamente mas o view prioriza dataManual
@@ -252,7 +250,7 @@ export default function DashboardPage() {
             <FileText size={18} strokeWidth={2.5}/>
           </div>
           <h3 className="text-xl font-bold text-gray-800">{agendamentos.length}</h3>
-          <p className="text-[10px] uppercase font-bold text-gray-400">Orçamentos</p>
+          <p className="text-[10px] uppercase font-bold text-gray-400">Agendamentos</p>
         </Link>
 
         <Link href="/servicos" className="bg-white rounded-3xl p-4 flex flex-col items-center justify-center text-center shadow-sm border border-gray-100/50 gap-2 hover:bg-gray-50 transition">
@@ -263,13 +261,7 @@ export default function DashboardPage() {
           <p className="text-[10px] uppercase font-bold text-gray-400">Serviços</p>
         </Link>
 
-        <div className="bg-white rounded-3xl p-4 flex flex-col items-center justify-center text-center shadow-sm border border-gray-100/50 gap-2 cursor-not-allowed opacity-80">
-          <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center text-emerald-500">
-            <Briefcase size={18} strokeWidth={2.5}/>
-          </div>
-          <h3 className="text-xl font-bold text-gray-800">0</h3>
-          <p className="text-[10px] uppercase font-bold text-gray-400">Contratos</p>
-        </div>
+
 
         <Link href="/produtos" className="bg-white rounded-3xl p-4 flex flex-col items-center justify-center text-center shadow-sm border border-gray-100/50 gap-2 hover:bg-gray-50 transition">
           <div className="w-10 h-10 rounded-full bg-cyan-50 flex items-center justify-center text-cyan-500">

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Building2, User, ArrowUpRight, ArrowDownRight, Wallet, Pencil, Trash2 } from "lucide-react";
+import { Plus, Building2, User, ArrowUpRight, ArrowDownRight, Wallet, Pencil, Trash2, Calendar } from "lucide-react";
 import { useFinanceiroStore, Transacao } from "@/store/useFinanceiroStore";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -10,10 +10,27 @@ import { ModalTransacao } from "@/components/financeiro/ModalTransacao";
 export default function FinanceiroPage() {
   const { transacoes, removeTransacao } = useFinanceiroStore();
   const [contaVisualizacao, setContaVisualizacao] = useState<'Empresa' | 'Particular'>('Empresa');
+  const [periodo, setPeriodo] = useState<7 | 14 | 30>(7);
+  const [dataManual, setDataManual] = useState<string>("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [transEdit, setTransEdit] = useState<Transacao | null>(null);
 
-  const transacoesFiltradas = transacoes.filter(t => t.conta === contaVisualizacao);
+  const transacoesFiltradas = transacoes.filter(t => {
+    const matchConta = t.conta === contaVisualizacao;
+    
+    // Filtro de Data
+    const dateLimit = new Date();
+    if (dataManual) {
+      const [year, month, day] = dataManual.split('-').map(Number);
+      dateLimit.setFullYear(year, month - 1, day);
+      dateLimit.setHours(0, 0, 0, 0);
+    } else {
+      dateLimit.setDate(dateLimit.getDate() - periodo);
+    }
+    const matchData = new Date(t.data) >= dateLimit;
+
+    return matchConta && matchData;
+  });
   
   const totalReceitas = transacoesFiltradas.filter(t => t.tipo === 'receita').reduce((acc, curr) => acc + curr.valor, 0);
   const totalDespesas = transacoesFiltradas.filter(t => t.tipo === 'despesa').reduce((acc, curr) => acc + curr.valor, 0);
@@ -33,20 +50,53 @@ export default function FinanceiroPage() {
         </button>
       </div>
 
-      {/* Abas */}
-      <div className="flex bg-gray-100 p-1 rounded-2xl w-full max-w-sm mb-8">
-        <button 
-          onClick={() => setContaVisualizacao('Empresa')}
-          className={`flex-1 py-2.5 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition ${contaVisualizacao === 'Empresa' ? 'bg-white shadow-sm text-primary' : 'text-gray-500 hover:text-gray-700'}`}
-        >
-          <Building2 size={18} /> Empresa
-        </button>
-        <button 
-          onClick={() => setContaVisualizacao('Particular')}
-          className={`flex-1 py-2.5 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition ${contaVisualizacao === 'Particular' ? 'bg-white shadow-sm text-primary' : 'text-gray-500 hover:text-gray-700'}`}
-        >
-          <User size={18} /> Particular
-        </button>
+      {/* Abas e Filtros */}
+      <div className="flex flex-col md:flex-row gap-4 mb-8">
+        <div className="flex bg-gray-100 p-1 rounded-2xl w-full max-w-sm">
+          <button 
+            onClick={() => setContaVisualizacao('Empresa')}
+            className={`flex-1 py-2.5 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition ${contaVisualizacao === 'Empresa' ? 'bg-white shadow-sm text-primary' : 'text-gray-500 hover:text-gray-700'}`}
+          >
+            <Building2 size={18} /> Empresa
+          </button>
+          <button 
+            onClick={() => setContaVisualizacao('Particular')}
+            className={`flex-1 py-2.5 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition ${contaVisualizacao === 'Particular' ? 'bg-white shadow-sm text-primary' : 'text-gray-500 hover:text-gray-700'}`}
+          >
+            <User size={18} /> Particular
+          </button>
+        </div>
+
+        <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-none items-center">
+          {[7, 14, 30].map(dia => (
+            <button 
+              key={dia}
+              onClick={() => {
+                setPeriodo(dia as any);
+                setDataManual("");
+              }}
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition flex-shrink-0 ${periodo === dia && !dataManual ? 'bg-primary text-white shadow-md shadow-primary/20' : 'bg-white border border-gray-100 text-gray-400 hover:bg-gray-50'}`}
+            >
+              {dia} dias
+            </button>
+          ))}
+          <div className="relative flex-shrink-0 h-[38px]">
+             <button 
+              className={`px-4 h-full rounded-xl text-xs font-bold transition flex items-center gap-2 ${dataManual ? 'bg-primary text-white shadow-md shadow-primary/20' : 'bg-white border border-gray-100 text-gray-400 hover:bg-gray-50'}`}
+            >
+              <Calendar size={14} />
+              {dataManual ? new Date(dataManual + 'T00:00:00').toLocaleDateString('pt-BR') : 'Personalizado'}
+            </button>
+            <input 
+              type="date"
+              className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+              onChange={(e) => {
+                setDataManual(e.target.value);
+                setPeriodo(7);
+              }}
+            />
+          </div>
+        </div>
       </div>
 
       {/* Cards de Resumo */}
