@@ -5,7 +5,7 @@ import { useFinanceiroStore } from "@/store/useFinanceiroStore";
 import { useProdutosStore } from "@/store/useProdutosStore";
 import { useServicosStore } from "@/store/useServicosStore";
 import { useClientesStore } from "@/store/useClientesStore";
-import { Users, FileText, Wrench, Briefcase, Box, Truck, TrendingUp, TrendingDown, BarChart2, CheckCircle2, Clock, XCircle } from "lucide-react";
+import { Users, FileText, Wrench, Briefcase, Box, TrendingUp, TrendingDown, BarChart2, CheckCircle2, Clock, XCircle, QrCode, Banknote, CreditCard } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -21,9 +21,16 @@ export default function DashboardPage() {
   // -- FINANCEIRO (Mensal) --
   const currentMonth = new Date().getMonth();
   const baseTrans = transacoes.filter(t => new Date(t.data).getMonth() === currentMonth);
-  const faturamento = baseTrans.filter(t => t.tipo === 'receita').reduce((a,b) => a + b.valor, 0);
+  const receitas = baseTrans.filter(t => t.tipo === 'receita');
+  const faturamento = receitas.reduce((a,b) => a + b.valor, 0);
   const despesas = baseTrans.filter(t => t.tipo === 'despesa').reduce((a,b) => a + b.valor, 0);
   const saldo = faturamento - despesas;
+
+  // -- BREAKDOWN POR MÉTODO DE PAGAMENTO --
+  const porPix = receitas.filter(t => t.metodo === 'Pix').reduce((a,b) => a + b.valor, 0);
+  const porDinheiro = receitas.filter(t => t.metodo === 'Dinheiro').reduce((a,b) => a + b.valor, 0);
+  const porCartao = receitas.filter(t => t.metodo === 'Cartão').reduce((a,b) => a + b.valor, 0);
+  const totalMetodos = Math.max(porPix + porDinheiro + porCartao, 1);
 
   // -- EVOLUÇÃO (Orçamentos/Agendamentos) --
   const dateLimit = new Date();
@@ -70,7 +77,63 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* 2. Grid de 6 Atributos */}
+      {/* 1.5 Bloco de Entradas por Método */}
+      <div className="bg-white rounded-[28px] p-5 shadow-sm border border-gray-100/50">
+        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Entradas do Mês por Forma de Pagamento</p>
+        <div className="space-y-3">
+
+          {/* PIX */}
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-500 shrink-0">
+              <QrCode size={16} strokeWidth={2.5} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-xs font-bold text-gray-600">Pix</span>
+                <span className="text-xs font-bold text-gray-800">{porPix.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+              </div>
+              <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                <div className="h-full bg-emerald-400 rounded-full transition-all duration-700" style={{ width: `${(porPix/totalMetodos)*100}%` }}></div>
+              </div>
+            </div>
+          </div>
+
+          {/* DINHEIRO */}
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-full bg-yellow-50 flex items-center justify-center text-yellow-500 shrink-0">
+              <Banknote size={16} strokeWidth={2.5} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-xs font-bold text-gray-600">Dinheiro</span>
+                <span className="text-xs font-bold text-gray-800">{porDinheiro.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+              </div>
+              <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                <div className="h-full bg-yellow-400 rounded-full transition-all duration-700" style={{ width: `${(porDinheiro/totalMetodos)*100}%` }}></div>
+              </div>
+            </div>
+          </div>
+
+          {/* CARTÃO */}
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center text-blue-500 shrink-0">
+              <CreditCard size={16} strokeWidth={2.5} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-xs font-bold text-gray-600">Cartão</span>
+                <span className="text-xs font-bold text-gray-800">{porCartao.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+              </div>
+              <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                <div className="h-full bg-blue-400 rounded-full transition-all duration-700" style={{ width: `${(porCartao/totalMetodos)*100}%` }}></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      {/* 2. Grid de Atributos */}
       <div className="grid grid-cols-3 gap-3 md:gap-4 pt-2">
         
         <Link href="/clientes" className="bg-white rounded-3xl p-4 flex flex-col items-center justify-center text-center shadow-sm border border-gray-100/50 gap-2 hover:bg-gray-50 transition">
@@ -112,14 +175,6 @@ export default function DashboardPage() {
           <h3 className="text-xl font-bold text-gray-800">{produtos.length}</h3>
           <p className="text-[10px] uppercase font-bold text-gray-400">Produtos</p>
         </Link>
-
-        <div className="bg-white rounded-3xl p-4 flex flex-col items-center justify-center text-center shadow-sm border border-gray-100/50 gap-2 cursor-not-allowed opacity-80">
-          <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-red-500">
-            <Truck size={18} strokeWidth={2.5}/>
-          </div>
-          <h3 className="text-xl font-bold text-gray-800">0</h3>
-          <p className="text-[10px] uppercase font-bold text-gray-400">Fornecs.</p>
-        </div>
 
       </div>
 
