@@ -100,11 +100,20 @@ export default function AgendaPage() {
                   
                   {/* Indicadores de cor dos agendamentos empilhados verticalmente */}
                   {qty > 0 && (
-                    <div className="mt-auto w-full flex flex-col items-end gap-0.5 pr-0.5 pb-0.5">
-                        {dayAgendamentos.slice(0, 4).map(a => (
-                          <div key={a.id} className={`h-1 w-2.5 rounded-full ${a.cor || 'bg-primary'}`} title={a.clienteNome}></div>
-                        ))}
-                        {qty > 4 && <span className="text-[7px] font-bold text-gray-400 leading-none">+{qty - 4}</span>}
+                    <div className="mt-1 w-full space-y-0.5 overflow-hidden">
+                        {dayAgendamentos
+                          .sort((a,b) => parseISO(a.dataInicio).getTime() - parseISO(b.dataInicio).getTime())
+                          .slice(0, 3)
+                          .map(a => (
+                            <div 
+                              key={a.id} 
+                              className={`w-full text-[8px] font-black text-white px-1 py-0.5 rounded cursor-pointer truncate shadow-sm transition-transform hover:scale-105 ${a.cor || 'bg-primary'} ${a.status === 'concluido' ? 'opacity-40 grayscale' : ''}`}
+                            >
+                              {format(parseISO(a.dataInicio), "HH:mm")}
+                            </div>
+                          ))
+                        }
+                        {qty > 3 && <p className="text-[8px] font-bold text-gray-400 text-center">+{qty - 3}</p>}
                     </div>
                   )}
                 </div>
