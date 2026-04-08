@@ -95,8 +95,8 @@ export default function FinanceiroPage() {
       </div>
 
       {periodo === 'custom' && (
-        <div className="flex items-center gap-3 mb-8 animate-in fade-in slide-in-from-top-2 max-w-sm">
-          <div className="flex-1">
+        <div className="grid grid-cols-2 gap-3 mb-8 animate-in fade-in slide-in-from-top-2 max-w-sm">
+          <div className="min-w-0">
             <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1 ml-1">Início</label>
             <input 
               type="date" 
@@ -105,7 +105,7 @@ export default function FinanceiroPage() {
               className="w-full px-4 py-2 rounded-xl border border-gray-100 bg-white text-xs font-bold text-gray-700 outline-none focus:border-primary transition-all shadow-sm"
             />
           </div>
-          <div className="flex-1">
+          <div className="min-w-0">
             <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1 ml-1">Fim</label>
             <input 
               type="date" 
