@@ -160,9 +160,10 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
         seriesData.push({ s, e });
     }
 
-    // Cadastro Inteligente de Clientes
-    if (clienteNome && clienteNome.trim() !== "") {
-       const clientExists = clientes.find(c => c.nome.toLowerCase() === clienteNome.trim().toLowerCase());
+    // Cadastro Inteligente: só cria cliente em NOVO agendamento (não em edições)
+    if (!initialData && clienteNome && clienteNome.trim() !== "" && clienteNome.trim() !== "Cliente Avulso") {
+       const nomeNormalizado = clienteNome.trim().toLowerCase();
+       const clientExists = clientes.some(c => c.nome.trim().toLowerCase() === nomeNormalizado);
        if (!clientExists) {
           addCliente({
             nome: clienteNome.trim(),
