@@ -229,7 +229,7 @@ Assinado: Heinz Tattoo Studio`}
           initialText={`TERMO DE AUTORIZAÇÃO DE TATUAGEM
 ESTÚDIO: HEINZ TATTOO STUDIO
 
-Eu, NOME_RESPONSAVEL, nascido em NASC_RESPONSAVEL, Idade IDADE_RESPONSAVEL, estado civil ESTADO_CIVIL_RESPONSAVEL, RG RG_RESPONSAVEL, residente e domiciliado à rua ENDERECO_RESPONSAVEL, Bairro BAIRRO_RESPONSAVEL, CEP CEP_RESPONSAVEL, Telefone TEL_RESPONSAVEL, no gozo pleno de minhas faculdades mentais e psíquicas, pelo presente e na melhor forma de direito, autorizo o artista HEINZ TATTOO a executar sobre a pele de meu filho (a) NOME_FILHO, menor de idade, nascido (a) em NASC_FILHO, CIDADE_UF_FILHO, portador do RG RG_FILHO, que em minha companhia reside e pelo qual sou inteiramente responsável, a gravação da tatuagem representada pelo desenho DESENHO, assumo ainda, na qualidade do genitor do menor, plena responsabilidade pela gravação, eximindo de qualquer responsabilidade civil ou criminal o agente elaborador.
+Eu, NOME_RESPONSAVEL, nascido em NASC_RESPONSAVEL, Idade IDADE_RESPONSAVEL, estado civil ESTADO_CIVIL_RESPONSAVEL, RG RG_RESPONSAVEL, Telefone TEL_RESPONSAVEL, no gozo pleno de minhas faculdades mentais e psíquicas, pelo presente e na melhor forma de direito, autorizo o artista HEINZ TATTOO a executar sobre a pele de meu filho (a) NOME_FILHO, menor de idade, nascido (a) em NASC_FILHO, CIDADE_UF_FILHO, portador do RG RG_FILHO, que em minha companhia reside e pelo qual sou inteiramente responsável, a gravação da tatuagem representada pelo desenho DESENHO, assumo ainda, na qualidade do genitor do menor, plena responsabilidade pela gravação, eximindo de qualquer responsabilidade civil ou criminal o agente elaborador.
 
 Data: DATA_ATUAL
 
@@ -244,9 +244,6 @@ Ass. Do Responsável: ________________________________
             { id: "IDADE_RESPONSAVEL", label: "Idade do Responsável" },
             { id: "ESTADO_CIVIL_RESPONSAVEL", label: "Estado Civil" },
             { id: "RG_RESPONSAVEL", label: "RG do Responsável" },
-            { id: "ENDERECO_RESPONSAVEL", label: "Endereço Completo" },
-            { id: "BAIRRO_RESPONSAVEL", label: "Bairro" },
-            { id: "CEP_RESPONSAVEL", label: "CEP" },
             { id: "TEL_RESPONSAVEL", label: "Telefone" },
             { id: "NOME_FILHO", label: "Nome do Menor" },
             { id: "NASC_FILHO", label: "Nascimento do Menor" },
@@ -268,9 +265,6 @@ Ass. Do Responsável: ________________________________
 DADOS PESSOAIS
 Nome completo: NOME_COMPLETO
 RG: RG_ANAM CPF: CPF_ANAM Data de nasc.: NASC_ANAM
-Endereço: END_ANAM
-CEP: CEP_ANAM Cidade: CID_ANAM
-E-mail: EMAIL_ANAM
 Como nos conheceu: CONHECEU_ANAM WhatsApp: WHATS_ANAM
 
 HISTÓRICO DE SAÚDE
@@ -315,14 +309,10 @@ Obs.: OBS_PRO
 Profissional: PRO_PRO
 Valor: VALOR_PRO`}
           variables={[
-            { id: "NOME_COMPLETO", label: "Nome Completo" },
+            {id: "NOME_COMPLETO", label: "Nome Completo" },
             { id: "RG_ANAM", label: "RG" },
             { id: "CPF_ANAM", label: "CPF" },
             { id: "NASC_ANAM", label: "Nascimento" },
-            { id: "END_ANAM", label: "Endereço" },
-            { id: "CEP_ANAM", label: "CEP" },
-            { id: "CID_ANAM", label: "Cidade" },
-            { id: "EMAIL_ANAM", label: "E-mail" },
             { id: "CONHECEU_ANAM", label: "Como conheceu" },
             { id: "WHATS_ANAM", label: "WhatsApp" },
             
