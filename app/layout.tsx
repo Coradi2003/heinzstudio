@@ -39,6 +39,19 @@ export default function RootLayout({
       <body className={`${inter.className}`}>
         <DataLoader />
         <GlobalModals />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.deferredPrompt = null;
+              window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                window.deferredPrompt = e;
+                console.log('PWA Pronto para Instalar 🔥');
+                window.dispatchEvent(new Event('pwa-ready'));
+              });
+            `,
+          }}
+        />
         <div className="flex flex-col md:flex-row h-screen overflow-hidden">
           <Sidebar />
           <main className="flex-1 overflow-y-auto bg-background">

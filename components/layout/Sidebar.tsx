@@ -42,15 +42,19 @@ export function Sidebar() {
   const { deferredPrompt, setDeferredPrompt } = useUIStore();
 
   const handleInstall = async () => {
-    if (!deferredPrompt) {
+    // Busca o prompt do window ou da store
+    const promptEvent = (window as any).deferredPrompt || deferredPrompt;
+
+    if (!promptEvent) {
       alert("O instalador automático está carregando ou o seu Chrome não liberou a instalação. \n\nPara baixar agora: \nClique nos '3 pontinhos' do Chrome e selecione 'Instalar Aplicativo'.");
       return;
     }
     
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
+    promptEvent.prompt();
+    const { outcome } = await promptEvent.userChoice;
     
     if (outcome === 'accepted') {
+      (window as any).deferredPrompt = null;
       setDeferredPrompt(null);
     }
   };

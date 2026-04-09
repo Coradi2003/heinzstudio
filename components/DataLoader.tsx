@@ -55,20 +55,24 @@ export function DataLoader() {
     carregarConfiguracao();
     carregarClientes();
 
-    // Captura do Evento de Instalação (PWA)
-    if (typeof window !== 'undefined') {
-      const handleBeforeInstallPrompt = (e: any) => {
-        e.preventDefault();
-        setDeferredPrompt(e);
-        console.log('PWA: Gatilho de instalação capturado!');
-      };
-
-      window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
-      return () => {
-        window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-      };
+    // Registro do Service Worker para PWA (Mínimo exigido por alguns Chrome Android)
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
     }
+
+    // Ouvir o evento customizado do layout
+    const handlePwaReady = () => {
+      if ((window as any).deferredPrompt) {
+        setDeferredPrompt((window as any).deferredPrompt);
+      }
+    };
+
+    window.addEventListener('pwa-ready', handlePwaReady);
+    if ((window as any).deferredPrompt) handlePwaReady();
+
+    return () => {
+      window.removeEventListener('pwa-ready', handlePwaReady);
+    };
   }, [setDeferredPrompt]);
 
   return null;
