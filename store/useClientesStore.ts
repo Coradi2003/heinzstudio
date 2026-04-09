@@ -42,13 +42,7 @@ export const useClientesStore = create<ClientesStore>()((set) => ({
 
     const { data: insertedData, error: insertError } = await supabase
       .from('clientes')
-      .insert([{ 
-        nome: data.nome,
-        telefone: data.telefone,
-        notas: data.notas,
-        ultimaVisita: data.ultimaVisita,
-        user_id: userData.user.id 
-      }])
+      .insert([{ ...data, user_id: userData.user.id }])
       .select()
       .single();
 
