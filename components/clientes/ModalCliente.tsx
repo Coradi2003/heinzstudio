@@ -12,6 +12,15 @@ export function ModalCliente({ isOpen, onClose, initialData }: Props) {
   const [notas, setNotas] = useState("");
   const [dataNascimento, setDataNascimento] = useState("");
 
+  const handleDataNascimento = (value: string) => {
+    // Máscara automática: DD/MM/AAAA
+    const nums = value.replace(/\D/g, '').slice(0, 8);
+    let masked = nums;
+    if (nums.length > 2) masked = nums.slice(0,2) + '/' + nums.slice(2);
+    if (nums.length > 4) masked = nums.slice(0,2) + '/' + nums.slice(2,4) + '/' + nums.slice(4);
+    setDataNascimento(masked);
+  };
+
   useEffect(() => {
     if (initialData) {
       setNome(initialData.nome);
@@ -45,7 +54,7 @@ export function ModalCliente({ isOpen, onClose, initialData }: Props) {
         </div>
         <div>
            <label className="block text-sm font-semibold mb-1 text-gray-700">Data de Nascimento</label>
-           <input type="date" value={dataNascimento} onChange={e => setDataNascimento(e.target.value)} className="w-full px-4 py-3 rounded-xl border focus:border-primary outline-none" />
+           <input type="text" inputMode="numeric" placeholder="DD/MM/AAAA" value={dataNascimento} onChange={e => handleDataNascimento(e.target.value)} className="w-full px-4 py-3 rounded-xl border focus:border-primary outline-none" />
         </div>
         <div>
            <label className="block text-sm font-semibold mb-1 text-gray-700">Anotações / Preferências</label>
