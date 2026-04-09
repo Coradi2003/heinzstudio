@@ -16,10 +16,9 @@ interface TemplateProps {
   icon: any;
   initialText: string;
   variables: Variable[];
-  type: 'whatsapp' | 'print';
 }
 
-function DocumentEditor({ title, description, icon: Icon, initialText, variables, type }: TemplateProps) {
+function DocumentEditor({ title, description, icon: Icon, initialText, variables }: TemplateProps) {
   const [vars, setVars] = useState<Record<string, string>>({});
   const [text, setText] = useState(initialText);
 
@@ -39,44 +38,44 @@ function DocumentEditor({ title, description, icon: Icon, initialText, variables
 
   const previewTexto = getPreview();
 
-  const handleAction = () => {
-    if (type === 'whatsapp') {
-      const formatted = encodeURIComponent(previewTexto);
-      window.open(`https://wa.me/?text=${formatted}`, '_blank');
-    } else {
-      const printWindow = window.open('', '_blank');
-      if (printWindow) {
-        printWindow.document.write(`
-          <html>
-            <head>
-              <title>${title} - ${vars['NOME_COMPLETO'] || vars['NOME_CLIENTE'] || ''}</title>
-              <style>
-                body { 
-                  font-family: 'Inter', -apple-system, sans-serif; 
-                  padding: 40px; 
-                  line-height: 1.4; 
-                  color: #000;
-                  background: #fff;
-                  font-size: 11pt;
-                }
-                .content {
-                  white-space: pre-wrap;
-                  word-wrap: break-word;
-                }
-                h1 { border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; text-transform: uppercase; font-size: 16pt; text-align: center; }
-                @page { margin: 1.5cm; }
-                .footer { margin-top: 30px; text-align: center; font-size: 8pt; color: #666; font-style: italic; }
-              </style>
-            </head>
-            <body onload="window.print(); window.close();">
-              <h1>${title}</h1>
-              <div class="content">${previewTexto}</div>
-              <div class="footer">Documento gerado eletronicamente por Heinz Studio</div>
-            </body>
-          </html>
-        `);
-        printWindow.document.close();
-      }
+  const handleWhatsApp = () => {
+    const formatted = encodeURIComponent(previewTexto);
+    window.open(`https://wa.me/?text=${formatted}`, '_blank');
+  };
+
+  const handlePrint = () => {
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>${title} - ${vars['NOME_COMPLETO'] || vars['NOME_CLIENTE'] || ''}</title>
+            <style>
+              body { 
+                font-family: 'Inter', -apple-system, sans-serif; 
+                padding: 40px; 
+                line-height: 1.4; 
+                color: #000;
+                background: #fff;
+                font-size: 11pt;
+              }
+              .content {
+                white-space: pre-wrap;
+                word-wrap: break-word;
+              }
+              h1 { border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; text-transform: uppercase; font-size: 16pt; text-align: center; }
+              @page { margin: 1.5cm; }
+              .footer { margin-top: 30px; text-align: center; font-size: 8pt; color: #666; font-style: italic; }
+            </style>
+          </head>
+          <body onload="window.print(); window.close();">
+            <h1>${title}</h1>
+            <div class="content">${previewTexto}</div>
+            <div class="footer">Documento gerado eletronicamente por Heinz Studio</div>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
     }
   };
 
@@ -164,15 +163,27 @@ function DocumentEditor({ title, description, icon: Icon, initialText, variables
                 {previewTexto}
               </div>
               
-              <button 
-                onClick={handleAction}
-                className={`mt-6 w-full ${type === 'whatsapp' ? 'bg-[#25D366] hover:bg-[#20ba59]' : 'bg-black hover:bg-gray-800'} text-white font-black py-4.5 rounded-[20px] shadow-xl transition-all flex items-center justify-center gap-3 relative z-10 hover:scale-[1.02] active:scale-[0.98]`}
-              >
-                <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
-                  {type === 'whatsapp' ? <Send size={14} className="ml-0.5" /> : <Printer size={16} />}
-                </div>
-                {type === 'whatsapp' ? 'ENVIAR PELO WHATSAPP' : 'GERAR IMPRESSÃO'}
-              </button>
+              <div className="flex flex-col gap-3 mt-6">
+                <button 
+                  onClick={handlePrint}
+                  className="w-full bg-black hover:bg-gray-800 text-white font-black py-4.5 rounded-[20px] shadow-xl transition-all flex items-center justify-center gap-3 relative z-10 hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
+                    <Printer size={16} />
+                  </div>
+                  GERAR IMPRESSÃO
+                </button>
+
+                <button 
+                  onClick={handleWhatsApp}
+                  className="w-full bg-[#25D366] hover:bg-[#20ba59] text-white font-black py-4.5 rounded-[20px] shadow-xl transition-all flex items-center justify-center gap-3 relative z-10 hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
+                    <Send size={14} className="ml-0.5" />
+                  </div>
+                  ENVIAR PELO WHATSAPP
+                </button>
+              </div>
             </div>
           </div>
 
@@ -203,7 +214,6 @@ export default function ContratoPage() {
           title="Compromisso de Sessão"
           description="Termos básicos de agendamento, retoque e cancelamento."
           icon={ShieldCheck}
-          type="whatsapp"
           initialText={`Olá NOME_CLIENTE, este é o compromisso do nosso estúdio referente à realização do procedimento: SERVICO_TATTOO no valor de VALOR_SERVICO.
 
 Regras do Estúdio:
@@ -225,7 +235,6 @@ Assinado: Heinz Tattoo Studio`}
           title="Autorização de Menores"
           description="Termo legal para tatuagem em adolescentes com autorização dos pais."
           icon={UserCheck}
-          type="print"
           initialText={`TERMO DE AUTORIZAÇÃO DE TATUAGEM
 ESTÚDIO: HEINZ TATTOO STUDIO
 
@@ -259,7 +268,6 @@ Ass. Do Responsável: ________________________________
           title="Ficha de Anamnese"
           description="Histórico de saúde completo e termo de responsabilidade."
           icon={FileText}
-          type="print"
           initialText={`FICHA DE ANAMNESE E SAÚDE
 
 DADOS PESSOAIS
