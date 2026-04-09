@@ -206,13 +206,7 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
           });
         }
       }
-      
-      // Se for um novo agendamento, mostra a tela de sucesso. Se for edição, apenas fecha.
-      if (!initialData) {
-        setIsSuccess(true);
-      } else {
-        onClose();
-      }
+      setIsSuccess(true);
     } catch (err) {
       console.error(err);
       alert("Falha ao salvar agendamento. Verifique se rodou o comando SQL para adicionar a coluna 'imagem' na tabela 'agendamentos'.");
@@ -308,8 +302,12 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
               <CalendarCheck size={48} />
            </div>
            
-           <h3 className="text-2xl font-black text-gray-900 mb-2 uppercase tracking-tighter">Agendamento Confirmado!</h3>
-           <p className="text-gray-500 mb-10 max-w-xs font-medium">O horário para *${clienteNome || 'o cliente'}* foi reservado com sucesso no calendário.</p>
+           <h3 className="text-2xl font-black text-gray-900 mb-2 uppercase tracking-tighter">
+             {initialData ? "Alteração Salva!" : "Agendamento Confirmado!"}
+           </h3>
+           <p className="text-gray-500 mb-10 max-w-xs font-medium">
+             As informações para *${clienteNome || 'o cliente'}* foram {initialData ? "atualizadas" : "reservadas"} com sucesso no calendário.
+           </p>
 
            <div className="w-full space-y-3">
               <button 

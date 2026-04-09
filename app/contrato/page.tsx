@@ -151,25 +151,28 @@ function DocumentEditor({ id, title, description, icon: Icon, initialText, varia
               ))}
             </div>
 
-              <div className="relative">
-                <label className="text-[10px] uppercase font-bold text-gray-400 mb-1.5 ml-1 block tracking-widest">
-                  Texto Base (Modelo Oficial)
-                </label>
+              <div>
+                <div className="flex items-center justify-between mb-2 ml-1">
+                  <label className="text-[10px] uppercase font-bold text-gray-400 tracking-widest">
+                    Texto Base (Modelo Oficial)
+                  </label>
+                  
+                  <button 
+                    onClick={handleSaveTemplate}
+                    disabled={isSavingTemplate}
+                    className="flex items-center gap-2 text-[10px] font-bold text-gray-500 hover:text-primary transition-all bg-gray-50 hover:bg-primary/5 px-3 py-1.5 rounded-lg border border-gray-100 shadow-sm"
+                    title="Salvar alterações como padrão para sempre"
+                  >
+                    {isSavingTemplate ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
+                    SALVAR MODELO OFICIAL
+                  </button>
+                </div>
+                
                 <textarea 
                   value={text} 
                   onChange={e => setText(e.target.value)} 
                   className="w-full h-64 p-5 rounded-[24px] border border-gray-200 bg-white text-sm font-medium text-gray-600 focus:border-primary outline-none transition-all leading-relaxed shadow-inner"
                 ></textarea>
-                
-                <button 
-                  onClick={handleSaveTemplate}
-                  disabled={isSavingTemplate}
-                  className="absolute bottom-4 right-4 bg-white/80 backdrop-blur shadow-sm border border-gray-100 hover:border-primary p-2 px-3 rounded-xl flex items-center gap-2 text-[10px] font-bold text-gray-500 hover:text-primary transition-all"
-                  title="Salvar alterações como padrão para sempre"
-                >
-                  {isSavingTemplate ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
-                  SALVAR MODELO OFICIAL
-                </button>
               </div>
             </div>
 
