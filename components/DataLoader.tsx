@@ -18,12 +18,25 @@ export function DataLoader() {
   const carregarClientes = useClientesStore(state => state.carregarClientes);
 
   useEffect(() => {
-    carregarAgendamentos();
-    carregarTransacoes();
-    carregarProdutos();
-    carregarServicos();
-    carregarConfiguracao();
-    carregarClientes();
+    const supabase = createClient();
+
+    // Carrega dados SOMENTE quando a sessão estiver confirmada
+    const carregarTudo = () => {
+      carregarAgendamentos();
+      carregarTransacoes();
+      carregarProdutos();
+      carregarServicos();
+      carregarConfiguracao();
+      carregarClientes();
+    };
+
+    // Escuta mudanças de autenticação (login, refresh de token, etc)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session) {
+        // Sessão confirmada: carrega todos os dados
+        carregarTudo();
+      }
+    });
 
     // Registro do Service Worker (PWA) - Robusto
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
@@ -36,6 +49,11 @@ export function DataLoader() {
       if (document.readyState === 'complete') register();
       else window.addEventListener('load', register);
     }
+
+    // Limpa o listener ao desmontar
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   return null;
