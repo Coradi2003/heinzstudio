@@ -39,26 +39,11 @@ export function Sidebar() {
   const router = useRouter();
   const supabase = createClient();
   const [isOpen, setIsOpen] = useState(false);
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [showInstallBtn, setShowInstallBtn] = useState(false);
-
-  useEffect(() => {
-    const handler = (e: any) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-      setShowInstallBtn(true);
-    };
-
-    window.addEventListener('beforeinstallprompt', handler);
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handler);
-    };
-  }, []);
+  const { deferredPrompt, setDeferredPrompt } = useUIStore();
 
   const handleInstall = async () => {
     if (!deferredPrompt) {
-      alert("O instalador automático está carregando ou você já possui o app. \n\nPara instalar manualmente: \nNo Chrome, clique nos '3 pontinhos' e selecione 'Instalar Aplicativo'.");
+      alert("O instalador automático está carregando ou o seu Chrome não liberou a instalação. \n\nPara baixar agora: \nClique nos '3 pontinhos' do Chrome e selecione 'Instalar Aplicativo'.");
       return;
     }
     
@@ -66,7 +51,6 @@ export function Sidebar() {
     const { outcome } = await deferredPrompt.userChoice;
     
     if (outcome === 'accepted') {
-      setShowInstallBtn(false);
       setDeferredPrompt(null);
     }
   };

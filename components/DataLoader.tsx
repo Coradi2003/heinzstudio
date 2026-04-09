@@ -7,6 +7,7 @@ import { useProdutosStore } from "@/store/useProdutosStore";
 import { useServicosStore } from "@/store/useServicosStore";
 import { useConfigStore } from "@/store/useConfigStore";
 import { useClientesStore } from "@/store/useClientesStore";
+import { useUIStore } from "@/store/useUIStore";
 
 export function DataLoader() {
   const carregarAgendamentos = useAgendaStore(state => state.carregarAgendamentos);
@@ -15,6 +16,7 @@ export function DataLoader() {
   const carregarServicos = useServicosStore(state => state.carregarServicos);
   const carregarConfiguracao = useConfigStore(state => state.carregarConfiguracao);
   const carregarClientes = useClientesStore(state => state.carregarClientes);
+  const setDeferredPrompt = useUIStore(state => state.setDeferredPrompt);
 
   const corHexa = useConfigStore(state => state.corHexa);
   const bgHexa = useConfigStore(state => state.bgHexa);
@@ -54,22 +56,24 @@ export function DataLoader() {
     carregarClientes();
 
     // Registro do Service Worker para PWA (mais robusto)
-    if ('serviceWorker' in navigator && typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      // Captura o evento de instalação globalmente
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        setDeferredPrompt(e);
+        console.log('PWA: Evento antes de instalar capturado!');
+      });
+
       const registerSW = () => {
-        navigator.serviceWorker.register('/sw.js').then(registration => {
-          console.log('PWA: Service Worker registrado!', registration.scope);
-        }).catch(err => {
-          console.warn('PWA: Falha no SW:', err);
-        });
+        navigator.serviceWorker.register('/sw.js').then(reg => {
+          console.log('PWA: SW registrado!', reg.scope);
+        }).catch(err => console.warn('PWA: Erro no SW:', err));
       };
 
-      if (document.readyState === 'complete') {
-        registerSW();
-      } else {
-        window.addEventListener('load', registerSW);
-      }
+      if (document.readyState === 'complete') registerSW();
+      else window.addEventListener('load', registerSW);
     }
-  }, []);
+  }, [setDeferredPrompt]);
 
   return null;
 }
