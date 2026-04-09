@@ -9,6 +9,11 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Heinz Tattoo Studio",
   description: "Sistema de gestão rápido e simples para tatuadores.",
+  manifest: "/manifest.json",
+  icons: {
+    icon: "/logo.jpeg",
+    apple: "/logo.jpeg",
+  },
   appleWebApp: {
     title: "Heinz Studio",
     statusBarStyle: "default",
