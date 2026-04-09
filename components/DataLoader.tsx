@@ -64,6 +64,16 @@ export function DataLoader() {
       if (document.readyState === 'complete') register();
       else window.addEventListener('load', register);
     }
+
+    // Verificação de Sessão Ativa
+    const checkSession = async () => {
+      const supabase = createClient();
+      const { data } = await supabase.auth.getUser();
+      if (!data.user && !window.location.pathname.startsWith('/login')) {
+         window.location.href = '/login';
+      }
+    };
+    checkSession();
   }, []);
 
   return null;
