@@ -9,8 +9,7 @@ import { useConfigStore } from "@/store/useConfigStore";
 export default function ConfiguracoesPage() {
   const router = useRouter();
   const supabase = createClient();
-  const salvarCor = useConfigStore(state => state.salvarCor);
-  const salvarBg = useConfigStore(state => state.salvarBg);
+  const salvarConfiguracoes = useConfigStore(state => state.salvarConfiguracoes);
   const corSalva = useConfigStore(state => state.corHexa);
   const bgSalvo = useConfigStore(state => state.bgHexa);
   const [loadingConfig, setLoadingConfig] = useState(false);
@@ -54,8 +53,10 @@ export default function ConfiguracoesPage() {
   const handleSaveColor = async () => {
     setLoadingConfig(true);
     try {
-      await salvarCor(corAtiva);
-      await salvarBg(fundoAtivo);
+      await salvarConfiguracoes({
+        corHexa: corAtiva,
+        bgHexa: fundoAtivo
+      });
     } finally {
       setLoadingConfig(false);
     }
