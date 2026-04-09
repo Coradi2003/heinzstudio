@@ -7,7 +7,6 @@ import { useProdutosStore } from "@/store/useProdutosStore";
 import { useServicosStore } from "@/store/useServicosStore";
 import { useConfigStore } from "@/store/useConfigStore";
 import { useClientesStore } from "@/store/useClientesStore";
-import { useUIStore } from "@/store/useUIStore";
 
 export function DataLoader() {
   const carregarAgendamentos = useAgendaStore(state => state.carregarAgendamentos);
@@ -16,7 +15,6 @@ export function DataLoader() {
   const carregarServicos = useServicosStore(state => state.carregarServicos);
   const carregarConfiguracao = useConfigStore(state => state.carregarConfiguracao);
   const carregarClientes = useClientesStore(state => state.carregarClientes);
-  const setDeferredPrompt = useUIStore(state => state.setDeferredPrompt);
 
   const corHexa = useConfigStore(state => state.corHexa);
   const bgHexa = useConfigStore(state => state.bgHexa);
@@ -54,26 +52,7 @@ export function DataLoader() {
     carregarServicos();
     carregarConfiguracao();
     carregarClientes();
-
-    // Registro do Service Worker para PWA (Mínimo exigido por alguns Chrome Android)
-    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(() => {});
-    }
-
-    // Ouvir o evento customizado do layout
-    const handlePwaReady = () => {
-      if ((window as any).deferredPrompt) {
-        setDeferredPrompt((window as any).deferredPrompt);
-      }
-    };
-
-    window.addEventListener('pwa-ready', handlePwaReady);
-    if ((window as any).deferredPrompt) handlePwaReady();
-
-    return () => {
-      window.removeEventListener('pwa-ready', handlePwaReady);
-    };
-  }, [setDeferredPrompt]);
+  }, []);
 
   return null;
 }

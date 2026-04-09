@@ -3,20 +3,13 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { DataLoader } from "@/components/DataLoader";
+import { GlobalModals } from "@/components/layout/GlobalModals";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Heinz Tattoo Studio",
   description: "Sistema de gestão rápido e simples para tatuadores.",
-  appleWebApp: {
-    title: "Heinz Studio",
-    statusBarStyle: "default",
-    capable: true,
-  },
-  icons: {
-    apple: "/logo.jpeg",
-  }
 };
 
 export const viewport: Viewport = {
@@ -26,8 +19,6 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
 };
-
-import { GlobalModals } from "@/components/layout/GlobalModals";
 
 export default function RootLayout({
   children,
@@ -39,19 +30,6 @@ export default function RootLayout({
       <body className={`${inter.className}`}>
         <DataLoader />
         <GlobalModals />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.deferredPrompt = null;
-              window.addEventListener('beforeinstallprompt', (e) => {
-                e.preventDefault();
-                window.deferredPrompt = e;
-                console.log('PWA Pronto para Instalar 🔥');
-                window.dispatchEvent(new Event('pwa-ready'));
-              });
-            `,
-          }}
-        />
         <div className="flex flex-col md:flex-row h-screen overflow-hidden">
           <Sidebar />
           <main className="flex-1 overflow-y-auto bg-background">

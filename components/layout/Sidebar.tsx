@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { createClient } from "@/lib/supabase";
 import { 
   LayoutDashboard, 
@@ -17,10 +17,8 @@ import {
   LogOut,
   Menu,
   X,
-  Zap,
-  Download
+  Zap
 } from "lucide-react";
-import { useUIStore } from "@/store/useUIStore";
 
 const menuItems = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -39,20 +37,6 @@ export function Sidebar() {
   const router = useRouter();
   const supabase = createClient();
   const [isOpen, setIsOpen] = useState(false);
-  const { deferredPrompt, setDeferredPrompt } = useUIStore();
-
-  const handleInstall = async () => {
-    const promptEvent = (window as any).deferredPrompt || deferredPrompt;
-    if (!promptEvent) return;
-    
-    promptEvent.prompt();
-    const { outcome } = await promptEvent.userChoice;
-    
-    if (outcome === 'accepted') {
-      (window as any).deferredPrompt = null;
-      setDeferredPrompt(null);
-    }
-  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -114,6 +98,7 @@ export function Sidebar() {
         <button 
           onClick={() => {
             setIsOpen(false);
+            const { useUIStore } = require("@/store/useUIStore");
             useUIStore.getState().openVendaRapida();
           }}
           className="flex items-center gap-3 w-full px-4 py-3.5 mb-4 rounded-2xl bg-yellow-50 text-yellow-700 border-2 border-yellow-200 hover:bg-yellow-100 transition-all font-black uppercase text-[10px] tracking-widest shadow-sm"
@@ -121,17 +106,6 @@ export function Sidebar() {
           <Zap size={18} fill="currentColor" />
           <span>Venda Rápida</span>
         </button>
-
-        {/* BOTÃO INSTALAR APP - APARECE APENAS QUANDO DISPONÍVEL */}
-        {(typeof window !== 'undefined' && ((window as any).deferredPrompt || deferredPrompt)) && (
-          <button 
-            onClick={handleInstall}
-            className="flex items-center gap-3 w-full px-4 py-3.5 mb-4 rounded-2xl bg-primary/10 text-primary border-2 border-primary/20 hover:bg-primary/20 transition-all font-black uppercase text-[10px] tracking-widest shadow-sm animate-pulse"
-          >
-            <Download size={18} />
-            <span>Instalar App Heinz 📱</span>
-          </button>
-        )}
 
         {menuItems.map((item) => {
           const isActive = pathname === item.href;
