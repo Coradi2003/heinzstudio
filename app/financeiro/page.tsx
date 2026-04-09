@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Building2, User, ArrowUpRight, ArrowDownRight, Wallet, Pencil, Trash2, Calendar, FileText } from "lucide-react";
+import { Plus, Building2, User, ArrowUpRight, ArrowDownRight, Wallet, Pencil, Trash2, Calendar, FileText, QrCode, Banknote, CreditCard } from "lucide-react";
 import { useFinanceiroStore, Transacao } from "@/store/useFinanceiroStore";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -40,22 +40,47 @@ export default function FinanceiroPage() {
   const totalDespesas = transacoesFiltradas.filter(t => t.tipo === 'despesa').reduce((acc, curr) => acc + curr.valor, 0);
   const saldo = totalReceitas - totalDespesas;
 
+  const [metodoRelatorio, setMetodoRelatorio] = useState<'todos' | 'Pix' | 'Dinheiro' | 'Cartão'>('todos');
+
   return (
     <div className="min-h-screen p-4 md:p-8 max-w-7xl mx-auto">
       {/* 0. Relatórios Quick Actions */}
-      <div className="flex gap-2 mb-6 no-print max-w-sm">
-         <Link 
-           href={`/relatorio?tipo=mensal&mes=${new Date().getMonth() + 1}&ano=${new Date().getFullYear()}`}
-           className="flex-1 bg-white border border-gray-100 p-3 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-wider text-gray-400 hover:text-primary hover:border-primary transition shadow-sm active:scale-95"
-         >
-           <FileText size={14} /> Relatório Mensal
-         </Link>
-         <Link 
-           href={`/relatorio?tipo=anual&ano=${new Date().getFullYear()}`}
-           className="flex-1 bg-white border border-gray-100 p-3 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-wider text-gray-400 hover:text-primary hover:border-primary transition shadow-sm active:scale-95"
-         >
-           <FileText size={14} /> Relatório Anual
-         </Link>
+      <div className="bg-white border border-gray-100 p-4 rounded-[28px] shadow-sm space-y-4 no-print mb-8">
+         <div className="flex items-center justify-between px-1">
+            <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Filtro do Relatório</span>
+            <div className="flex bg-gray-50 p-1 rounded-xl border border-gray-100">
+               {[
+                 { id: 'todos', label: 'Todos' },
+                 { id: 'Pix', icon: QrCode },
+                 { id: 'Dinheiro', icon: Banknote },
+                 { id: 'Cartão', icon: CreditCard }
+               ].map((m) => (
+                 <button
+                   key={m.id}
+                   onClick={() => setMetodoRelatorio(m.id as any)}
+                   className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-2 ${metodoRelatorio === m.id ? 'bg-white shadow-sm text-primary ring-1 ring-black/5' : 'text-gray-400 hover:text-gray-600'}`}
+                 >
+                   {m.icon ? <m.icon size={14} /> : <span className="text-[10px] font-bold uppercase px-1">Geral</span>}
+                   {m.id !== 'todos' && <span className="text-[10px] font-bold uppercase hidden md:inline">{m.id}</span>}
+                 </button>
+               ))}
+            </div>
+         </div>
+         
+         <div className="flex gap-2">
+            <Link 
+              href={`/relatorio?tipo=mensal&mes=${new Date().getMonth() + 1}&ano=${new Date().getFullYear()}&metodo=${metodoRelatorio}`}
+              className="flex-1 bg-gray-900 text-white p-3.5 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest hover:bg-black transition shadow-lg active:scale-95"
+            >
+              <FileText size={14} /> Relatório Mensal
+            </Link>
+            <Link 
+              href={`/relatorio?tipo=anual&ano=${new Date().getFullYear()}&metodo=${metodoRelatorio}`}
+              className="flex-1 bg-white border-2 border-gray-900 p-3.5 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-900 hover:bg-gray-50 transition active:scale-95"
+            >
+              <FileText size={14} /> Relatório Anual
+            </Link>
+         </div>
       </div>
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">

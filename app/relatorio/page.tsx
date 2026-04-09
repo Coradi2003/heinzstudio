@@ -5,9 +5,9 @@ import { useFinanceiroStore } from "@/store/useFinanceiroStore";
 import { useSearchParams, useRouter } from "next/navigation";
 import { format, parseISO, startOfMonth, endOfMonth, startOfYear, endOfYear, isWithinInterval } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Printer, ArrowLeft, BarChart2, TrendingUp, TrendingDown, Wallet } from "lucide-react";
+import { Printer, ArrowLeft, BarChart2, Wallet, QrCode, Banknote, CreditCard } from "lucide-react";
 
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 
 function RelatorioContent() {
   const searchParams = useSearchParams();
@@ -16,6 +16,26 @@ function RelatorioContent() {
   const tipo = searchParams.get("tipo") || "mensal";
   const mes = parseInt(searchParams.get("mes") || String(new Date().getMonth() + 1));
   const ano = parseInt(searchParams.get("ano") || String(new Date().getFullYear()));
+  const metodoFiltro = searchParams.get("metodo") || "todos";
+
+  useEffect(() => {
+    // Forçar modo claro no elemento raiz
+    const html = document.documentElement;
+    const body = document.body;
+    const hadDark = html.classList.contains('dark');
+    
+    html.classList.remove('dark');
+    html.style.backgroundColor = '#ffffff';
+    body.style.backgroundColor = '#ffffff';
+    body.style.color = '#000000';
+
+    return () => {
+      if (hadDark) html.classList.add('dark');
+      html.style.backgroundColor = '';
+      body.style.backgroundColor = '';
+      body.style.color = '';
+    };
+  }, []);
 
   const { agendamentos } = useAgendaStore();
   const { transacoes } = useFinanceiroStore();
@@ -35,10 +55,15 @@ function RelatorioContent() {
   }
 
   // 2. Filtrar Dados
-  const transactionsPeriod = transacoes.filter(t => {
+  let transactionsPeriod = transacoes.filter(t => {
     const d = new Date(t.data);
     return isWithinInterval(d, { start: startDate, end: endDate });
   });
+
+  // Filtro por Método de Pagamento (Filtra TUDO como solicitado)
+  if (metodoFiltro !== "todos") {
+    transactionsPeriod = transactionsPeriod.filter(t => t.metodo === metodoFiltro);
+  }
 
   const agendamentosPeriod = agendamentos.filter(a => {
     const d = parseISO(a.dataInicio);
@@ -65,30 +90,32 @@ function RelatorioContent() {
   };
 
   return (
-    <div className="min-h-screen bg-white text-black p-4 md:p-10 font-sans max-w-4xl mx-auto shadow-2xl my-0 md:my-10 rounded-sm border-x border-gray-100 flex flex-col">
+    <div className="min-h-screen bg-white text-black p-4 md:p-10 font-sans max-w-4xl mx-auto my-0 md:my-10 border border-gray-200 flex flex-col shadow-none print:m-0 print:p-0 print:border-0">
       <style jsx global>{`
         /* Forçar modo claro absoluto para esta página */
-        body { background-color: #f3f4f6 !important; color: black !important; }
-        .dark-theme body { background-color: #f3f4f6 !important; }
-        * { border-color: #e5e7eb !important; }
+        :root { --background: #ffffff !important; --foreground: #000000 !important; }
+        html, body { background-color: white !important; color: black !important; }
+        .dark { background-color: white !important; color: black !important; }
+        * { border-color: #000000 !important; color: black !important; }
         
         @media print {
-          body { background-color: white !important; }
-          .min-h-screen { margin: 0 !important; padding: 0 !important; shadow: none !important; border: none !important; }
+          @page { margin: 1cm; }
+          body { background-color: white !important; -webkit-print-color-adjust: exact; }
+          .no-print { display: none !important; }
         }
       `}</style>
 
-      {/* Barra de Ações (Sone na Impressão) */}
-      <div className="flex justify-between items-center mb-10 no-print bg-white p-4 rounded-2xl border border-gray-200 shadow-sm">
-        <button onClick={() => router.back()} className="flex items-center gap-2 text-gray-500 hover:text-black font-bold transition">
+      {/* Barra de Ações (Some na Impressão) */}
+      <div className="flex justify-between items-center mb-10 no-print bg-gray-50 p-4 rounded-2xl border border-gray-200">
+        <button onClick={() => router.back()} className="flex items-center gap-2 text-gray-900 font-bold transition">
           <ArrowLeft size={18} />
           Voltar
         </button>
         <div className="flex items-center gap-3">
-          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest hidden md:inline">Relatório Oficial</span>
+          <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest hidden md:inline">Relatório {metodoFiltro === 'todos' ? 'Geral' : metodoFiltro.toUpperCase()}</span>
           <button 
             onClick={handlePrint}
-            className="bg-black text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:opacity-80 transition shadow-lg"
+            className="bg-black text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:opacity-80 transition"
           >
             <Printer size={16} />
             Imprimir / PDF
@@ -100,29 +127,30 @@ function RelatorioContent() {
       <div className="border-b-4 border-black pb-8 mb-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
           <h1 className="text-5xl font-black uppercase tracking-tighter leading-none mb-2">Relatório</h1>
-          <p className="text-xl font-black text-gray-800 uppercase tracking-tight">
+          <p className="text-xl font-black text-gray-900 uppercase tracking-tight">
             ESTÚDIO {tipo === 'mensal' ? `/ ${format(startDate, 'MMMM yyyy', { locale: ptBR })}` : `/ ANO ${ano}`}
+            {metodoFiltro !== 'todos' && <span className="text-gray-500 ml-2">[{metodoFiltro}]</span>}
           </p>
         </div>
         <div className="text-left md:text-right border-l-2 md:border-l-0 md:border-r-2 border-black pl-4 md:pr-4">
           <p className="text-xs font-black uppercase tracking-widest">Heinz Tattoo Studio</p>
-          <p className="text-[10px] font-bold text-gray-500">Documento Gerado: {format(new Date(), "dd/MM/yyyy HH:mm")}</p>
+          <p className="text-[10px] font-bold text-gray-800">Documento Gerado: {format(new Date(), "dd/MM/yyyy HH:mm")}</p>
         </div>
       </div>
 
-      {/* GRID DE RESUMO RÁPIDO - Fix Padding and Content Fit */}
+      {/* GRID DE RESUMO RÁPIDO */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
-        <div className="border-2 border-black p-5 rounded-2xl flex flex-col justify-center min-h-[100px]">
-          <p className="text-[10px] font-black uppercase mb-1 text-gray-400 tracking-widest">Total Receitas</p>
+        <div className="border-2 border-black p-5 rounded-sm flex flex-col justify-center min-h-[100px]">
+          <p className="text-[10px] font-black uppercase mb-1 text-gray-500 tracking-widest">Total Receitas</p>
           <p className="text-2xl font-black truncate">{totalReceitas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
         </div>
-        <div className="border-2 border-black p-5 rounded-2xl flex flex-col justify-center min-h-[100px]">
-          <p className="text-[10px] font-black uppercase mb-1 text-gray-400 tracking-widest">Total Despesas</p>
+        <div className="border-2 border-black p-5 rounded-sm flex flex-col justify-center min-h-[100px]">
+          <p className="text-[10px] font-black uppercase mb-1 text-gray-500 tracking-widest">Total Despesas</p>
           <p className="text-2xl font-black truncate">{totalDespesas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
         </div>
-        <div className="bg-black text-white p-5 rounded-2xl shadow-xl flex flex-col justify-center min-h-[100px]">
-          <p className="text-[10px] font-black uppercase mb-1 opacity-60 tracking-widest">Lucro Líquido</p>
-          <p className="text-2xl font-black truncate">{lucro.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+        <div className="bg-black text-white p-5 rounded-sm flex flex-col justify-center min-h-[100px]">
+          <p className="text-[10px] font-black uppercase mb-1 opacity-80 tracking-widest">Lucro Líquido</p>
+          <p className="text-2xl font-black truncate text-white">{lucro.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
         </div>
       </div>
 
@@ -130,29 +158,28 @@ function RelatorioContent() {
       <div className="mb-14">
         <h2 className="text-xl font-black uppercase border-b-2 border-black mb-6 flex items-center gap-2 pb-1 tracking-tight">
           <Wallet size={20} />
-          Detalhamento Financeiro
+          Detalhamento por Meio de Pagamento
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
           <div className="space-y-4">
-             <div className="flex justify-between border-b-2 border-gray-50 py-2">
-                <span className="font-bold text-gray-500 uppercase text-[11px] tracking-wider">Entradas via PIX</span>
+             <div className="flex justify-between border-b border-black py-2">
+                <span className="font-bold flex items-center gap-2 text-xs uppercase tracking-wider"><QrCode size={14}/> Pix</span>
                 <span className="font-black text-lg">{porPix.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
              </div>
-             <div className="flex justify-between border-b-2 border-gray-50 py-2">
-                <span className="font-bold text-gray-500 uppercase text-[11px] tracking-wider">Entradas em Dinheiro</span>
+             <div className="flex justify-between border-b border-black py-2">
+                <span className="font-bold flex items-center gap-2 text-xs uppercase tracking-wider"><Banknote size={14}/> Dinheiro</span>
                 <span className="font-black text-lg">{porDinheiro.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
              </div>
-             <div className="flex justify-between border-b-2 border-gray-50 py-2">
-                <span className="font-bold text-gray-500 uppercase text-[11px] tracking-wider">Entradas em Cartão</span>
+             <div className="flex justify-between border-b border-black py-2">
+                <span className="font-bold flex items-center gap-2 text-xs uppercase tracking-wider"><CreditCard size={14}/> Cartão</span>
                 <span className="font-black text-lg">{porCartao.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
              </div>
           </div>
-          <div className="bg-gray-100 p-6 rounded-3xl border-l-4 border-black">
-             <p className="text-[10px] font-black uppercase text-black mb-3 tracking-widest underline decoration-2 underline-offset-4">Análise Operacional</p>
-             <p className="text-sm leading-relaxed font-medium">
-               Relatório referente ao faturamento bruto de <b>{totalReceitas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</b>. 
-               {lucro > 0 ? " O resultado operacional demonstra saúde financeira positiva no período analisado." : " Recomenda-se uma revisão estratégica dos custos fixos e variáveis."} 
-               Predominância de recebimento: {porPix > porDinheiro && porPix > porCartao ? "PIX" : porCartao > porDinheiro ? "CARTÃO" : "DINHEIRO"}.
+          <div className="bg-gray-50 p-6 border-l-4 border-black">
+             <p className="text-[10px] font-black uppercase text-black mb-3 tracking-widest underline decoration-2 underline-offset-4">Nota Operacional</p>
+             <p className="text-sm leading-relaxed font-bold">
+               Este relatório contém dados filtrados {metodoFiltro === 'todos' ? 'de todas as formas de pagamento' : `exclusivamente para pagamentos via ${metodoFiltro.toUpperCase()}`}. 
+               O volume total capturado é de <b>{totalReceitas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</b>.
              </p>
           </div>
         </div>
@@ -162,23 +189,23 @@ function RelatorioContent() {
       <div className="mb-14">
         <h2 className="text-xl font-black uppercase border-b-2 border-black mb-6 flex items-center gap-2 pb-1 tracking-tight">
           <BarChart2 size={20} />
-          Evolução Comercial
+          Evolução Comercial (Geral)
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="p-5 border-2 border-gray-100 rounded-2xl text-center">
-               <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Carga Total</p>
+            <div className="p-5 border border-black rounded-sm text-center">
+               <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1">Total</p>
                <p className="text-3xl font-black">{agendamentosPeriod.length}</p>
             </div>
-            <div className="p-5 border-2 border-gray-100 rounded-2xl text-center bg-gray-50">
-               <p className="text-[9px] font-black text-green-600 uppercase tracking-widest mb-1">Concluídos</p>
+            <div className="p-5 border border-black rounded-sm text-center">
+               <p className="text-[9px] font-black text-gray-900 uppercase tracking-widest mb-1">Concluídos</p>
                <p className="text-3xl font-black">{concluidos.length}</p>
             </div>
-            <div className="p-5 border-2 border-gray-100 rounded-2xl text-center">
-               <p className="text-[9px] font-black text-red-600 uppercase tracking-widest mb-1">Rejeitados</p>
+            <div className="p-5 border border-black rounded-sm text-center">
+               <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1">Cancelados</p>
                <p className="text-3xl font-black">{cancelados.length}</p>
             </div>
-            <div className="p-5 border-2 border-gray-100 rounded-2xl text-center">
-               <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Pendentes</p>
+            <div className="p-5 border border-black rounded-sm text-center">
+               <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1">Pendentes</p>
                <p className="text-3xl font-black">{pendentes.length}</p>
             </div>
         </div>
@@ -187,38 +214,33 @@ function RelatorioContent() {
       {/* SEÇÃO: LISTAGEM DE TRANSAÇÕES */}
       <div className="flex-1">
         <h2 className="text-xl font-black uppercase border-b-2 border-black mb-4 pb-1 tracking-tight">Registro de Movimentações</h2>
-        <table className="w-full text-left text-[11px]">
+        <table className="w-full text-left text-[11px] border-collapse">
           <thead>
-            <tr className="border-b-2 border-black bg-gray-50 text-gray-500">
-              <th className="p-3 uppercase font-black">Data</th>
-              <th className="p-3 uppercase font-black">Descrição do Item</th>
-              <th className="p-3 uppercase font-black">Categoria</th>
-              <th className="p-3 uppercase font-black text-right">Valor Líquido</th>
+            <tr className="border-b-2 border-black bg-gray-100">
+              <th className="p-3 uppercase font-black border border-black">Data</th>
+              <th className="p-3 uppercase font-black border border-black">Descrição</th>
+              <th className="p-3 uppercase font-black border border-black">Método</th>
+              <th className="p-3 uppercase font-black border border-black text-right">Valor</th>
             </tr>
           </thead>
           <tbody>
-            {transactionsPeriod.slice(0, 100).map((t, idx) => (
-              <tr key={idx} className="border-b border-gray-100 hover:bg-gray-50/50">
-                <td className="p-3 font-bold">{format(new Date(t.data), "dd/MM")}</td>
-                <td className="p-3 font-bold text-sm">{t.descricao}</td>
-                <td className="p-3 uppercase text-[9px] font-black text-gray-400">{t.categoria}</td>
-                <td className={`p-3 text-right font-black text-sm ${t.tipo === 'receita' ? 'text-black' : 'text-gray-400'}`}>
+            {transactionsPeriod.map((t, idx) => (
+              <tr key={idx} className="border-b border-black">
+                <td className="p-3 font-bold border border-black">{format(new Date(t.data), "dd/MM")}</td>
+                <td className="p-3 font-bold text-sm border border-black">{t.descricao}</td>
+                <td className="p-3 uppercase text-[9px] font-black border border-black">{t.metodo}</td>
+                <td className="p-3 text-right font-black text-sm border border-black">
                   {t.tipo === 'despesa' ? '-' : ''}{t.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-        {transactionsPeriod.length > 100 && (
-          <p className="text-[10px] italic text-gray-400 mt-4 p-4 bg-gray-50 rounded-xl text-center font-bold">
-            * Lista limitada às primeiras 100 movimentações para otimização do documento.
-          </p>
-        )}
       </div>
 
       <div className="mt-16 pt-10 border-t-2 border-black text-center">
         <p className="text-[10px] font-black uppercase tracking-widest text-black">Heinz Tattoo Studio - Documento de Validade Interna</p>
-        <p className="text-[9px] text-gray-400 mt-1 italic">Este relatório é gerado automaticamente pelo sistema de gestão Heinz Studio.</p>
+        <p className="text-[9px] text-gray-500 mt-1 italic">Este relatório é gerado automaticamente pelo sistema de gestão Heinz Studio.</p>
       </div>
 
     </div>
