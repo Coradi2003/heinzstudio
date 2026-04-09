@@ -55,23 +55,19 @@ export function DataLoader() {
     carregarConfiguracao();
     carregarClientes();
 
-    // Registro do Service Worker para PWA (mais robusto)
-    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-      // Captura o evento de instalação globalmente
-      window.addEventListener('beforeinstallprompt', (e) => {
+    // Captura do Evento de Instalação (PWA)
+    if (typeof window !== 'undefined') {
+      const handleBeforeInstallPrompt = (e: any) => {
         e.preventDefault();
         setDeferredPrompt(e);
-        console.log('PWA: Evento antes de instalar capturado!');
-      });
-
-      const registerSW = () => {
-        navigator.serviceWorker.register('/sw.js').then(reg => {
-          console.log('PWA: SW registrado!', reg.scope);
-        }).catch(err => console.warn('PWA: Erro no SW:', err));
+        console.log('PWA: Gatilho de instalação capturado!');
       };
 
-      if (document.readyState === 'complete') registerSW();
-      else window.addEventListener('load', registerSW);
+      window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+      return () => {
+        window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      };
     }
   }, [setDeferredPrompt]);
 
