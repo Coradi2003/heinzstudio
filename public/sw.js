@@ -1,16 +1,15 @@
-const CACHE_NAME = 'heinz-studio-v4';
+const CACHE_NAME = 'heinz-studio-v5';
 const OFFLINE_URL = '/offline.html';
 
+// Só guardamos o que é 100% estático e necessário para o app abrir
 const ASSETS_TO_CACHE = [
-  '/',
-  '/manifest.json',
   '/offline.html',
+  '/manifest.json',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
   '/logo.jpeg'
 ];
 
-// Instalação e Cache Inicial
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
@@ -20,7 +19,6 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// Ativação e limpeza de cache antigo
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -36,17 +34,15 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Estratégia de Fetch
+// ESTRATÉGIA DE REDE PURA PARA DADOS E PÁGINAS DINÂMICAS
 self.addEventListener('fetch', (event) => {
-  // 1. Ignora requisições que não sejam HTTP/S (extensões, etc)
   if (!event.request.url.startsWith('http')) return;
 
-  // 2. IMPORTANTE: Só interceptamos requisições GET.
-  // Se for POST, PUT, DELETE (salvar dados), o SW NÃO CHAMA event.respondWith.
-  // Isso faz com que o navegador lide com a requisição de forma nativa e segura.
+  // Se for qualquer coisa que não seja GET (Salvar, Editar, Deletar), sai da frente.
   if (event.request.method !== 'GET') return;
 
-  // Se for uma navegação (mudar de página)
+  // Para navegação de páginas: SEMPRE REDE. 
+  // Só mostra o 'offline.html' se a rede falhar de verdade.
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request).catch(() => {
@@ -56,23 +52,11 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Para outros arquivos (images, scripts, etc)
+  // Para outros arquivos (imagens do sistema, manifest, etc)
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-
-      return fetch(event.request).then((response) => {
-        // Se a rede respondeu e for uma requisição GET válida, guardamos no cache
-        if (response && response.status === 200 && response.type === 'basic') {
-          const responseToCache = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseToCache);
-          });
-        }
-        return response;
-      });
+      if (cachedResponse) return cachedResponse;
+      return fetch(event.request);
     })
   );
 });
