@@ -71,13 +71,13 @@ export default function FinanceiroPage() {
          
          <div className="flex gap-2">
             <Link 
-              href={`/relatorio?tipo=mensal&mes=${new Date().getMonth() + 1}&ano=${new Date().getFullYear()}&metodo=${metodoRelatorio}`}
+              href={`/relatorio?tipo=mensal&mes=${new Date().getMonth() + 1}&ano=${new Date().getFullYear()}&metodo=${metodoRelatorio}&conta=${contaVisualizacao}`}
               className="flex-1 bg-gray-900 text-white p-3.5 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest hover:bg-black transition shadow-lg active:scale-95"
             >
               <FileText size={14} /> Relatório Mensal
             </Link>
             <Link 
-              href={`/relatorio?tipo=anual&ano=${new Date().getFullYear()}&metodo=${metodoRelatorio}`}
+              href={`/relatorio?tipo=anual&ano=${new Date().getFullYear()}&metodo=${metodoRelatorio}&conta=${contaVisualizacao}`}
               className="flex-1 bg-white border-2 border-gray-900 p-3.5 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-900 hover:bg-gray-50 transition active:scale-95"
             >
               <FileText size={14} /> Relatório Anual

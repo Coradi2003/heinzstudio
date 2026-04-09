@@ -19,6 +19,12 @@ export default function ConfiguracoesPage() {
     { nome: "Preto Dark", bg: "bg-gray-900" },
     { nome: "Vermelho Sangue", bg: "bg-red-600" },
     { nome: "Verde Neon", bg: "bg-[#00FF00]" },
+    { nome: "Dourado Premium", bg: "bg-[#D4AF37]" },
+    { nome: "Azul Royal", bg: "bg-[#002366]" },
+    { nome: "Rosa Neon", bg: "bg-[#FF1493]" },
+    { nome: "Verde Esmeralda", bg: "bg-[#50C878]" },
+    { nome: "Ciano Elétrico", bg: "bg-[#00FFFF]" },
+    { nome: "Roxo UV", bg: "bg-[#6A0DAD]" },
   ];
   
   const [corAtiva, setCorAtiva] = useState(cores[0].bg);
@@ -28,6 +34,10 @@ export default function ConfiguracoesPage() {
     { nome: "Cinza Escuro", bg: "#1F2937" },
     { nome: "Preto Dark", bg: "#111827" },
     { nome: "Deep Black", bg: "#000000" },
+    { nome: "Azul Noturno", bg: "#000B1E" },
+    { nome: "Verde Floresta", bg: "#0B1E00" },
+    { nome: "Vinho Escuro", bg: "#1E0000" },
+    { nome: "Slate Gray", bg: "#334155" },
   ];
   const [fundoAtivo, setFundoAtivo] = useState(fundos[0].bg);
 

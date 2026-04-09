@@ -19,6 +19,7 @@ export default function DashboardPage() {
   const [periodo, setPeriodo] = useState<7 | 14 | 30 | 'custom'>(7);
   const [dataInicioManual, setDataInicioManual] = useState<string>("");
   const [dataFimManual, setDataFimManual] = useState<string>("");
+  const [contaVisao, setContaVisao] = useState<'Empresa' | 'Particular'>('Empresa');
 
   // -- LOGICA DE FILTRO DE DATA --
   const getPeriodoDatas = () => {
@@ -39,16 +40,27 @@ export default function DashboardPage() {
 
   const { start, end } = getPeriodoDatas();
 
-  // -- FINANCEIRO (Baseado no Período) --
+  // -- FINANCEIRO (Baseado no Período e Conta Selecionada) --
   const baseTrans = transacoes.filter(t => {
     const d = new Date(t.data);
-    return d >= start && d <= end;
+    const matchData = d >= start && d <= end;
+    const matchConta = t.conta === contaVisao;
+    return matchData && matchConta;
   });
   
   const receitas = baseTrans.filter(t => t.tipo === 'receita');
   const faturamento = receitas.reduce((a,b) => a + b.valor, 0);
   const despesas = baseTrans.filter(t => t.tipo === 'despesa').reduce((a,b) => a + b.valor, 0);
   const saldo = faturamento - despesas;
+
+  // -- DÉBITOS GERAIS (Sempre Visíveis) --
+  const debitoParticular = transacoes
+    .filter(t => t.tipo === 'despesa' && t.conta === 'Particular' && new Date(t.data) >= start && new Date(t.data) <= end)
+    .reduce((a,b) => a + b.valor, 0);
+  
+  const debitoEmpresarial = transacoes
+    .filter(t => t.tipo === 'despesa' && t.conta === 'Empresa' && new Date(t.data) >= start && new Date(t.data) <= end)
+    .reduce((a,b) => a + b.valor, 0);
 
   // -- BREAKDOWN POR MÉTODO DE PAGAMENTO --
   const porPix = receitas.filter(t => t.metodo === 'Pix').reduce((a,b) => a + b.valor, 0);
@@ -130,25 +142,41 @@ export default function DashboardPage() {
          
          <div className="flex gap-2">
             <Link 
-              href={`/relatorio?tipo=mensal&mes=${new Date().getMonth() + 1}&ano=${new Date().getFullYear()}&metodo=${metodoRelatorio}`}
+              href={`/relatorio?tipo=mensal&mes=${new Date().getMonth() + 1}&ano=${new Date().getFullYear()}&metodo=${metodoRelatorio}&conta=${contaVisao}`}
               className="flex-1 bg-gray-900 text-white p-3.5 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest hover:bg-black transition shadow-lg active:scale-95"
             >
               <FileText size={14} /> Relatório Mensal
             </Link>
             <Link 
-              href={`/relatorio?tipo=anual&ano=${new Date().getFullYear()}&metodo=${metodoRelatorio}`}
+              href={`/relatorio?tipo=anual&ano=${new Date().getFullYear()}&metodo=${metodoRelatorio}&conta=${contaVisao}`}
               className="flex-1 bg-white border-2 border-gray-900 p-3.5 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-900 hover:bg-gray-50 transition active:scale-95"
             >
               <FileText size={14} /> Relatório Anual
             </Link>
-         </div>
-      </div>
+          </div>
+        </div>
+
+        {/* 0.5 Seletor de Conta */}
+        <div className="flex bg-gray-100 p-1 rounded-2xl w-full no-print">
+          <button 
+            onClick={() => setContaVisao('Empresa')}
+            className={`flex-1 py-3 px-4 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition ${contaVisao === 'Empresa' ? 'bg-primary text-white shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}
+          >
+            Empresa
+          </button>
+          <button 
+            onClick={() => setContaVisao('Particular')}
+            className={`flex-1 py-3 px-4 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition ${contaVisao === 'Particular' ? 'bg-primary text-white shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}
+          >
+            Particular
+          </button>
+        </div>
       
       {/* 1. Header Card (Saldo) */}
       <div className="bg-gradient-to-br from-primary to-secondary p-6 rounded-[28px] shadow-lg text-white relative overflow-hidden">
         <div className="absolute -right-4 -top-8 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
         
-        <p className="text-sm font-medium opacity-80 mb-1 z-10 relative">Saldo do Mês</p>
+        <p className="text-sm font-medium opacity-80 mb-1 z-10 relative">Saldo do Mês ({contaVisao})</p>
         <h2 className="text-4xl font-bold mb-6 z-10 relative">{saldo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL'})}</h2>
         
         <div className="flex items-center gap-6 relative z-10">
@@ -171,6 +199,22 @@ export default function DashboardPage() {
               <p className="text-sm font-bold">{despesas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL'})}</p>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* 1.1 Resumo de Débitos e Pendentes */}
+      <div className="grid grid-cols-3 gap-2">
+        <div className="bg-white rounded-2xl p-3 border border-gray-100 flex flex-col items-center justify-center text-center">
+          <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Pendentes</p>
+          <p className="text-[10px] md:text-sm font-black text-yellow-600 truncate w-full">{pendentesTot.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0})}</p>
+        </div>
+        <div className="bg-white rounded-2xl p-3 border border-gray-100 flex flex-col items-center justify-center text-center">
+          <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Déb. Part.</p>
+          <p className="text-[10px] md:text-sm font-black text-red-500 truncate w-full">{debitoParticular.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0})}</p>
+        </div>
+        <div className="bg-white rounded-2xl p-3 border border-gray-100 flex flex-col items-center justify-center text-center">
+          <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Déb. Empr.</p>
+          <p className="text-[10px] md:text-sm font-black text-red-500 truncate w-full">{debitoEmpresarial.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0})}</p>
         </div>
       </div>
 

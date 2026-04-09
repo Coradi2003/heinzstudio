@@ -17,6 +17,7 @@ function RelatorioContent() {
   const mes = parseInt(searchParams.get("mes") || String(new Date().getMonth() + 1));
   const ano = parseInt(searchParams.get("ano") || String(new Date().getFullYear()));
   const metodoFiltro = searchParams.get("metodo") || "todos";
+  const contaFiltro = searchParams.get("conta") || "Empresa";
 
   useEffect(() => {
     // Forçamos o modo claro removendo as classes do topo do site
@@ -57,7 +58,9 @@ function RelatorioContent() {
   // 2. Filtrar Dados
   let transactionsPeriod = transacoes.filter(t => {
     const d = new Date(t.data);
-    return isWithinInterval(d, { start: startDate, end: endDate });
+    const matchData = isWithinInterval(d, { start: startDate, end: endDate });
+    const matchConta = t.conta === contaFiltro;
+    return matchData && matchConta;
   });
 
   // Filtro por Método de Pagamento (Filtra TUDO como solicitado)
@@ -128,7 +131,7 @@ function RelatorioContent() {
         {/* CABEÇALHO DO RELATÓRIO */}
         <div className="border-b-4 border-black pb-8 mb-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
           <div>
-            <h1 className="text-5xl font-black uppercase tracking-tighter leading-none mb-2">Relatório</h1>
+            <h1 className="text-5xl font-black uppercase tracking-tighter leading-none mb-2">Relatório {contaFiltro}</h1>
             <p className="text-xl font-black text-gray-900 uppercase tracking-tight">
               ESTÚDIO {tipo === 'mensal' ? `/ ${format(startDate, 'MMMM yyyy', { locale: ptBR })}` : `/ ANO ${ano}`}
               {metodoFiltro !== 'todos' && <span className="text-gray-500 ml-2">[{metodoFiltro}]</span>}
