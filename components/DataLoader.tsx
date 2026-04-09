@@ -53,15 +53,21 @@ export function DataLoader() {
     carregarConfiguracao();
     carregarClientes();
 
-    // Registro do Service Worker para PWA
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
+    // Registro do Service Worker para PWA (mais robusto)
+    if ('serviceWorker' in navigator && typeof window !== 'undefined') {
+      const registerSW = () => {
         navigator.serviceWorker.register('/sw.js').then(registration => {
-          console.log('SW registrado com sucesso:', registration.scope);
+          console.log('PWA: Service Worker registrado!', registration.scope);
         }).catch(err => {
-          console.warn('Falha ao registrar SW:', err);
+          console.warn('PWA: Falha no SW:', err);
         });
-      });
+      };
+
+      if (document.readyState === 'complete') {
+        registerSW();
+      } else {
+        window.addEventListener('load', registerSW);
+      }
     }
   }, []);
 

@@ -1,18 +1,32 @@
 {
   "name": "Heinz Tattoo Studio",
   "short_name": "Heinz Studio",
-  "description": "Sistema de gestão rápido e simples para tatuadores.",
-  "start_url": "/",
+  "description": "Sistema de gestão rápida e profissional para tatuadores.",
+  "start_url": ".",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#000000",
   "orientation": "portrait",
+  "categories": ["productivity", "business"],
   "icons": [
+    {
+      "src": "/logo.jpeg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
     {
       "src": "/logo.jpeg",
       "sizes": "512x512",
       "type": "image/jpeg",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/logo.jpeg",
+      "sizes": "192x192 512x512",
+      "type": "image/jpeg",
+      "purpose": "maskable"
     }
   ]
 }
