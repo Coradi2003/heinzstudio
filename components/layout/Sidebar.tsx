@@ -16,8 +16,10 @@ import {
   Settings,
   LogOut,
   Menu,
-  X
+  X,
+  Zap
 } from "lucide-react";
+import { useUIStore } from "@/store/useUIStore";
 
 const menuItems = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -91,7 +93,20 @@ export function Sidebar() {
       </Link>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-1.5">
+      <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-1.5 focus-within:ring-0">
+        
+        {/* BOTÃO VENDA RÁPIDA FIXO */}
+        <button 
+          onClick={() => {
+            setIsOpen(false);
+            useUIStore.getState().openVendaRapida();
+          }}
+          className="flex items-center gap-3 w-full px-4 py-3.5 mb-4 rounded-2xl bg-yellow-50 text-yellow-700 border-2 border-yellow-200 hover:bg-yellow-100 transition-all font-black uppercase text-[10px] tracking-widest shadow-sm"
+        >
+          <Zap size={18} fill="currentColor" />
+          <span>Venda Rápida</span>
+        </button>
+
         {menuItems.map((item) => {
           const isActive = pathname === item.href;
           const Icon = item.icon;

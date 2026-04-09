@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useClientesStore, Cliente } from "@/store/useClientesStore";
-import { MessageCircle, Gift, CalendarClock, User, Plus, Pencil, Trash2 } from "lucide-react";
+import { MessageCircle, Gift, CalendarClock, User, Plus, Pencil, Trash2, Search } from "lucide-react";
 import { ModalCliente } from "@/components/clientes/ModalCliente";
 
 export default function ClientesPage() {
@@ -10,6 +10,12 @@ export default function ClientesPage() {
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [clienteEdit, setClienteEdit] = useState<Cliente | null>(null);
+  const [busca, setBusca] = useState("");
+
+  const clientesFiltrados = clientes.filter(c => 
+     c.nome.toLowerCase().includes(busca.toLowerCase()) || 
+     c.telefone?.includes(busca)
+  );
 
   const handleWhatsApp = (numero: string | undefined, textoInicial: string) => {
     const msg = encodeURIComponent(textoInicial);
@@ -32,9 +38,24 @@ export default function ClientesPage() {
       </div>
 
       <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6">
-        {clientes.length > 0 ? (
+        
+        {/* Barra de Pesquisa */}
+        <div className="relative mb-6">
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+            <Search size={20} />
+          </div>
+          <input 
+            type="text"
+            placeholder="Pesquisar por nome ou telefone..."
+            className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 pl-12 pr-4 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium text-gray-700"
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+          />
+        </div>
+
+        {clientesFiltrados.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {clientes.map(c => (
+            {clientesFiltrados.map(c => (
               <div key={c.id} className="border border-gray-100 rounded-2xl p-5 hover:border-primary/30 transition group flex flex-col justify-between h-full bg-gray-50/50 relative">
                 
                 {/* Lápis e Lixeira flutuantes (Controle Total) */}

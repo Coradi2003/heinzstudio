@@ -3,45 +3,15 @@
 import { useState } from "react";
 import { Package, Plus, Zap, ShoppingCart, Pencil, Trash2 } from "lucide-react";
 import { useProdutosStore, Produto } from "@/store/useProdutosStore";
-import { useFinanceiroStore } from "@/store/useFinanceiroStore";
-import { Modal } from "@/components/ui/Modal";
 import { ModalProduto } from "@/components/produtos/ModalProduto";
+import { useUIStore } from "@/store/useUIStore";
 
 export default function ProdutosPage() {
-  const { produtos, addProduto, removeProduto } = useProdutosStore();
-  const addTransacao = useFinanceiroStore(state => state.addTransacao);
+  const { produtos, removeProduto } = useProdutosStore();
+  const openVendaRapida = useUIStore(state => state.openVendaRapida);
   
-  const [isVendaRapidaOpen, setIsVendaRapidaOpen] = useState(false);
   const [isModalProdutoOpen, setIsModalProdutoOpen] = useState(false);
   const [produtoEdit, setProdutoEdit] = useState<Produto | null>(null);
-  const [produtoSelecionado, setProdutoSelecionado] = useState<string>("");
-  const [valorVenda, setValorVenda] = useState("");
-
-  const handleVendaRapida = () => {
-    if (!produtoSelecionado || !valorVenda) return;
-    
-    const prodNome = produtos.find(p => p.id === produtoSelecionado)?.nome || "Produto";
-
-    addTransacao({
-      tipo: 'receita',
-      categoria: 'Venda Rápida',
-      descricao: `Venda Rápida - ${prodNome}`,
-      metodo: 'Pix',
-      valor: Number(valorVenda),
-      data: new Date().toISOString(),
-      conta: 'Empresa',
-    });
-
-    setIsVendaRapidaOpen(false);
-    setProdutoSelecionado("");
-    setValorVenda("");
-    alert("Venda registrada e adicionada ao Financeiro com sucesso!");
-  };
-
-  const handleSelecionarProduto = (id: string, valor: number) => {
-    setProdutoSelecionado(id);
-    setValorVenda(valor.toString());
-  };
 
   return (
     <div className="min-h-screen p-4 md:p-8 max-w-7xl mx-auto">
@@ -57,7 +27,7 @@ export default function ProdutosPage() {
             <span>Adicionar</span>
           </button>
           <button 
-            onClick={() => setIsVendaRapidaOpen(true)}
+            onClick={openVendaRapida}
             className="bg-primary text-white px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-primary-dark transition shadow-md shadow-primary/20"
           >
             <Zap size={20} className="text-yellow-400" fill="currentColor" />
@@ -96,49 +66,7 @@ export default function ProdutosPage() {
         </div>
       </div>
 
-      {/* Modal Venda Rápida */}
-      <Modal isOpen={isVendaRapidaOpen} onClose={() => setIsVendaRapidaOpen(false)} title="⚡ Venda Rápida">
-        <div className="space-y-6">
-          <p className="text-sm text-gray-500">Sem necessidade de vincular cliente. O valor entra automaticamente no financeiro.</p>
-          
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Qual produto está vendendo?</label>
-            <div className="grid grid-cols-1 gap-2">
-              {produtos.map(p => (
-                <div 
-                  key={p.id} 
-                  onClick={() => handleSelecionarProduto(p.id, p.valor)}
-                  className={`p-4 rounded-xl border-2 flex justify-between cursor-pointer transition ${produtoSelecionado === p.id ? 'border-primary bg-primary/5' : 'border-gray-100 hover:border-gray-200'}`}
-                >
-                  <h5 className="font-bold text-gray-800">{p.nome}</h5>
-                  <span className="text-gray-500 font-medium">R$ {p.valor}</span>
-                </div>
-              ))}
-            </div>
-          </div>
 
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Valor Final da Venda (R$)</label>
-            <input 
-              type="number" 
-              value={valorVenda} 
-              onChange={e => setValorVenda(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-primary font-medium text-green-600 bg-green-50" 
-              placeholder="0,00" 
-            />
-            <p className="text-xs text-gray-400 mt-1">Você pode alterar se deu algum desconto no balcão.</p>
-          </div>
-
-          <button 
-            onClick={handleVendaRapida}
-            disabled={!produtoSelecionado || !valorVenda}
-            className="w-full bg-primary text-white font-bold py-4 rounded-xl shadow-md disabled:bg-gray-300 disabled:shadow-none hover:opacity-90 flex items-center justify-center gap-2"
-          >
-            <ShoppingCart size={20} />
-            Confirmar e Lançar no Financeiro
-          </button>
-        </div>
-      </Modal>
 
       <ModalProduto isOpen={isModalProdutoOpen} onClose={() => setIsModalProdutoOpen(false)} initialData={produtoEdit} />
 

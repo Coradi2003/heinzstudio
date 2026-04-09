@@ -24,6 +24,8 @@ export const viewport: Viewport = {
   userScalable: false,
 };
 
+import { GlobalModals } from "@/components/layout/GlobalModals";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -33,6 +35,7 @@ export default function RootLayout({
     <html lang="pt-BR">
       <body className={`${inter.className}`}>
         <DataLoader />
+        <GlobalModals />
         <div className="flex flex-col md:flex-row h-screen overflow-hidden">
           <Sidebar />
           <main className="flex-1 overflow-y-auto bg-background">

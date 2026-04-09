@@ -5,13 +5,14 @@ import { useFinanceiroStore } from "@/store/useFinanceiroStore";
 import { useProdutosStore } from "@/store/useProdutosStore";
 import { useServicosStore } from "@/store/useServicosStore";
 import { useClientesStore } from "@/store/useClientesStore";
-import { Users, FileText, Wrench, Box, TrendingUp, TrendingDown, BarChart2, CheckCircle2, Clock, XCircle, QrCode, Banknote, CreditCard, Calendar, Gift } from "lucide-react";
+import { Users, FileText, Wrench, Box, TrendingUp, TrendingDown, BarChart2, CheckCircle2, Clock, XCircle, QrCode, Banknote, CreditCard, Calendar, Gift, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
+import { startOfMonth, endOfMonth, isWithinInterval, parseISO } from "date-fns";
 
 export default function DashboardPage() {
   const { agendamentos } = useAgendaStore();
-  const { transacoes } = useFinanceiroStore();
+  const { transacoes, despesasFixas } = useFinanceiroStore();
   const { produtos } = useProdutosStore();
   const { servicos } = useServicosStore();
   const { clientes } = useClientesStore();
@@ -111,6 +112,16 @@ export default function DashboardPage() {
     const dia = parseInt(parts[2]);
     return dia === diaHoje && mes === mesHoje;
   });
+
+  // -- LEMBRETE DE DESPESAS FIXAS PENDENTES --
+  const inicioMesAtual = startOfMonth(hoje);
+  const fimMesAtual = endOfMonth(hoje);
+
+  const despesasFixasJaLancadas = transacoes
+    .filter(t => isWithinInterval(parseISO(t.data), { start: inicioMesAtual, end: fimMesAtual }))
+    .map(t => t.descricao.toLowerCase());
+
+  const despesasFixasPendentes = despesasFixas.filter(df => !despesasFixasJaLancadas.includes(df.descricao.toLowerCase()));
 
   const [metodoRelatorio, setMetodoRelatorio] = useState<'todos' | 'Pix' | 'Dinheiro' | 'Cartão'>('todos');
 
@@ -234,6 +245,27 @@ export default function DashboardPage() {
             </div>
             <div className="px-3 py-1 bg-white/20 rounded-full text-[10px] font-bold uppercase tracking-widest whitespace-nowrap">
               Ver lista
+            </div>
+          </div>
+        </Link>
+      )}
+
+      {/* 1.3 Alerta de Despesas Fixas Pendentes */}
+      {despesasFixasPendentes.length > 0 && (
+        <Link href="/financeiro" className="block">
+          <div className="bg-gradient-to-r from-orange-500 to-red-600 p-4 rounded-[24px] shadow-md text-white flex items-center gap-4 hover:scale-[1.02] transition pointer-events-auto">
+            <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+              <AlertTriangle size={24} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-bold uppercase tracking-wider opacity-90">{despesasFixasPendentes.length} conta(s) pendente(s)!</p>
+              <h3 className="font-bold truncate">
+                Contas do Mês
+              </h3>
+              <p className="text-[10px] opacity-80 mt-0.5 whitespace-nowrap uppercase font-black">O mês virou! Clique aqui para lançar as despesas.</p>
+            </div>
+            <div className="px-3 py-1 bg-white/20 rounded-full text-[10px] font-bold uppercase tracking-widest whitespace-nowrap">
+              Lançar Agora
             </div>
           </div>
         </Link>
