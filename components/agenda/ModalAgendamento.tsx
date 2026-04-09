@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { Modal } from "@/components/ui/Modal";
@@ -134,7 +134,7 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
     };
 
     // Testar conflitos antes de começar a salvar
-    const totalAdicionar = !initialData && repetir ? Math.max(1, repeticoes + 1) : 1;
+    const totalAdicionar = !initialData && repetir ? Math.max(1, repeticoes) + 1 : 1;
     const seriesData: {s: string, e: string}[] = [];
 
     for (let i = 0; i < totalAdicionar; i++) {
@@ -583,7 +583,7 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
                       </select>
                    </div>
                    <div>
-                      <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1 ml-1">Vezes (Extras)</label>
+                      <label className="block text-[10px] uppercase font-bold text-gray-400 mb-1 ml-1">Quantas vezes repetir</label>
                       <input 
                         type="number" 
                         min={1} 
@@ -593,7 +593,7 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
                         className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-xs font-bold text-gray-700 outline-none focus:border-primary"
                       />
                    </div>
-                   <p className="col-span-2 text-[10px] text-gray-400 ml-1">Serão criados {repeticoes + 1} agendamentos no total.</p>
+                   <p className="col-span-2 text-[10px] text-gray-400 ml-1">Serão criados {repeticoes + 1} agendamentos no total (todo {frequencia === 'mensal' ? 'm\u00eas' : frequencia === 'semanal' ? 'semana' : 'dia'}, no mesmo dia e horario).</p>
                  </div>
                )}
             </div>
