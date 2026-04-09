@@ -123,7 +123,7 @@ export function Sidebar() {
         </button>
 
         {/* BOTÃO INSTALAR APP - APARECE APENAS QUANDO DISPONÍVEL */}
-        {((window as any).deferredPrompt || deferredPrompt) && (
+        {(typeof window !== 'undefined' && ((window as any).deferredPrompt || deferredPrompt)) && (
           <button 
             onClick={handleInstall}
             className="flex items-center gap-3 w-full px-4 py-3.5 mb-4 rounded-2xl bg-primary/10 text-primary border-2 border-primary/20 hover:bg-primary/20 transition-all font-black uppercase text-[10px] tracking-widest shadow-sm animate-pulse"
