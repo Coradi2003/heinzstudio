@@ -265,37 +265,33 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
     }
   };
 
-  const handleSendReceipt = () => {
+  const handleSendAll = () => {
     const endereco = "Rua Euvira Popia Pavelski 255 Bairro Martelo Caçador S.C";
-    const msg = `📍 *Heinz Tattoo Studio - Agendamento Confirmado!*
     
-Olá *${clienteNome || 'Cliente'}*, sua sessão foi agendada com sucesso!
+    // Parte 1: Comprovante
+    const comprovante = `📍 *Heinz Tattoo Studio - CONFIRMAÇÃO*
+
+Olá *${clienteNome || 'Cliente'}*, sua sessão foi agendada!
 
 🏁 *Trabalho:* ${servico || 'Sessão de Tatuagem'}
 ⏳ *Duração estimada:* ${duracao.replace(':', 'h ')}min
 💰 *Valor total:* R$ ${valorTotal || '0,00'}
 🏠 *Endereço:* ${endereco}
 
-*Por favor, tente chegar 10 minutos antes. Nos vemos lá!* 🤘✨`;
+*Por favor, tente chegar 10 minutos antes.*`;
 
-    const encodedMsg = encodeURIComponent(msg);
-    const numLimpo = telefone?.replace(/\D/g, '') || '';
-    window.open(`https://wa.me/${numLimpo}?text=${encodedMsg}`, '_blank');
-  };
+    // Parte 2: Compromisso
+    const compromisso = `------------------------------------------
+📝 *REGRAS E COMPROMISSO*
 
-  const handleSendCommitment = () => {
-    const msg = `📝 *COMPROMISSO DE SESSÃO - Heinz Tattoo Studio*
-
-Olá *${clienteNome || 'Cliente'}*, este é o compromisso do nosso estúdio referente à realização do procedimento: *${servico || 'Sessão de Tatuagem'}* no valor de *R$ ${valorTotal || '0,00'}*.
-
-*Regras do Estúdio:*
 1. O cliente tem 60 dias para agendar o retoque gratuito. Após esse prazo, será cobrado.
-2. Em caso de falta sem aviso prévio de 24h, o valor do SINAL será perdido para cobrir a agenda travada.
-3. Se o estúdio necessitar cancelar ou reagendar pela nossa parte, seu sinal poderá ser devolvido integralmente se não quiser um novo horário.
+2. Em caso de falta sem aviso prévio de 24h, o valor do SINAL será perdido.
+3. Se o estúdio necessitar cancelar, seu sinal poderá ser devolvido integralmente.
 
-*Aguardamos ansiosamente pela sua sessão!* 🤘✨`;
+*Nos vemos na sua sessão!* 🤘✨`;
 
-    const encodedMsg = encodeURIComponent(msg);
+    const fullMsg = `${comprovante}\n\n${compromisso}`;
+    const encodedMsg = encodeURIComponent(fullMsg);
     const numLimpo = telefone?.replace(/\D/g, '') || '';
     window.open(`https://wa.me/${numLimpo}?text=${encodedMsg}`, '_blank');
   };
@@ -313,19 +309,11 @@ Olá *${clienteNome || 'Cliente'}*, este é o compromisso do nosso estúdio refe
 
            <div className="w-full space-y-3">
               <button 
-                onClick={handleSendReceipt} 
+                onClick={handleSendAll} 
                 className="w-full bg-[#25D366] text-white font-black py-5 rounded-[22px] shadow-xl shadow-green-100 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 text-sm uppercase tracking-widest"
               >
                 <Send size={20} />
-                Enviar Comprovante 📲
-              </button>
-
-              <button 
-                onClick={handleSendCommitment} 
-                className="w-full bg-slate-800 text-white font-black py-5 rounded-[22px] shadow-xl hover:bg-slate-900 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 text-sm uppercase tracking-widest"
-              >
-                <ShieldCheck size={20} />
-                Enviar Compromisso 📝
+                Enviar Mensagem Completa 🚀
               </button>
               
               <button 
