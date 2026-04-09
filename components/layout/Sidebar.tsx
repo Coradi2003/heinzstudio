@@ -42,13 +42,8 @@ export function Sidebar() {
   const { deferredPrompt, setDeferredPrompt } = useUIStore();
 
   const handleInstall = async () => {
-    // Busca o prompt do window ou da store
     const promptEvent = (window as any).deferredPrompt || deferredPrompt;
-
-    if (!promptEvent) {
-      alert("O instalador automático está carregando ou o seu Chrome não liberou a instalação. \n\nPara baixar agora: \nClique nos '3 pontinhos' do Chrome e selecione 'Instalar Aplicativo'.");
-      return;
-    }
+    if (!promptEvent) return;
     
     promptEvent.prompt();
     const { outcome } = await promptEvent.userChoice;
@@ -127,14 +122,16 @@ export function Sidebar() {
           <span>Venda Rápida</span>
         </button>
 
-        {/* BOTÃO INSTALAR APP - SEMPRE VISÍVEL PARA FACILITAR */}
-        <button 
-          onClick={handleInstall}
-          className="flex items-center gap-3 w-full px-4 py-3.5 mb-4 rounded-2xl bg-primary/10 text-primary border-2 border-primary/20 hover:bg-primary/20 transition-all font-black uppercase text-[10px] tracking-widest shadow-sm"
-        >
-          <Download size={18} />
-          <span>Instalar App Heinz 📱</span>
-        </button>
+        {/* BOTÃO INSTALAR APP - APARECE APENAS QUANDO DISPONÍVEL */}
+        {((window as any).deferredPrompt || deferredPrompt) && (
+          <button 
+            onClick={handleInstall}
+            className="flex items-center gap-3 w-full px-4 py-3.5 mb-4 rounded-2xl bg-primary/10 text-primary border-2 border-primary/20 hover:bg-primary/20 transition-all font-black uppercase text-[10px] tracking-widest shadow-sm animate-pulse"
+          >
+            <Download size={18} />
+            <span>Instalar App Heinz 📱</span>
+          </button>
+        )}
 
         {menuItems.map((item) => {
           const isActive = pathname === item.href;
