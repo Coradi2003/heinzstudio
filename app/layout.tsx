@@ -10,6 +10,12 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Heinz Tattoo Studio",
   description: "Sistema de gestão rápido e simples para tatuadores.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    title: "Heinz Studio",
+    statusBarStyle: "default",
+    capable: true,
+  },
 };
 
 export const viewport: Viewport = {

@@ -52,6 +52,15 @@ export function DataLoader() {
     carregarServicos();
     carregarConfiguracao();
     carregarClientes();
+
+    // Registro do Service Worker (PWA)
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('PWA: Service Worker registrado!', reg.scope))
+          .catch(err => console.warn('PWA: Erro ao registrar SW:', err));
+      });
+    }
   }, []);
 
   return null;

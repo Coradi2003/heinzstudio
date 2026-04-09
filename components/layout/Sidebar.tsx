@@ -20,6 +20,8 @@ import {
   Zap
 } from "lucide-react";
 
+import { InstallAppButton } from "./InstallAppButton";
+
 const menuItems = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "Agenda", href: "/agenda", icon: CalendarMinus },
@@ -94,6 +96,11 @@ export function Sidebar() {
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-6 px-4 space-y-1.5 focus-within:ring-0">
         
+        {/* BOTÃO INSTALAR PWA */}
+        <div className="px-1">
+          <InstallAppButton />
+        </div>
+
         {/* BOTÃO VENDA RÁPIDA FIXO */}
         <button 
           onClick={() => {
