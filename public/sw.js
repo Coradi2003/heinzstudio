@@ -1,4 +1,4 @@
-const CACHE_NAME = 'heinz-studio-v2';
+const CACHE_NAME = 'heinz-studio-v3';
 const OFFLINE_URL = '/offline.html';
 
 const ASSETS_TO_CACHE = [
@@ -36,10 +36,16 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Estratégia: NETWORK FIRST com fallback para CACHE e OFFLINE PAGE
+// Estratégia de Fetch
 self.addEventListener('fetch', (event) => {
   // Ignora requisições de extensões ou outros esquemas
   if (!event.request.url.startsWith('http')) return;
+
+  // IMPORTANTE: Só aplicar cache para requisições GET (evita erros ao salvar dados)
+  if (event.request.method !== 'GET') {
+    event.respondWith(fetch(event.request));
+    return;
+  }
 
   // Se for uma navegação (mudar de página)
   if (event.request.mode === 'navigate') {
