@@ -7,6 +7,7 @@ import { useProdutosStore } from "@/store/useProdutosStore";
 import { useServicosStore } from "@/store/useServicosStore";
 import { useConfigStore } from "@/store/useConfigStore";
 import { useClientesStore } from "@/store/useClientesStore";
+import { createClient } from "@/lib/supabase";
 
 export function DataLoader() {
   const carregarAgendamentos = useAgendaStore(state => state.carregarAgendamentos);
