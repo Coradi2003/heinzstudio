@@ -7,7 +7,9 @@ import { format, parseISO, startOfMonth, endOfMonth, startOfYear, endOfYear, isW
 import { ptBR } from "date-fns/locale";
 import { Printer, ArrowLeft, BarChart2, TrendingUp, TrendingDown, Wallet } from "lucide-react";
 
-export default function RelatorioPage() {
+import { Suspense } from "react";
+
+function RelatorioContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   
@@ -206,5 +208,13 @@ export default function RelatorioPage() {
       </div>
 
     </div>
+  );
+}
+
+export default function RelatorioPage() {
+  return (
+    <Suspense fallback={<div className="p-10 text-center font-bold">Carregando relatório...</div>}>
+      <RelatorioContent />
+    </Suspense>
   );
 }
