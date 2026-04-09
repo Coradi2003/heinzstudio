@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Building2, User, ArrowUpRight, ArrowDownRight, Wallet, Pencil, Trash2, Calendar } from "lucide-react";
+import { Plus, Building2, User, ArrowUpRight, ArrowDownRight, Wallet, Pencil, Trash2, Calendar, FileText } from "lucide-react";
 import { useFinanceiroStore, Transacao } from "@/store/useFinanceiroStore";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ModalTransacao } from "@/components/financeiro/ModalTransacao";
+import Link from "next/link";
 
 export default function FinanceiroPage() {
   const { transacoes, removeTransacao } = useFinanceiroStore();
@@ -41,6 +42,21 @@ export default function FinanceiroPage() {
 
   return (
     <div className="min-h-screen p-4 md:p-8 max-w-7xl mx-auto">
+      {/* 0. Relatórios Quick Actions */}
+      <div className="flex gap-2 mb-6 no-print max-w-sm">
+         <Link 
+           href={`/relatorio?tipo=mensal&mes=${new Date().getMonth() + 1}&ano=${new Date().getFullYear()}`}
+           className="flex-1 bg-white border border-gray-100 p-3 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-wider text-gray-400 hover:text-primary hover:border-primary transition shadow-sm active:scale-95"
+         >
+           <FileText size={14} /> Relatório Mensal
+         </Link>
+         <Link 
+           href={`/relatorio?tipo=anual&ano=${new Date().getFullYear()}`}
+           className="flex-1 bg-white border border-gray-100 p-3 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-wider text-gray-400 hover:text-primary hover:border-primary transition shadow-sm active:scale-95"
+         >
+           <FileText size={14} /> Relatório Anual
+         </Link>
+      </div>
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>

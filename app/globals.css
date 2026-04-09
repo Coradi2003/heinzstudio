@@ -42,10 +42,38 @@ body {
 .dark-theme .border-gray-100 { border-color: #374151 !important; }
 .dark-theme .border-gray-200 { border-color: #4B5563 !important; }
 
-/* Form Elements */
 .dark-theme input, .dark-theme select, .dark-theme textarea { 
   background-color: #374151 !important; 
   color: #F9FAFB !important; 
   border-color: #4B5563 !important; 
+}
+
+/* === PRINT STYLES === */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  body, main, .flex {
+    background-color: white !important;
+    color: black !important;
+    overflow: visible !important;
+    height: auto !important;
+    display: block !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  /* Reset layout for print */
+  .h-screen {
+    height: auto !important;
+    overflow: visible !important;
+  }
+}
+
+.print-only {
+  display: none;
 }
 

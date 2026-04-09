@@ -103,6 +103,22 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen p-4 md:p-6 lg:p-8 max-w-lg mx-auto md:max-w-4xl space-y-4 mb-20 md:mb-0">
       
+      {/* 0. Relatórios Quick Actions */}
+      <div className="flex gap-2 mb-2 no-print">
+         <Link 
+           href={`/relatorio?tipo=mensal&mes=${new Date().getMonth() + 1}&ano=${new Date().getFullYear()}`}
+           className="flex-1 bg-white border border-gray-100 p-3 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-wider text-gray-400 hover:text-primary hover:border-primary transition shadow-sm active:scale-95"
+         >
+           <FileText size={14} /> Relatório Mensal
+         </Link>
+         <Link 
+           href={`/relatorio?tipo=anual&ano=${new Date().getFullYear()}`}
+           className="flex-1 bg-white border border-gray-100 p-3 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-wider text-gray-400 hover:text-primary hover:border-primary transition shadow-sm active:scale-95"
+         >
+           <FileText size={14} /> Relatório Anual
+         </Link>
+      </div>
+      
       {/* 1. Header Card (Saldo) */}
       <div className="bg-gradient-to-br from-primary to-secondary p-6 rounded-[28px] shadow-lg text-white relative overflow-hidden">
         <div className="absolute -right-4 -top-8 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>

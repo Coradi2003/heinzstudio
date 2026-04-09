@@ -42,12 +42,12 @@ export function Sidebar() {
     router.push("/login");
   };
 
-  if (pathname === "/login") return null;
+  if (pathname === "/login" || pathname === "/relatorio") return null;
 
   return (
     <>
       {/* MOBILE TOP BAR */}
-      <div className="md:hidden flex items-center justify-between p-4 bg-white border-b border-gray-100 w-full shrink-0">
+      <div className="md:hidden flex items-center justify-between p-4 bg-white border-b border-gray-100 w-full shrink-0 no-print">
         <Link href="/" className="flex items-center gap-3 group">
            <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-md shadow-primary/20 ring-1 ring-primary/5 group-hover:scale-105 transition-transform duration-300">
              <Image src="/logo.jpeg" alt="Heinz Studio" fill className="object-cover" sizes="40px" />
@@ -68,7 +68,7 @@ export function Sidebar() {
       )}
 
       {/* DEFAULT DRAWER ASIDE */}
-      <aside className={`fixed md:relative left-0 top-0 h-screen w-72 md:w-64 bg-white border-r border-gray-100 flex flex-col shadow-2xl md:shadow-sm z-50 transform transition-transform duration-300 md:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <aside className={`fixed md:relative left-0 top-0 h-screen w-72 md:w-64 bg-white border-r border-gray-100 flex flex-col shadow-2xl md:shadow-sm z-50 transform transition-transform duration-300 md:translate-x-0 no-print ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         
         {/* MOBILE CLOSE BTN */}
         <button onClick={() => setIsOpen(false)} className="md:hidden absolute top-5 right-5 p-2 bg-gray-50 rounded-full text-gray-400 hover:bg-gray-100">
