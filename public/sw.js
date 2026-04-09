@@ -1,4 +1,4 @@
-const CACHE_NAME = 'heinz-studio-v3';
+const CACHE_NAME = 'heinz-studio-v4';
 const OFFLINE_URL = '/offline.html';
 
 const ASSETS_TO_CACHE = [
@@ -38,14 +38,13 @@ self.addEventListener('activate', (event) => {
 
 // Estratégia de Fetch
 self.addEventListener('fetch', (event) => {
-  // Ignora requisições de extensões ou outros esquemas
+  // 1. Ignora requisições que não sejam HTTP/S (extensões, etc)
   if (!event.request.url.startsWith('http')) return;
 
-  // IMPORTANTE: Só aplicar cache para requisições GET (evita erros ao salvar dados)
-  if (event.request.method !== 'GET') {
-    event.respondWith(fetch(event.request));
-    return;
-  }
+  // 2. IMPORTANTE: Só interceptamos requisições GET.
+  // Se for POST, PUT, DELETE (salvar dados), o SW NÃO CHAMA event.respondWith.
+  // Isso faz com que o navegador lide com a requisição de forma nativa e segura.
+  if (event.request.method !== 'GET') return;
 
   // Se for uma navegação (mudar de página)
   if (event.request.mode === 'navigate') {
@@ -59,18 +58,21 @@ self.addEventListener('fetch', (event) => {
 
   // Para outros arquivos (images, scripts, etc)
   event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        // Se a rede respondeu, clonamos e guardamos no cache
-        const responseClone = response.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseClone);
-        });
+    caches.match(event.request).then((cachedResponse) => {
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+
+      return fetch(event.request).then((response) => {
+        // Se a rede respondeu e for uma requisição GET válida, guardamos no cache
+        if (response && response.status === 200 && response.type === 'basic') {
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
+        }
         return response;
-      })
-      .catch(() => {
-        // Se a rede falhar, tenta pegar do cache
-        return caches.match(event.request);
-      })
+      });
+    })
   );
 });
