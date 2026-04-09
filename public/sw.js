@@ -1,15 +1,16 @@
-const CACHE_NAME = 'heinz-studio-v5';
+const CACHE_NAME = 'heinz-studio-v2';
 const OFFLINE_URL = '/offline.html';
 
-// Só guardamos o que é 100% estático e necessário para o app abrir
 const ASSETS_TO_CACHE = [
-  '/offline.html',
+  '/',
   '/manifest.json',
+  '/offline.html',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
   '/logo.jpeg'
 ];
 
+// Instalação e Cache Inicial
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
@@ -19,6 +20,7 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
+// Ativação e limpeza de cache antigo
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -34,15 +36,12 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// ESTRATÉGIA DE REDE PURA PARA DADOS E PÁGINAS DINÂMICAS
+// Estratégia: NETWORK FIRST com fallback para CACHE e OFFLINE PAGE
 self.addEventListener('fetch', (event) => {
+  // Ignora requisições de extensões ou outros esquemas
   if (!event.request.url.startsWith('http')) return;
 
-  // Se for qualquer coisa que não seja GET (Salvar, Editar, Deletar), sai da frente.
-  if (event.request.method !== 'GET') return;
-
-  // Para navegação de páginas: SEMPRE REDE. 
-  // Só mostra o 'offline.html' se a rede falhar de verdade.
+  // Se for uma navegação (mudar de página)
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request).catch(() => {
@@ -52,11 +51,20 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Para outros arquivos (imagens do sistema, manifest, etc)
+  // Para outros arquivos (images, scripts, etc)
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) return cachedResponse;
-      return fetch(event.request);
-    })
+    fetch(event.request)
+      .then((response) => {
+        // Se a rede respondeu, clonamos e guardamos no cache
+        const responseClone = response.clone();
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(event.request, responseClone);
+        });
+        return response;
+      })
+      .catch(() => {
+        // Se a rede falhar, tenta pegar do cache
+        return caches.match(event.request);
+      })
   );
 });
