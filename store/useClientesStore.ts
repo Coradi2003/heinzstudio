@@ -32,14 +32,25 @@ export const useClientesStore = create<ClientesStore>()((set) => ({
 
   addCliente: async (data) => {
     const supabase = createClient();
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) return;
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    
+    if (userError || !userData.user) {
+      console.error('PWA Debug: Erro de usuário', userError);
+      alert('Sua sessão expirou. Por favor, saia e entre novamente no app.');
+      return;
+    }
 
-    const { data: insertedData } = await supabase
+    const { data: insertedData, error: insertError } = await supabase
       .from('clientes')
       .insert([{ ...data, user_id: userData.user.id }])
       .select()
       .single();
+
+    if (insertError) {
+      console.error('PWA Debug: Erro ao inserir cliente', insertError);
+      alert('Erro ao salvar no banco: ' + insertError.message);
+      return;
+    }
 
     if (insertedData) {
       set((state) => ({ clientes: [...state.clientes, insertedData as Cliente] }));
@@ -48,7 +59,14 @@ export const useClientesStore = create<ClientesStore>()((set) => ({
 
   updateCliente: async (id, dataToUpdate) => {
     const supabase = createClient();
-    await supabase.from('clientes').update(dataToUpdate).eq('id', id);
+    const { error: updateError } = await supabase.from('clientes').update(dataToUpdate).eq('id', id);
+    
+    if (updateError) {
+      console.error('PWA Debug: Erro ao atualizar', updateError);
+      alert('Erro ao atualizar: ' + updateError.message);
+      return;
+    }
+
     set((state) => ({
       clientes: state.clientes.map(c => c.id === id ? { ...c, ...dataToUpdate } : c)
     }));
