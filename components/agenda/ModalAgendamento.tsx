@@ -38,6 +38,7 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
   const [isSaving, setIsSaving] = useState(false);
   const [isClientModalOpen, setIsClientModalOpen] = useState(false);
   const [showClientes, setShowClientes] = useState(false);
+  const [showServicos, setShowServicos] = useState(false);
 
   // States de Repetição
   const [repetir, setRepetir] = useState(false);
@@ -315,24 +316,54 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
             <label className="block text-sm font-semibold text-gray-700 mb-1">Whatsapp</label>
             <input type="text" value={telefone} onChange={e => setTelefone(e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-primary" placeholder="(00) 00000-0000" />
           </div>
-          <div className="md:col-span-2">
+          <div className="md:col-span-2 relative">
             <label className="block text-sm font-semibold text-gray-700 mb-1">Serviço</label>
-            <select 
+            <input 
+              type="text"
               value={servico} 
               onChange={e => {
                 setServico(e.target.value);
-                // Auto-preencher valor se for um serviço oficial
-                const offSrv = servicos.find(s => s.nome === e.target.value);
+                setShowServicos(e.target.value.length >= 0);
+                
+                // Auto-preencher valor se o que foi digitado bater EXATAMENTE com um serviço
+                const offSrv = servicos.find(s => s.nome.toLowerCase() === e.target.value.toLowerCase());
                 if (offSrv) setValorTotal(offSrv.valorBase.toString());
               }} 
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-primary bg-white appearance-none"
-            >
-              <option value="" disabled>Selecione um serviço da sua base...</option>
-              {servicos.map(s => (
-                <option key={s.id} value={s.nome}>{s.nome} (R$ {s.valorBase})</option>
-              ))}
-              <option value="Outro (Avulso)">Outro serviço não listado...</option>
-            </select>
+              onFocus={() => setShowServicos(true)}
+              onBlur={() => {
+                // Pequeno delay para permitir o clique na sugestão antes de fechar
+                setTimeout(() => setShowServicos(false), 200);
+              }}
+              placeholder="Digite ou selecione um serviço..."
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-primary bg-white"
+            />
+            
+            {/* Sugestões de Serviços */}
+            {showServicos && (
+              <div className="absolute z-[60] left-0 right-0 mt-1 bg-white border border-gray-100 rounded-xl shadow-xl max-h-48 overflow-y-auto">
+                {servicos
+                  .filter(s => s.nome.toLowerCase().includes(servico.toLowerCase()))
+                  .map(s => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => {
+                        setServico(s.nome);
+                        setValorTotal(s.valorBase.toString());
+                        setShowServicos(false);
+                      }}
+                      className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center justify-between border-b border-gray-50 last:border-0"
+                    >
+                      <span className="font-bold text-gray-800">{s.nome}</span>
+                      <span className="text-xs font-black text-primary">R$ {s.valorBase}</span>
+                    </button>
+                  ))
+                }
+                <div className="px-4 py-3 text-[10px] text-gray-400 bg-gray-50/50 italic border-t border-gray-50">
+                  Dica: Você pode digitar qualquer nome personalizado acima.
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
