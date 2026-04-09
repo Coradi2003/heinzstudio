@@ -19,18 +19,27 @@ function RelatorioContent() {
   const metodoFiltro = searchParams.get("metodo") || "todos";
 
   useEffect(() => {
-    // Forçar modo claro no elemento raiz
+    // Forçar modo claro NO NIVEL MAIS FORTE POSSÍVEL
     const html = document.documentElement;
     const body = document.body;
-    const hadDark = html.classList.contains('dark');
     
-    html.classList.remove('dark');
+    const originalClasses = Array.from(html.classList);
+    const originalBg = html.style.getPropertyValue('--color-background');
+    const originalPrimary = html.style.getPropertyValue('--color-primary');
+
+    // Remove as classes de tema e seta variaveis manuais
+    html.classList.remove('dark-theme', 'dark');
+    html.style.setProperty('--color-background', '#ffffff', 'important');
+    html.style.setProperty('--color-primary', '#000000', 'important');
     html.style.backgroundColor = '#ffffff';
     body.style.backgroundColor = '#ffffff';
     body.style.color = '#000000';
 
     return () => {
-      if (hadDark) html.classList.add('dark');
+      // Restaura ao sair
+      html.classList.add(...originalClasses);
+      html.style.setProperty('--color-background', originalBg);
+      html.style.setProperty('--color-primary', originalPrimary);
       html.style.backgroundColor = '';
       body.style.backgroundColor = '';
       body.style.color = '';
@@ -90,159 +99,161 @@ function RelatorioContent() {
   };
 
   return (
-    <div className="min-h-screen bg-white text-black p-4 md:p-10 font-sans max-w-4xl mx-auto my-0 md:my-10 border border-gray-200 flex flex-col shadow-none print:m-0 print:p-0 print:border-0">
-      <style jsx global>{`
-        /* Forçar modo claro absoluto para esta página */
-        :root { --background: #ffffff !important; --foreground: #000000 !important; }
-        html, body { background-color: white !important; color: black !important; }
-        .dark { background-color: white !important; color: black !important; }
-        * { border-color: #000000 !important; color: black !important; }
-        
-        @media print {
-          @page { margin: 1cm; }
-          body { background-color: white !important; -webkit-print-color-adjust: exact; }
-          .no-print { display: none !important; }
-        }
-      `}</style>
+    <div className="fixed inset-0 z-[9999] bg-white text-black overflow-y-auto h-screen w-screen selection:bg-black selection:text-white font-sans">
+      <div className="max-w-4xl mx-auto p-4 md:p-10 flex flex-col min-h-full">
+        <style jsx global>{`
+          /* Reset total de cores para o relatório */
+          .fixed * { color: #000000 !important; border-color: #000000 !important; background-color: transparent !important; }
+          .fixed .bg-black, .fixed .bg-black * { background-color: #000000 !important; color: #ffffff !important; }
+          .fixed .bg-gray-50, .fixed .bg-gray-100 { background-color: #f9fafb !important; }
+          .fixed button { border: 1px solid #000 !important; }
+          
+          @media print {
+            @page { margin: 1cm; }
+            body { background-color: white !important; -webkit-print-color-adjust: exact; }
+            .no-print { display: none !important; }
+            .fixed { position: static !important; overflow: visible !important; height: auto !important; width: auto !important; }
+          }
+        `}</style>
 
-      {/* Barra de Ações (Some na Impressão) */}
-      <div className="flex justify-between items-center mb-10 no-print bg-gray-50 p-4 rounded-2xl border border-gray-200">
-        <button onClick={() => router.back()} className="flex items-center gap-2 text-gray-900 font-bold transition">
-          <ArrowLeft size={18} />
-          Voltar
-        </button>
-        <div className="flex items-center gap-3">
-          <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest hidden md:inline">Relatório {metodoFiltro === 'todos' ? 'Geral' : metodoFiltro.toUpperCase()}</span>
-          <button 
-            onClick={handlePrint}
-            className="bg-black text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:opacity-80 transition"
-          >
-            <Printer size={16} />
-            Imprimir / PDF
+        {/* Barra de Ações (Some na Impressão) */}
+        <div className="flex justify-between items-center mb-10 no-print bg-gray-50 p-4 rounded-2xl border border-gray-200">
+          <button onClick={() => router.back()} className="flex items-center gap-2 text-gray-900 font-bold px-4 py-2 rounded-xl transition hover:bg-gray-200">
+            <ArrowLeft size={18} />
+            Voltar
           </button>
-        </div>
-      </div>
-
-      {/* CABEÇALHO DO RELATÓRIO */}
-      <div className="border-b-4 border-black pb-8 mb-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
-        <div>
-          <h1 className="text-5xl font-black uppercase tracking-tighter leading-none mb-2">Relatório</h1>
-          <p className="text-xl font-black text-gray-900 uppercase tracking-tight">
-            ESTÚDIO {tipo === 'mensal' ? `/ ${format(startDate, 'MMMM yyyy', { locale: ptBR })}` : `/ ANO ${ano}`}
-            {metodoFiltro !== 'todos' && <span className="text-gray-500 ml-2">[{metodoFiltro}]</span>}
-          </p>
-        </div>
-        <div className="text-left md:text-right border-l-2 md:border-l-0 md:border-r-2 border-black pl-4 md:pr-4">
-          <p className="text-xs font-black uppercase tracking-widest">Heinz Tattoo Studio</p>
-          <p className="text-[10px] font-bold text-gray-800">Documento Gerado: {format(new Date(), "dd/MM/yyyy HH:mm")}</p>
-        </div>
-      </div>
-
-      {/* GRID DE RESUMO RÁPIDO */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
-        <div className="border-2 border-black p-5 rounded-sm flex flex-col justify-center min-h-[100px]">
-          <p className="text-[10px] font-black uppercase mb-1 text-gray-500 tracking-widest">Total Receitas</p>
-          <p className="text-2xl font-black truncate">{totalReceitas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
-        </div>
-        <div className="border-2 border-black p-5 rounded-sm flex flex-col justify-center min-h-[100px]">
-          <p className="text-[10px] font-black uppercase mb-1 text-gray-500 tracking-widest">Total Despesas</p>
-          <p className="text-2xl font-black truncate">{totalDespesas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
-        </div>
-        <div className="bg-black text-white p-5 rounded-sm flex flex-col justify-center min-h-[100px]">
-          <p className="text-[10px] font-black uppercase mb-1 opacity-80 tracking-widest">Lucro Líquido</p>
-          <p className="text-2xl font-black truncate text-white">{lucro.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
-        </div>
-      </div>
-
-      {/* SEÇÃO: FINANCEIRO DETALHADO */}
-      <div className="mb-14">
-        <h2 className="text-xl font-black uppercase border-b-2 border-black mb-6 flex items-center gap-2 pb-1 tracking-tight">
-          <Wallet size={20} />
-          Detalhamento por Meio de Pagamento
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
-          <div className="space-y-4">
-             <div className="flex justify-between border-b border-black py-2">
-                <span className="font-bold flex items-center gap-2 text-xs uppercase tracking-wider"><QrCode size={14}/> Pix</span>
-                <span className="font-black text-lg">{porPix.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
-             </div>
-             <div className="flex justify-between border-b border-black py-2">
-                <span className="font-bold flex items-center gap-2 text-xs uppercase tracking-wider"><Banknote size={14}/> Dinheiro</span>
-                <span className="font-black text-lg">{porDinheiro.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
-             </div>
-             <div className="flex justify-between border-b border-black py-2">
-                <span className="font-bold flex items-center gap-2 text-xs uppercase tracking-wider"><CreditCard size={14}/> Cartão</span>
-                <span className="font-black text-lg">{porCartao.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
-             </div>
-          </div>
-          <div className="bg-gray-50 p-6 border-l-4 border-black">
-             <p className="text-[10px] font-black uppercase text-black mb-3 tracking-widest underline decoration-2 underline-offset-4">Nota Operacional</p>
-             <p className="text-sm leading-relaxed font-bold">
-               Este relatório contém dados filtrados {metodoFiltro === 'todos' ? 'de todas as formas de pagamento' : `exclusivamente para pagamentos via ${metodoFiltro.toUpperCase()}`}. 
-               O volume total capturado é de <b>{totalReceitas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</b>.
-             </p>
+          <div className="flex items-center gap-3">
+            <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest hidden md:inline">Relatório {metodoFiltro === 'todos' ? 'Geral' : metodoFiltro.toUpperCase()}</span>
+            <button 
+              onClick={handlePrint}
+              className="bg-black text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:opacity-80 transition"
+            >
+              <Printer size={16} />
+              Imprimir / PDF
+            </button>
           </div>
         </div>
-      </div>
 
-      {/* SEÇÃO: PERFORMANCE DE AGENDAMENTOS */}
-      <div className="mb-14">
-        <h2 className="text-xl font-black uppercase border-b-2 border-black mb-6 flex items-center gap-2 pb-1 tracking-tight">
-          <BarChart2 size={20} />
-          Evolução Comercial (Geral)
-        </h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="p-5 border border-black rounded-sm text-center">
-               <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1">Total</p>
-               <p className="text-3xl font-black">{agendamentosPeriod.length}</p>
-            </div>
-            <div className="p-5 border border-black rounded-sm text-center">
-               <p className="text-[9px] font-black text-gray-900 uppercase tracking-widest mb-1">Concluídos</p>
-               <p className="text-3xl font-black">{concluidos.length}</p>
-            </div>
-            <div className="p-5 border border-black rounded-sm text-center">
-               <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1">Cancelados</p>
-               <p className="text-3xl font-black">{cancelados.length}</p>
-            </div>
-            <div className="p-5 border border-black rounded-sm text-center">
-               <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1">Pendentes</p>
-               <p className="text-3xl font-black">{pendentes.length}</p>
-            </div>
+        {/* CABEÇALHO DO RELATÓRIO */}
+        <div className="border-b-4 border-black pb-8 mb-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+          <div>
+            <h1 className="text-5xl font-black uppercase tracking-tighter leading-none mb-2">Relatório</h1>
+            <p className="text-xl font-black text-gray-900 uppercase tracking-tight">
+              ESTÚDIO {tipo === 'mensal' ? `/ ${format(startDate, 'MMMM yyyy', { locale: ptBR })}` : `/ ANO ${ano}`}
+              {metodoFiltro !== 'todos' && <span className="text-gray-500 ml-2">[{metodoFiltro}]</span>}
+            </p>
+          </div>
+          <div className="text-left md:text-right border-l-2 md:border-l-0 md:border-r-2 border-black pl-4 md:pr-4">
+            <p className="text-xs font-black uppercase tracking-widest">Heinz Tattoo Studio</p>
+            <p className="text-[10px] font-bold text-gray-800">Documento Gerado: {format(new Date(), "dd/MM/yyyy HH:mm")}</p>
+          </div>
         </div>
-      </div>
 
-      {/* SEÇÃO: LISTAGEM DE TRANSAÇÕES */}
-      <div className="flex-1">
-        <h2 className="text-xl font-black uppercase border-b-2 border-black mb-4 pb-1 tracking-tight">Registro de Movimentações</h2>
-        <table className="w-full text-left text-[11px] border-collapse">
-          <thead>
-            <tr className="border-b-2 border-black bg-gray-100">
-              <th className="p-3 uppercase font-black border border-black">Data</th>
-              <th className="p-3 uppercase font-black border border-black">Descrição</th>
-              <th className="p-3 uppercase font-black border border-black">Método</th>
-              <th className="p-3 uppercase font-black border border-black text-right">Valor</th>
-            </tr>
-          </thead>
-          <tbody>
-            {transactionsPeriod.map((t, idx) => (
-              <tr key={idx} className="border-b border-black">
-                <td className="p-3 font-bold border border-black">{format(new Date(t.data), "dd/MM")}</td>
-                <td className="p-3 font-bold text-sm border border-black">{t.descricao}</td>
-                <td className="p-3 uppercase text-[9px] font-black border border-black">{t.metodo}</td>
-                <td className="p-3 text-right font-black text-sm border border-black">
-                  {t.tipo === 'despesa' ? '-' : ''}{t.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                </td>
+        {/* GRID DE RESUMO RÁPIDO */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
+          <div className="border-2 border-black p-5 rounded-sm flex flex-col justify-center min-h-[100px]">
+            <p className="text-[10px] font-black uppercase mb-1 text-gray-500 tracking-widest">Total Receitas</p>
+            <p className="text-2xl font-black truncate">{totalReceitas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+          </div>
+          <div className="border-2 border-black p-5 rounded-sm flex flex-col justify-center min-h-[100px]">
+            <p className="text-[10px] font-black uppercase mb-1 text-gray-500 tracking-widest">Total Despesas</p>
+            <p className="text-2xl font-black truncate">{totalDespesas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+          </div>
+          <div className="bg-black p-5 rounded-sm flex flex-col justify-center min-h-[100px]">
+            <p className="text-[10px] font-black uppercase mb-1 opacity-80 tracking-widest text-white">Lucro Líquido</p>
+            <p className="text-2xl font-black truncate text-white">{lucro.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+          </div>
+        </div>
+
+        {/* SEÇÃO: FINANCEIRO DETALHADO */}
+        <div className="mb-14">
+          <h2 className="text-xl font-black uppercase border-b-2 border-black mb-6 flex items-center gap-2 pb-1 tracking-tight">
+            <Wallet size={20} />
+            Detalhamento por Meio de Pagamento
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
+            <div className="space-y-4">
+               <div className="flex justify-between border-b border-black py-2">
+                  <span className="font-bold flex items-center gap-2 text-xs uppercase tracking-wider"><QrCode size={14}/> Pix</span>
+                  <span className="font-black text-lg">{porPix.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+               </div>
+               <div className="flex justify-between border-b border-black py-2">
+                  <span className="font-bold flex items-center gap-2 text-xs uppercase tracking-wider"><Banknote size={14}/> Dinheiro</span>
+                  <span className="font-black text-lg">{porDinheiro.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+               </div>
+               <div className="flex justify-between border-b border-black py-2">
+                  <span className="font-bold flex items-center gap-2 text-xs uppercase tracking-wider"><CreditCard size={14}/> Cartão</span>
+                  <span className="font-black text-lg">{porCartao.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+               </div>
+            </div>
+            <div className="bg-gray-50 p-6 border-l-4 border-black">
+               <p className="text-[10px] font-black uppercase text-black mb-3 tracking-widest underline decoration-2 underline-offset-4">Nota Operacional</p>
+               <p className="text-sm leading-relaxed font-bold">
+                 Este relatório contém dados filtrados {metodoFiltro === 'todos' ? 'de todas as formas de pagamento' : `exclusivamente para pagamentos via ${metodoFiltro.toUpperCase()}`}. 
+                 O volume total capturado é de <b>{totalReceitas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</b>.
+               </p>
+            </div>
+          </div>
+        </div>
+
+        {/* SEÇÃO: PERFORMANCE DE AGENDAMENTOS */}
+        <div className="mb-14">
+          <h2 className="text-xl font-black uppercase border-b-2 border-black mb-6 flex items-center gap-2 pb-1 tracking-tight">
+            <BarChart2 size={20} />
+            Evolução Comercial (Geral)
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="p-5 border border-black rounded-sm text-center">
+                 <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1">Total</p>
+                 <p className="text-3xl font-black">{agendamentosPeriod.length}</p>
+              </div>
+              <div className="p-5 border border-black rounded-sm text-center">
+                 <p className="text-[9px] font-black text-gray-900 uppercase tracking-widest mb-1">Concluídos</p>
+                 <p className="text-3xl font-black">{concluidos.length}</p>
+              </div>
+              <div className="p-5 border border-black rounded-sm text-center">
+                 <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1">Cancelados</p>
+                 <p className="text-3xl font-black">{cancelados.length}</p>
+              </div>
+              <div className="p-5 border border-black rounded-sm text-center">
+                 <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1">Pendentes</p>
+                 <p className="text-3xl font-black">{pendentes.length}</p>
+              </div>
+          </div>
+        </div>
+
+        {/* SEÇÃO: LISTAGEM DE TRANSAÇÕES */}
+        <div className="flex-1 overflow-x-auto">
+          <h2 className="text-xl font-black uppercase border-b-2 border-black mb-4 pb-1 tracking-tight">Registro de Movimentações</h2>
+          <table className="w-full text-left text-[11px] border-collapse min-w-[500px]">
+            <thead>
+              <tr className="border-b-2 border-black bg-gray-100">
+                <th className="p-3 uppercase font-black border border-black">Data</th>
+                <th className="p-3 uppercase font-black border border-black">Descrição</th>
+                <th className="p-3 uppercase font-black border border-black">Método</th>
+                <th className="p-3 uppercase font-black border border-black text-right">Valor</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {transactionsPeriod.map((t, idx) => (
+                <tr key={idx} className="border-b border-black">
+                  <td className="p-3 font-bold border border-black whitespace-nowrap">{format(new Date(t.data), "dd/MM")}</td>
+                  <td className="p-3 font-bold text-sm border border-black">{t.descricao}</td>
+                  <td className="p-3 uppercase text-[9px] font-black border border-black whitespace-nowrap">{t.metodo}</td>
+                  <td className="p-3 text-right font-black text-sm border border-black whitespace-nowrap">
+                    {t.tipo === 'despesa' ? '-' : ''}{t.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
-      <div className="mt-16 pt-10 border-t-2 border-black text-center">
-        <p className="text-[10px] font-black uppercase tracking-widest text-black">Heinz Tattoo Studio - Documento de Validade Interna</p>
-        <p className="text-[9px] text-gray-500 mt-1 italic">Este relatório é gerado automaticamente pelo sistema de gestão Heinz Studio.</p>
+        <div className="mt-16 pt-10 border-t-2 border-black text-center">
+          <p className="text-[10px] font-black uppercase tracking-widest text-black">Heinz Tattoo Studio - Documento de Validade Interna</p>
+          <p className="text-[9px] text-gray-500 mt-1 italic">Este relatório é gerado automaticamente pelo sistema de gestão Heinz Studio.</p>
+        </div>
       </div>
-
     </div>
   );
 }
