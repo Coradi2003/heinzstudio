@@ -65,146 +65,160 @@ function RelatorioContent() {
   };
 
   return (
-    <div className="min-h-screen bg-white text-black p-4 md:p-10 font-sans max-w-4xl mx-auto">
-      
+    <div className="min-h-screen bg-white text-black p-4 md:p-10 font-sans max-w-4xl mx-auto shadow-2xl my-0 md:my-10 rounded-sm border-x border-gray-100 flex flex-col">
+      <style jsx global>{`
+        /* Forçar modo claro absoluto para esta página */
+        body { background-color: #f3f4f6 !important; color: black !important; }
+        .dark-theme body { background-color: #f3f4f6 !important; }
+        * { border-color: #e5e7eb !important; }
+        
+        @media print {
+          body { background-color: white !important; }
+          .min-h-screen { margin: 0 !important; padding: 0 !important; shadow: none !important; border: none !important; }
+        }
+      `}</style>
+
       {/* Barra de Ações (Sone na Impressão) */}
-      <div className="flex justify-between items-center mb-10 no-print bg-gray-50 p-4 rounded-2xl border border-gray-100">
-        <button onClick={() => router.back()} className="flex items-center gap-2 text-gray-500 hover:text-gray-800 font-bold transition">
-          <ArrowLeft size={20} />
+      <div className="flex justify-between items-center mb-10 no-print bg-white p-4 rounded-2xl border border-gray-200 shadow-sm">
+        <button onClick={() => router.back()} className="flex items-center gap-2 text-gray-500 hover:text-black font-bold transition">
+          <ArrowLeft size={18} />
           Voltar
         </button>
         <div className="flex items-center gap-3">
-          <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Visualizando Relatório</span>
+          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest hidden md:inline">Relatório Oficial</span>
           <button 
             onClick={handlePrint}
-            className="bg-primary text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:opacity-90 transition shadow-lg shadow-primary/20"
+            className="bg-black text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:opacity-80 transition shadow-lg"
           >
-            <Printer size={18} />
-            Imprimir / Salvar PDF
+            <Printer size={16} />
+            Imprimir / PDF
           </button>
         </div>
       </div>
 
       {/* CABEÇALHO DO RELATÓRIO */}
-      <div className="border-b-4 border-black pb-6 mb-8 flex justify-between items-end">
+      <div className="border-b-4 border-black pb-8 mb-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
-          <h1 className="text-4xl font-black uppercase tracking-tighter">Relatório de Gestão</h1>
-          <p className="text-lg font-bold text-gray-600 uppercase">
-            {tipo === 'mensal' ? `${format(startDate, 'MMMM yyyy', { locale: ptBR })}` : `Ano Base: ${ano}`}
+          <h1 className="text-5xl font-black uppercase tracking-tighter leading-none mb-2">Relatório</h1>
+          <p className="text-xl font-black text-gray-800 uppercase tracking-tight">
+            ESTÚDIO {tipo === 'mensal' ? `/ ${format(startDate, 'MMMM yyyy', { locale: ptBR })}` : `/ ANO ${ano}`}
           </p>
         </div>
-        <div className="text-right">
-          <p className="text-xs font-bold text-gray-400">HEINZ TATTOO STUDIO</p>
-          <p className="text-[10px] text-gray-300">Gerado em {format(new Date(), "dd/MM/yyyy 'às' HH:mm")}</p>
+        <div className="text-left md:text-right border-l-2 md:border-l-0 md:border-r-2 border-black pl-4 md:pr-4">
+          <p className="text-xs font-black uppercase tracking-widest">Heinz Tattoo Studio</p>
+          <p className="text-[10px] font-bold text-gray-500">Documento Gerado: {format(new Date(), "dd/MM/yyyy HH:mm")}</p>
         </div>
       </div>
 
-      {/* GRID DE RESUMO RÁPIDO */}
-      <div className="grid grid-cols-3 gap-6 mb-10">
-        <div className="border-2 border-black p-4 rounded-xl">
-          <p className="text-[10px] font-black uppercase mb-1 text-gray-400">Total Receitas</p>
-          <p className="text-2xl font-black">{totalReceitas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+      {/* GRID DE RESUMO RÁPIDO - Fix Padding and Content Fit */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
+        <div className="border-2 border-black p-5 rounded-2xl flex flex-col justify-center min-h-[100px]">
+          <p className="text-[10px] font-black uppercase mb-1 text-gray-400 tracking-widest">Total Receitas</p>
+          <p className="text-2xl font-black truncate">{totalReceitas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
         </div>
-        <div className="border-2 border-black p-4 rounded-xl">
-          <p className="text-[10px] font-black uppercase mb-1 text-gray-400">Total Despesas</p>
-          <p className="text-2xl font-black">{totalDespesas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+        <div className="border-2 border-black p-5 rounded-2xl flex flex-col justify-center min-h-[100px]">
+          <p className="text-[10px] font-black uppercase mb-1 text-gray-400 tracking-widest">Total Despesas</p>
+          <p className="text-2xl font-black truncate">{totalDespesas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
         </div>
-        <div className="bg-black text-white p-4 rounded-xl shadow-lg">
-          <p className="text-[10px] font-black uppercase mb-1 opacity-70">Lucro Líquido</p>
-          <p className="text-2xl font-black">{lucro.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+        <div className="bg-black text-white p-5 rounded-2xl shadow-xl flex flex-col justify-center min-h-[100px]">
+          <p className="text-[10px] font-black uppercase mb-1 opacity-60 tracking-widest">Lucro Líquido</p>
+          <p className="text-2xl font-black truncate">{lucro.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
         </div>
       </div>
 
       {/* SEÇÃO: FINANCEIRO DETALHADO */}
-      <div className="mb-12">
-        <h2 className="text-xl font-black uppercase border-b-2 border-black mb-4 flex items-center gap-2 pb-1">
+      <div className="mb-14">
+        <h2 className="text-xl font-black uppercase border-b-2 border-black mb-6 flex items-center gap-2 pb-1 tracking-tight">
           <Wallet size={20} />
           Detalhamento Financeiro
         </h2>
-        <div className="grid grid-cols-2 gap-10">
-          <div className="space-y-3">
-             <div className="flex justify-between border-b border-gray-100 py-1">
-                <span className="font-bold text-gray-600">Entradas via PIX</span>
-                <span className="font-black">{porPix.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
+          <div className="space-y-4">
+             <div className="flex justify-between border-b-2 border-gray-50 py-2">
+                <span className="font-bold text-gray-500 uppercase text-[11px] tracking-wider">Entradas via PIX</span>
+                <span className="font-black text-lg">{porPix.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
              </div>
-             <div className="flex justify-between border-b border-gray-100 py-1">
-                <span className="font-bold text-gray-600">Entradas via Dinheiro</span>
-                <span className="font-black">{porDinheiro.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+             <div className="flex justify-between border-b-2 border-gray-50 py-2">
+                <span className="font-bold text-gray-500 uppercase text-[11px] tracking-wider">Entradas em Dinheiro</span>
+                <span className="font-black text-lg">{porDinheiro.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
              </div>
-             <div className="flex justify-between border-b border-gray-100 py-1">
-                <span className="font-bold text-gray-600">Entradas via Cartão</span>
-                <span className="font-black">{porCartao.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+             <div className="flex justify-between border-b-2 border-gray-50 py-2">
+                <span className="font-bold text-gray-500 uppercase text-[11px] tracking-wider">Entradas em Cartão</span>
+                <span className="font-black text-lg">{porCartao.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
              </div>
           </div>
-          <div className="bg-gray-50 p-4 rounded-2xl">
-             <p className="text-[10px] font-black uppercase text-gray-400 mb-2 underline decoration-black decoration-2 underline-offset-4">Insights de Período</p>
-             <p className="text-xs leading-relaxed">
-               Este relatório contempla um faturamento de <b>{totalReceitas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</b>. 
-               {lucro > 0 ? " O resultado operacional foi positivo." : " Atenção ao controle de despesas."} 
-               A maior parte dos recebimentos veio via {porPix > porDinheiro && porPix > porCartao ? "Pix" : porCartao > porDinheiro ? "Cartão" : "Dinheiro"}.
+          <div className="bg-gray-100 p-6 rounded-3xl border-l-4 border-black">
+             <p className="text-[10px] font-black uppercase text-black mb-3 tracking-widest underline decoration-2 underline-offset-4">Análise Operacional</p>
+             <p className="text-sm leading-relaxed font-medium">
+               Relatório referente ao faturamento bruto de <b>{totalReceitas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</b>. 
+               {lucro > 0 ? " O resultado operacional demonstra saúde financeira positiva no período analisado." : " Recomenda-se uma revisão estratégica dos custos fixos e variáveis."} 
+               Predominância de recebimento: {porPix > porDinheiro && porPix > porCartao ? "PIX" : porCartao > porDinheiro ? "CARTÃO" : "DINHEIRO"}.
              </p>
           </div>
         </div>
       </div>
 
       {/* SEÇÃO: PERFORMANCE DE AGENDAMENTOS */}
-      <div className="mb-12">
-        <h2 className="text-xl font-black uppercase border-b-2 border-black mb-4 flex items-center gap-2 pb-1">
+      <div className="mb-14">
+        <h2 className="text-xl font-black uppercase border-b-2 border-black mb-6 flex items-center gap-2 pb-1 tracking-tight">
           <BarChart2 size={20} />
-          Evolução de Agendamentos
+          Evolução Comercial
         </h2>
-        <div className="grid grid-cols-4 gap-4 text-center">
-            <div className="p-3 border border-gray-200 rounded-xl">
-               <p className="text-[10px] font-bold text-gray-400 uppercase">Total Geral</p>
-               <p className="text-xl font-black">{agendamentosPeriod.length}</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="p-5 border-2 border-gray-100 rounded-2xl text-center">
+               <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Carga Total</p>
+               <p className="text-3xl font-black">{agendamentosPeriod.length}</p>
             </div>
-            <div className="p-3 border border-gray-200 rounded-xl bg-green-50/30">
-               <p className="text-[10px] font-bold text-green-600 uppercase">Concluídos</p>
-               <p className="text-xl font-black">{concluidos.length}</p>
+            <div className="p-5 border-2 border-gray-100 rounded-2xl text-center bg-gray-50">
+               <p className="text-[9px] font-black text-green-600 uppercase tracking-widest mb-1">Concluídos</p>
+               <p className="text-3xl font-black">{concluidos.length}</p>
             </div>
-            <div className="p-3 border border-gray-200 rounded-xl bg-red-50/30">
-               <p className="text-[10px] font-bold text-red-600 uppercase">Rejeitados</p>
-               <p className="text-xl font-black">{cancelados.length}</p>
+            <div className="p-5 border-2 border-gray-100 rounded-2xl text-center">
+               <p className="text-[9px] font-black text-red-600 uppercase tracking-widest mb-1">Rejeitados</p>
+               <p className="text-3xl font-black">{cancelados.length}</p>
             </div>
-            <div className="p-3 border border-gray-200 rounded-xl">
-               <p className="text-[10px] font-bold text-gray-400 uppercase">Em Espera</p>
-               <p className="text-xl font-black">{pendentes.length}</p>
+            <div className="p-5 border-2 border-gray-100 rounded-2xl text-center">
+               <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Pendentes</p>
+               <p className="text-3xl font-black">{pendentes.length}</p>
             </div>
         </div>
       </div>
 
-      {/* SEÇÃO: LISTAGEM DE TRANSAÇÕES (Compacta) */}
-      <div>
-        <h2 className="text-xl font-black uppercase border-b-2 border-black mb-4 pb-1">Documento de Movimentação</h2>
-        <table className="w-full text-left text-xs">
+      {/* SEÇÃO: LISTAGEM DE TRANSAÇÕES */}
+      <div className="flex-1">
+        <h2 className="text-xl font-black uppercase border-b-2 border-black mb-4 pb-1 tracking-tight">Registro de Movimentações</h2>
+        <table className="w-full text-left text-[11px]">
           <thead>
-            <tr className="border-b-2 border-black">
-              <th className="py-2">Data</th>
-              <th className="py-2">Descrição</th>
-              <th className="py-2">Categoria</th>
-              <th className="py-2 text-right">Valor</th>
+            <tr className="border-b-2 border-black bg-gray-50 text-gray-500">
+              <th className="p-3 uppercase font-black">Data</th>
+              <th className="p-3 uppercase font-black">Descrição do Item</th>
+              <th className="p-3 uppercase font-black">Categoria</th>
+              <th className="p-3 uppercase font-black text-right">Valor Líquido</th>
             </tr>
           </thead>
           <tbody>
-            {transactionsPeriod.slice(0, 50).map((t, idx) => (
-              <tr key={idx} className="border-b border-gray-100">
-                <td className="py-2">{format(new Date(t.data), "dd/MM")}</td>
-                <td className="py-2 font-bold">{t.descricao}</td>
-                <td className="py-2 uppercase text-[10px] text-gray-400">{t.categoria}</td>
-                <td className={`py-2 text-right font-black ${t.tipo === 'receita' ? 'text-black' : 'text-gray-400'}`}>
+            {transactionsPeriod.slice(0, 100).map((t, idx) => (
+              <tr key={idx} className="border-b border-gray-100 hover:bg-gray-50/50">
+                <td className="p-3 font-bold">{format(new Date(t.data), "dd/MM")}</td>
+                <td className="p-3 font-bold text-sm">{t.descricao}</td>
+                <td className="p-3 uppercase text-[9px] font-black text-gray-400">{t.categoria}</td>
+                <td className={`p-3 text-right font-black text-sm ${t.tipo === 'receita' ? 'text-black' : 'text-gray-400'}`}>
                   {t.tipo === 'despesa' ? '-' : ''}{t.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-        {transactionsPeriod.length > 50 && (
-          <p className="text-[10px] italic text-gray-400 mt-2">* Exibindo apenas as primeiras 50 transações.</p>
+        {transactionsPeriod.length > 100 && (
+          <p className="text-[10px] italic text-gray-400 mt-4 p-4 bg-gray-50 rounded-xl text-center font-bold">
+            * Lista limitada às primeiras 100 movimentações para otimização do documento.
+          </p>
         )}
       </div>
 
-      <div className="mt-20 pt-10 border-t border-dashed border-gray-200 text-center">
-        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Fim do Relatório</p>
+      <div className="mt-16 pt-10 border-t-2 border-black text-center">
+        <p className="text-[10px] font-black uppercase tracking-widest text-black">Heinz Tattoo Studio - Documento de Validade Interna</p>
+        <p className="text-[9px] text-gray-400 mt-1 italic">Este relatório é gerado automaticamente pelo sistema de gestão Heinz Studio.</p>
       </div>
 
     </div>
