@@ -19,31 +19,8 @@ function RelatorioContent() {
   const metodoFiltro = searchParams.get("metodo") || "todos";
 
   useEffect(() => {
-    // Forçar modo claro NO NIVEL MAIS FORTE POSSÍVEL
-    const html = document.documentElement;
-    const body = document.body;
-    
-    const originalClasses = Array.from(html.classList);
-    const originalBg = html.style.getPropertyValue('--color-background');
-    const originalPrimary = html.style.getPropertyValue('--color-primary');
-
-    // Remove as classes de tema e seta variaveis manuais
-    html.classList.remove('dark-theme', 'dark');
-    html.style.setProperty('--color-background', '#ffffff', 'important');
-    html.style.setProperty('--color-primary', '#000000', 'important');
-    html.style.backgroundColor = '#ffffff';
-    body.style.backgroundColor = '#ffffff';
-    body.style.color = '#000000';
-
-    return () => {
-      // Restaura ao sair
-      html.classList.add(...originalClasses);
-      html.style.setProperty('--color-background', originalBg);
-      html.style.setProperty('--color-primary', originalPrimary);
-      html.style.backgroundColor = '';
-      body.style.backgroundColor = '';
-      body.style.color = '';
-    };
+    // Apenas garantir que o scroll comece no topo ao abrir o relatório
+    window.scrollTo(0, 0);
   }, []);
 
   const { agendamentos } = useAgendaStore();
