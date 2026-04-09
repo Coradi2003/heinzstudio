@@ -26,7 +26,7 @@ const menuItems = [
   { name: "Clientes", href: "/clientes", icon: Users },
   { name: "Serviços", href: "/servicos", icon: Scissors },
   { name: "Produtos", href: "/produtos", icon: Package },
-  { name: "Contrato", href: "/contrato", icon: FileText },
+  { name: "Documentos", href: "/contrato", icon: FileText },
   { name: "Financeiro", href: "/financeiro", icon: Wallet },
   { name: "Configurações", href: "/configuracoes", icon: Settings },
 ];
