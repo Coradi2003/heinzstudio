@@ -5,6 +5,7 @@ import { Modal } from "@/components/ui/Modal";
 import { useAgendaStore, Agendamento } from "@/store/useAgendaStore";
 import { useServicosStore } from "@/store/useServicosStore";
 import { useClientesStore } from "@/store/useClientesStore";
+import { useConfigStore } from "@/store/useConfigStore";
 import { UserPlus, Check, Camera, X, Loader2, Image as ImageIcon, RotateCw, Send, CalendarCheck, ShieldCheck } from "lucide-react";
 import { ModalCliente } from "@/components/clientes/ModalCliente";
 import { createClient } from "@/lib/supabase";
@@ -21,6 +22,11 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
   const { agendamentos, addAgendamento, updateAgendamento } = useAgendaStore();
   const { servicos } = useServicosStore();
   const { clientes, addCliente } = useClientesStore();
+  const { 
+    carregarConfiguracao, 
+    templateComprovante, 
+    templateCompromisso 
+  } = useConfigStore();
   
   // States - Tudo opcional
   const [clienteNome, setClienteNome] = useState("");
@@ -84,7 +90,11 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
       setRepeticoes(1);
       setIsSuccess(false);
     }
-  }, [initialData, isOpen]);
+
+    if (isOpen) {
+      carregarConfiguracao();
+    }
+  }, [initialData, isOpen, carregarConfiguracao]);
 
   const handleSave = async () => {
     // Monta dados (conversões básicas)
@@ -266,31 +276,25 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
   };
 
   const handleSendAll = () => {
-    const endereco = "Rua Euvira Popia Pavelski 255 Bairro Martelo Caçador S.C";
-    
-    // Parte 1: Comprovante
-    const comprovante = `📍 *Heinz Tattoo Studio - CONFIRMAÇÃO*
+    // 1. Pegar templates da store
+    let msgComprovante = templateComprovante;
+    let msgCompromisso = templateCompromisso;
 
-Olá *${clienteNome || 'Cliente'}*, sua sessão foi agendada!
+    // 2. Substituir variáveis do Comprovante
+    msgComprovante = msgComprovante
+      .replaceAll("NOME_CLIENTE", clienteNome || "Cliente")
+      .replaceAll("SERVICO_TATTOO", servico || "Sessão de Tatuagem")
+      .replaceAll("DURACAO_SESSION", `${duracao.replace(':', 'h ')}min`)
+      .replaceAll("VALOR_TOTAL", valorTotal || "0,00");
 
-🏁 *Trabalho:* ${servico || 'Sessão de Tatuagem'}
-⏳ *Duração estimada:* ${duracao.replace(':', 'h ')}min
-💰 *Valor total:* R$ ${valorTotal || '0,00'}
-🏠 *Endereço:* ${endereco}
+    // 3. Substituir variáveis do Compromisso
+    msgCompromisso = msgCompromisso
+      .replaceAll("NOME_CLIENTE", clienteNome || "Cliente")
+      .replaceAll("SERVICO_TATTOO", servico || "Sessão de Tatuagem")
+      .replaceAll("VALOR_SERVICO", `R$ ${valorTotal || "0,00"}`);
 
-*Por favor, tente chegar 10 minutos antes.*`;
-
-    // Parte 2: Compromisso
-    const compromisso = `------------------------------------------
-📝 *REGRAS E COMPROMISSO*
-
-1. O cliente tem 60 dias para agendar o retoque gratuito. Após esse prazo, será cobrado.
-2. Em caso de falta sem aviso prévio de 24h, o valor do SINAL será perdido.
-3. Se o estúdio necessitar cancelar, seu sinal poderá ser devolvido integralmente.
-
-*Nos vemos na sua sessão!* 🤘✨`;
-
-    const fullMsg = `${comprovante}\n\n${compromisso}`;
+    // 4. Unificar e Enviar
+    const fullMsg = `${msgComprovante}\n\n${msgCompromisso}`;
     const encodedMsg = encodeURIComponent(fullMsg);
     const numLimpo = telefone?.replace(/\D/g, '') || '';
     window.open(`https://wa.me/${numLimpo}?text=${encodedMsg}`, '_blank');

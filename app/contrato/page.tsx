@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { FileText, Printer, Send, UserCheck, ShieldCheck } from "lucide-react";
+import { FileText, Printer, Send, UserCheck, ShieldCheck, Save, Loader2, CalendarClock } from "lucide-react";
+import { useConfigStore } from "@/store/useConfigStore";
+import { useEffect } from "react";
 
 interface Variable {
   id: string;
@@ -11,6 +13,7 @@ interface Variable {
 }
 
 interface TemplateProps {
+  id: string; // ID para salvar na store (ex: templateComprovante)
   title: string;
   description: string;
   icon: any;
@@ -18,9 +21,22 @@ interface TemplateProps {
   variables: Variable[];
 }
 
-function DocumentEditor({ title, description, icon: Icon, initialText, variables }: TemplateProps) {
+function DocumentEditor({ id, title, description, icon: Icon, initialText, variables }: TemplateProps) {
+  const { salvarConfiguracoes } = useConfigStore();
   const [vars, setVars] = useState<Record<string, string>>({});
   const [text, setText] = useState(initialText);
+  const [isSavingTemplate, setIsSavingTemplate] = useState(false);
+
+  // Atualizar o texto se o initialText mudar (vinda da store)
+  useEffect(() => {
+    setText(initialText);
+  }, [initialText]);
+
+  const handleSaveTemplate = async () => {
+    setIsSavingTemplate(true);
+    await salvarConfiguracoes({ [id]: text });
+    setIsSavingTemplate(false);
+  };
 
   const getPreview = () => {
     let preview = text;
@@ -135,17 +151,27 @@ function DocumentEditor({ title, description, icon: Icon, initialText, variables
               ))}
             </div>
 
-            <div>
-              <label className="text-[10px] uppercase font-bold text-gray-400 mb-1.5 ml-1 block tracking-widest">
-                Texto Base (Ajuste Final)
-              </label>
-              <textarea 
-                value={text} 
-                onChange={e => setText(e.target.value)} 
-                className="w-full h-64 p-5 rounded-[24px] border border-gray-200 bg-white text-sm font-medium text-gray-600 focus:border-primary outline-none transition-all leading-relaxed shadow-inner"
-              ></textarea>
+              <div className="relative">
+                <label className="text-[10px] uppercase font-bold text-gray-400 mb-1.5 ml-1 block tracking-widest">
+                  Texto Base (Modelo Oficial)
+                </label>
+                <textarea 
+                  value={text} 
+                  onChange={e => setText(e.target.value)} 
+                  className="w-full h-64 p-5 rounded-[24px] border border-gray-200 bg-white text-sm font-medium text-gray-600 focus:border-primary outline-none transition-all leading-relaxed shadow-inner"
+                ></textarea>
+                
+                <button 
+                  onClick={handleSaveTemplate}
+                  disabled={isSavingTemplate}
+                  className="absolute bottom-4 right-4 bg-white/80 backdrop-blur shadow-sm border border-gray-100 hover:border-primary p-2 px-3 rounded-xl flex items-center gap-2 text-[10px] font-bold text-gray-500 hover:text-primary transition-all"
+                  title="Salvar alterações como padrão para sempre"
+                >
+                  {isSavingTemplate ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
+                  SALVAR MODELO OFICIAL
+                </button>
+              </div>
             </div>
-          </div>
 
           {/* Preview Area */}
           <div className="flex flex-col h-full sticky top-0">
@@ -194,35 +220,55 @@ function DocumentEditor({ title, description, icon: Icon, initialText, variables
 }
 
 export default function ContratoPage() {
+  const { 
+    carregarConfiguracao, 
+    templateComprovante, 
+    templateCompromisso, 
+    templateAnamnese, 
+    templateMenores 
+  } = useConfigStore();
+
+  useEffect(() => {
+    carregarConfiguracao();
+  }, []);
+
   return (
     <div className="min-h-screen p-4 md:p-8 lg:p-12 max-w-7xl mx-auto space-y-12">
       
       {/* Header */}
       <div className="max-w-3xl mb-12">
         <h2 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tighter mb-4">
-          Documentos e Termos
+          Personalização de Documentos
         </h2>
         <p className="text-lg text-gray-500 font-medium leading-relaxed">
-          Gere termos, contratos e fichas médicas. Preencha as variáveis e envie ou imprima instantaneamente.
+          Edite os modelos oficiais do estúdio. O que você alterar aqui será usado automaticamente no agendamento e nas mensagens de WhatsApp.
         </p>
       </div>
 
       <div className="space-y-16">
         
-        {/* 1. Compromisso Geral */}
+        {/* 1. Comprovante de Agendamento */}
         <DocumentEditor 
+          id="templateComprovante"
+          title="Comprovante de Agendamento"
+          description="Enviado logo após marcar um horário. Contém endereço e dados da sessão."
+          icon={CalendarClock}
+          initialText={templateComprovante}
+          variables={[
+            { id: "NOME_CLIENTE", label: "Nome do Cliente", placeholder: "Ex: João Silva" },
+            { id: "SERVICO_TATTOO", label: "Procedimento", placeholder: "Ex: Tatuagem Realista" },
+            { id: "DURACAO_SESSION", label: "Duração", placeholder: "Ex: 02h 30min" },
+            { id: "VALOR_TOTAL", label: "Valor", placeholder: "Ex: 500,00" },
+          ]}
+        />
+
+        {/* 2. Compromisso Geral */}
+        <DocumentEditor 
+          id="templateCompromisso"
           title="Compromisso de Sessão"
           description="Termos básicos de agendamento, retoque e cancelamento."
           icon={ShieldCheck}
-          initialText={`Olá NOME_CLIENTE, este é o compromisso do nosso estúdio referente à realização do procedimento: SERVICO_TATTOO no valor de VALOR_SERVICO.
-
-Regras do Estúdio:
-1. O cliente tem 60 dias para agendar o retoque gratuito. Após esse prazo, será cobrado.
-2. Em caso de falta sem aviso prévio de 24h, o valor do SINAL será perdido para cobrir a agenda travada.
-3. Se o estúdio necessitar cancelar ou reagendar pela nossa parte, seu sinal poderá ser devolvido integralmente se não quiser um novo horário.
-
-Aguardamos ansiosamente pela sua sessão!
-Assinado: Heinz Tattoo Studio`}
+          initialText={templateCompromisso}
           variables={[
             { id: "NOME_CLIENTE", label: "Nome do Cliente", placeholder: "Ex: João Silva" },
             { id: "SERVICO_TATTOO", label: "Procedimento", placeholder: "Ex: Tatuagem Realista" },
@@ -230,23 +276,13 @@ Assinado: Heinz Tattoo Studio`}
           ]}
         />
 
-        {/* 2. Autorização de Menores */}
+        {/* 3. Autorização de Menores */}
         <DocumentEditor 
+          id="templateMenores"
           title="Autorização de Menores"
           description="Termo legal para tatuagem em adolescentes com autorização dos pais."
           icon={UserCheck}
-          initialText={`TERMO DE AUTORIZAÇÃO DE TATUAGEM
-ESTÚDIO: HEINZ TATTOO STUDIO
-
-Eu, NOME_RESPONSAVEL, nascido em NASC_RESPONSAVEL, Idade IDADE_RESPONSAVEL, estado civil ESTADO_CIVIL_RESPONSAVEL, RG RG_RESPONSAVEL, Telefone TEL_RESPONSAVEL, no gozo pleno de minhas faculdades mentais e psíquicas, pelo presente e na melhor forma de direito, autorizo o artista HEINZ TATTOO a executar sobre a pele de meu filho (a) NOME_FILHO, menor de idade, nascido (a) em NASC_FILHO, CIDADE_UF_FILHO, portador do RG RG_FILHO, que em minha companhia reside e pelo qual sou inteiramente responsável, a gravação da tatuagem representada pelo desenho DESENHO, assumo ainda, na qualidade do genitor do menor, plena responsabilidade pela gravação, eximindo de qualquer responsabilidade civil ou criminal o agente elaborador.
-
-Data: DATA_ATUAL
-
-Ass. Do Tatuador: ___________________________________
-Ass. Do Menor: ____________________________________
-Ass. Do Responsável: ________________________________
-
-* Favor reconhecer firma da assinatura do responsável.`}
+          initialText={templateMenores}
           variables={[
             { id: "NOME_RESPONSAVEL", label: "Nome do Responsável" },
             { id: "NASC_RESPONSAVEL", label: "Nascimento do Responsável" },
@@ -263,59 +299,13 @@ Ass. Do Responsável: ________________________________
           ]}
         />
 
-        {/* 3. Ficha de Anamnese */}
+        {/* 4. Ficha de Anamnese */}
         <DocumentEditor 
+          id="templateAnamnese"
           title="Ficha de Anamnese"
           description="Histórico de saúde completo e termo de responsabilidade."
           icon={FileText}
-          initialText={`FICHA DE ANAMNESE E SAÚDE
-
-DADOS PESSOAIS
-Nome completo: NOME_COMPLETO
-RG: RG_ANAM CPF: CPF_ANAM Data de nasc.: NASC_ANAM
-Como nos conheceu: CONHECEU_ANAM WhatsApp: WHATS_ANAM
-
-HISTÓRICO DE SAÚDE
-Fumante? FUMANTE_CHECK
-Alérgia? ALERGIA_CHECK
-Grávida? GRAVIDA_CHECK
-Menstruada? MENSTR_CHECK
-Possui herpes? HERPES_CHECK
-Quelóide? QUELOIDE_CHECK
-Diabetes? DIABETES_CHECK
-Epilepsia? EPILEPSIA_CHECK
-Cicatriza mal? CICATRIZA_CHECK
-Anemia? ANEMIA_CHECK
-Hemofilia? HEMOFILIA_CHECK
-Desmaio? DESMAIO_CHECK
-Vitiligo? VITILIGO_CHECK
-Portador de HIV? HIV_CHECK
-Marcapasso? MARCAPASSO_CHECK
-Hepatite? HEPATITE_CHECK
-Hipertensão? HIPERTENSAO_CHECK
-Doença auto-imune? AUTOIMUNE_CHECK
-Alimentou-se nas últimas 24h? ALIM_CHECK
-Está sob efeito de drogas/álcool? DROGAS_CHECK
-Está com a pele bronzeada? BRONZE_CHECK
-Possui alguma doença cardíaca? CARDIACO_CHECK
-Possui algum tipo de câncer? CANCER_CHECK
-Problema de pele/cicatrização? PELE_CHECK
-Medicamente faz uso diário? MEDIC_CHECK
-Está em tratamento médico? TRATAM_CHECK
-Possui doenças transmissíveis? TRANSM_CHECK
-Possui algum problema de saúde não citado? OUTRO_CHECK
-
-TERMO DE RESPONSABILIDADE
-Declaro que as informações acima são verdadeiras, não cabendo ao profissional quaisquer responsabilidades por declarações omitidas nessa avaliação. Declaro ter de minha espontânea vontade a realização da tatuagem no local aqui descrito. Estou ciente de que o procedimento poderá ocasionar desconforto, dor e inflamação, sendo necessário seguir todos os cuidados recomendados pelo profissional. Autorizo o registro fotográfico do trabalho realizado (autorizando ou não o uso para divulgação). Estou ciente de que o procedimento não possui garantia absoluta de resultado, podendo haver necessidade de retoques posteriores.
-
-Assinatura do cliente: ______________________________________
-Data: DATA_ATUAL_ANAM
-
-PROFISSIONAL
-Local da tattoo/piercing: LOCAL_TATTOO Tipo: TIPO_TATTOO
-Obs.: OBS_PRO
-Profissional: PRO_PRO
-Valor: VALOR_PRO`}
+          initialText={templateAnamnese}
           variables={[
             {id: "NOME_COMPLETO", label: "Nome Completo" },
             { id: "RG_ANAM", label: "RG" },
