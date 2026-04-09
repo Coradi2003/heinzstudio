@@ -41,8 +41,14 @@ export function Sidebar() {
   const [isOpen, setIsOpen] = useState(false);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push("/login");
+    try {
+      await supabase.auth.signOut();
+    } catch (e) {
+      console.warn('Erro ao fazer signOut:', e);
+    } finally {
+      // Força reload completo para limpar sessão no PWA
+      window.location.href = '/login';
+    }
   };
 
   if (pathname === "/login" || pathname === "/relatorio") return null;
