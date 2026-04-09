@@ -57,7 +57,10 @@ export function Sidebar() {
   }, []);
 
   const handleInstall = async () => {
-    if (!deferredPrompt) return;
+    if (!deferredPrompt) {
+      alert("O instalador automático está carregando ou você já possui o app. \n\nPara instalar manualmente: \nNo Chrome, clique nos '3 pontinhos' e selecione 'Instalar Aplicativo'.");
+      return;
+    }
     
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
@@ -136,6 +139,15 @@ export function Sidebar() {
           <span>Venda Rápida</span>
         </button>
 
+        {/* BOTÃO INSTALAR APP - SEMPRE VISÍVEL PARA FACILITAR */}
+        <button 
+          onClick={handleInstall}
+          className="flex items-center gap-3 w-full px-4 py-3.5 mb-4 rounded-2xl bg-primary/10 text-primary border-2 border-primary/20 hover:bg-primary/20 transition-all font-black uppercase text-[10px] tracking-widest shadow-sm"
+        >
+          <Download size={18} />
+          <span>Instalar App Heinz 📱</span>
+        </button>
+
         {menuItems.map((item) => {
           const isActive = pathname === item.href;
           const Icon = item.icon;
@@ -156,17 +168,6 @@ export function Sidebar() {
             </Link>
           );
         })}
-
-        {/* BOTÃO INSTALAR APP (SÓ APARECE SE DISPONÍVEL) */}
-        {showInstallBtn && (
-          <button 
-            onClick={handleInstall}
-            className="flex items-center gap-3 w-full px-4 py-3.5 mt-4 rounded-2xl bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-all font-bold text-sm shadow-inner"
-          >
-            <Download size={18} />
-            <span>Instalar App 📱</span>
-          </button>
-        )}
       </nav>
 
       {/* Logout / Bottom */}
