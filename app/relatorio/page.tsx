@@ -19,8 +19,22 @@ function RelatorioContent() {
   const metodoFiltro = searchParams.get("metodo") || "todos";
 
   useEffect(() => {
-    // Apenas garantir que o scroll comece no topo ao abrir o relatório
+    // Forçamos o modo claro removendo as classes do topo do site
+    const root = document.documentElement;
+    const wasDarkTheme = root.classList.contains('dark-theme');
+    const wasStyleDark = root.classList.contains('dark');
+    
+    if (wasDarkTheme) root.classList.remove('dark-theme');
+    if (wasStyleDark) root.classList.remove('dark');
+    
+    // Garantir que o scroll comece no topo
     window.scrollTo(0, 0);
+
+    return () => {
+      // Quando sair do relatório, devolvemos as classes do Dashboard
+      if (wasDarkTheme) root.classList.add('dark-theme');
+      if (wasStyleDark) root.classList.add('dark');
+    };
   }, []);
 
   const { agendamentos } = useAgendaStore();
