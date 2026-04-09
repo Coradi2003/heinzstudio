@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Building2, User, ArrowUpRight, ArrowDownRight, Wallet, Pencil, Trash2, Calendar, FileText, QrCode, Banknote, CreditCard } from "lucide-react";
+import { Plus, Building2, User, ArrowUpRight, ArrowDownRight, Wallet, Pencil, Trash2, Calendar, FileText, QrCode, Banknote, CreditCard, Zap } from "lucide-react";
 import { useFinanceiroStore, Transacao } from "@/store/useFinanceiroStore";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ModalTransacao } from "@/components/financeiro/ModalTransacao";
+import { ModalDespesasFixas } from "@/components/financeiro/ModalDespesasFixas";
 import Link from "next/link";
 
 export default function FinanceiroPage() {
@@ -15,6 +16,7 @@ export default function FinanceiroPage() {
   const [dataInicioManual, setDataInicioManual] = useState<string>("");
   const [dataFimManual, setDataFimManual] = useState<string>("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isFixedModalOpen, setIsFixedModalOpen] = useState(false);
   const [transEdit, setTransEdit] = useState<Transacao | null>(null);
 
   const transacoesFiltradas = transacoes.filter(t => {
@@ -88,10 +90,19 @@ export default function FinanceiroPage() {
           <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Financeiro</h2>
           <p className="text-gray-500">Controle completo de caixa e faturamento</p>
         </div>
-        <button onClick={() => { setTransEdit(null); setIsModalOpen(true); }} className="bg-primary text-white px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-primary-dark transition shadow-md shadow-primary/20">
-          <Plus size={20} />
-          <span>Novo Registro</span>
-        </button>
+        <div className="flex gap-2">
+          <button 
+            onClick={() => setIsFixedModalOpen(true)} 
+            className="bg-white border-2 border-gray-900 text-gray-900 px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-gray-50 transition"
+          >
+            <Zap size={20} className="text-primary fill-primary/20" />
+            <span>Despesas Fixas</span>
+          </button>
+          <button onClick={() => { setTransEdit(null); setIsModalOpen(true); }} className="bg-primary text-white px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-primary-dark transition shadow-md shadow-primary/20">
+            <Plus size={20} />
+            <span>Novo Registro</span>
+          </button>
+        </div>
       </div>
 
       {/* Abas e Filtros */}
@@ -246,6 +257,7 @@ export default function FinanceiroPage() {
       </div>
 
       <ModalTransacao isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} initialData={transEdit} />
+      <ModalDespesasFixas isOpen={isFixedModalOpen} onClose={() => setIsFixedModalOpen(false)} />
     </div>
   );
 }
