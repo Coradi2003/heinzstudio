@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase";
 import { 
   LayoutDashboard, 
@@ -17,7 +17,8 @@ import {
   LogOut,
   Menu,
   X,
-  Zap
+  Zap,
+  Download
 } from "lucide-react";
 import { useUIStore } from "@/store/useUIStore";
 
@@ -38,6 +39,34 @@ export function Sidebar() {
   const router = useRouter();
   const supabase = createClient();
   const [isOpen, setIsOpen] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstallBtn, setShowInstallBtn] = useState(false);
+
+  useEffect(() => {
+    const handler = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallBtn(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handler);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handler);
+    };
+  }, []);
+
+  const handleInstall = async () => {
+    if (!deferredPrompt) return;
+    
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    
+    if (outcome === 'accepted') {
+      setShowInstallBtn(false);
+      setDeferredPrompt(null);
+    }
+  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -127,6 +156,17 @@ export function Sidebar() {
             </Link>
           );
         })}
+
+        {/* BOTÃO INSTALAR APP (SÓ APARECE SE DISPONÍVEL) */}
+        {showInstallBtn && (
+          <button 
+            onClick={handleInstall}
+            className="flex items-center gap-3 w-full px-4 py-3.5 mt-4 rounded-2xl bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-all font-bold text-sm shadow-inner"
+          >
+            <Download size={18} />
+            <span>Instalar App 📱</span>
+          </button>
+        )}
       </nav>
 
       {/* Logout / Bottom */}
