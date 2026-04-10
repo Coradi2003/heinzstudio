@@ -9,8 +9,7 @@ import { useConfigStore } from "@/store/useConfigStore";
 import { UserPlus, Check, Camera, X, Loader2, Image as ImageIcon, RotateCw, Send, CalendarCheck, ShieldCheck } from "lucide-react";
 import { ModalCliente } from "@/components/clientes/ModalCliente";
 import { createClient } from "@/lib/supabase";
-import { ptBR } from "date-fns/locale";
-import { addDays, addWeeks, addMonths, parseISO, format as formatDate } from "date-fns";
+import { format as formatDate } from "date-fns";
 
 interface ModalAgendamentoProps {
   isOpen: boolean;
@@ -153,25 +152,44 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
     const totalAdicionar = !initialData && repetir ? Math.max(1, repeticoes) + 1 : 1;
     const seriesData: {s: string, e: string}[] = [];
 
+    // Helper: desloca uma data ISO (yyyy-MM-dd) por N dias, semanas ou meses
+    // sem usar Date objects (evita conversão de fuso horário)
+    const offsetDateStr = (dateStr: string, n: number, freq: 'diario' | 'semanal' | 'mensal'): string => {
+      const [yyyy, mm, dd] = dateStr.split('-').map(Number);
+      if (freq === 'diario') {
+        const d = new Date(yyyy, mm - 1, dd + n);
+        return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      } else if (freq === 'semanal') {
+        const d = new Date(yyyy, mm - 1, dd + n * 7);
+        return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      } else {
+        // mensal: incrementa mês, corrige overflow de dia (ex: 31/jan + 1 mês = 28/fev)
+        let newMonth = mm - 1 + n;
+        const newYear = yyyy + Math.floor(newMonth / 12);
+        newMonth = newMonth % 12;
+        const maxDay = new Date(newYear, newMonth + 1, 0).getDate();
+        const newDay = Math.min(dd, maxDay);
+        return `${newYear}-${String(newMonth+1).padStart(2,'0')}-${String(newDay).padStart(2,'0')}`;
+      }
+    };
+
     for (let i = 0; i < totalAdicionar; i++) {
         let s = dateTimeInicio;
         let e = dateTimeFim;
         if (i > 0) {
-            const baseStart = parseISO(dateTimeInicio);
-            const baseEnd = parseISO(dateTimeFim);
-            const nextStart = frequencia === 'diario' ? addDays(baseStart, i) : (frequencia === 'semanal' ? addWeeks(baseStart, i) : addMonths(baseStart, i));
-            const nextEnd = frequencia === 'diario' ? addDays(baseEnd, i) : (frequencia === 'semanal' ? addWeeks(baseEnd, i) : addMonths(baseEnd, i));
-            s = formatDate(nextStart, "yyyy-MM-dd'T'HH:mm:ss");
-            e = formatDate(nextEnd, "yyyy-MM-dd'T'HH:mm:ss");
+            const [startDate, startTime] = dateTimeInicio.split('T');
+            const [endDate, endTime] = dateTimeFim.split('T');
+            s = `${offsetDateStr(startDate, i, frequencia)}T${startTime}`;
+            e = `${offsetDateStr(endDate, i, frequencia)}T${endTime}`;
         }
         
         const conflito = checkConflict(s, e);
         if (conflito) {
-            const dataFormatada = formatDate(new Date(s), "dd/MM 'às' HH:mm", { locale: ptBR });
+            const [sDate, sTime] = s.split('T');
+            const [sy, sm, sd] = sDate.split('-');
+            const dataFormatada = `${sd}/${sm} às ${sTime.substring(0,5)}`;
             const prosseguir = confirm(`CONFLITO DE HORÁRIO!\n\nNo dia ${dataFormatada} já existe um agendamento para "${conflito.clienteNome}".\n\nVocê realmente deseja agendar este horário assim mesmo?`);
             if (!prosseguir) return;
-            // Se aceitou, não precisa avisar dos outros conflitos na mesma série de uma vez (opcional)
-            // mas vou deixar avisar cada um pra ele ter certeza de onde está batendo.
         }
         seriesData.push({ s, e });
     }
