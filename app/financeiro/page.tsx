@@ -42,6 +42,19 @@ export default function FinanceiroPage() {
   const totalDespesas = transacoesFiltradas.filter(t => t.tipo === 'despesa').reduce((acc, curr) => acc + curr.valor, 0);
   const saldo = totalReceitas - totalDespesas;
 
+  // -- CUSTO FIXO TOTAL (Mês inteiro, igual ao relatório) --
+  const hoje = new Date();
+  const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1, 0, 0, 0);
+  const fimMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0, 23, 59, 59);
+  const custoFixoMes = transacoes
+    .filter(t => {
+      const d = new Date(t.data);
+      return t.tipo === 'despesa' &&
+             t.conta === contaVisualizacao &&
+             d >= inicioMes && d <= fimMes;
+    })
+    .reduce((acc, curr) => acc + curr.valor, 0);
+
   const [metodoRelatorio, setMetodoRelatorio] = useState<'todos' | 'Pix' | 'Dinheiro' | 'Cartão'>('todos');
 
   return (
@@ -200,11 +213,12 @@ export default function FinanceiroPage() {
             <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-red-500">
               <ArrowDownRight size={20} />
             </div>
-            <p className="text-gray-500 font-medium">Saídas</p>
+            <p className="text-gray-500 font-medium">Saídas (Mês)</p>
           </div>
           <h3 className="text-4xl font-bold text-red-600 tracking-tight mt-4">
-            {totalDespesas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+            {custoFixoMes.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
           </h3>
+          <p className="text-xs text-gray-400 mt-2">Total de despesas no mês atual</p>
         </div>
       </div>
 
