@@ -84,12 +84,31 @@ function RelatorioContent() {
     const html2canvas = (await import('html2canvas')).default;
     const { jsPDF } = await import('jspdf');
 
-    const canvas = await html2canvas(reportRef.current, {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: '#ffffff',
-      logging: false,
-    });
+    // Força largura A4 (794px @ 96dpi) para que a tabela não fique cortada em telas estreitas
+    const el = reportRef.current;
+    const prevWidth = el.style.width;
+    const prevMaxWidth = el.style.maxWidth;
+    const prevOverflow = el.style.overflow;
+    el.style.width = '794px';
+    el.style.maxWidth = '794px';
+    el.style.overflow = 'visible';
+
+    let canvas;
+    try {
+      canvas = await html2canvas(el, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        width: 794,
+        windowWidth: 794,
+      });
+    } finally {
+      // Restaura estilos originais
+      el.style.width = prevWidth;
+      el.style.maxWidth = prevMaxWidth;
+      el.style.overflow = prevOverflow;
+    }
 
     const imgData = canvas.toDataURL('image/png');
     const imgWidth = 210;

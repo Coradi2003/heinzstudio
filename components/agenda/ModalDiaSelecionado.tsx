@@ -39,7 +39,7 @@ export function ModalDiaSelecionado({ isOpen, onClose, selectedDate, agendamento
               <div className="flex justify-between items-start mb-2 pl-3">
                 <h4 className="font-bold text-gray-800">{agendamento.clienteNome}</h4>
                 <span className="text-xs font-bold bg-gray-100 text-gray-600 px-2 py-1 rounded-lg">
-                  {format(parseISO(agendamento.dataInicio), "HH:mm")} - {format(parseISO(agendamento.dataFim), "HH:mm")}
+                  {(agendamento.dataInicio.split('T')[1] || '').substring(0, 5)} - {(agendamento.dataFim.split('T')[1] || '').substring(0, 5)}
                 </span>
               </div>
               <div className="pl-3 mb-3">

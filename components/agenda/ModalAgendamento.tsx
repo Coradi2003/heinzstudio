@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import { Modal } from "@/components/ui/Modal";
@@ -68,17 +68,23 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
         setImagens(imgs);
       }
       
-      const [data, hora] = initialData.dataInicio.split('T');
+      // Extrai data e hora diretamente da string sem conversão de fuso
+      const [data, horaRaw] = initialData.dataInicio.split('T');
       setDataInicio(data);
-      if (hora) setHoraInicio(hora.substring(0, 5));
+      const horaLimpa = horaRaw ? horaRaw.substring(0, 5) : '';
+      if (horaLimpa) setHoraInicio(horaLimpa);
 
-      // Calcula duração do initialData
-      const start = new Date(initialData.dataInicio);
-      const end = new Date(initialData.dataFim);
-      const diffMs = end.getTime() - start.getTime();
-      const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
-      const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-      setDuracao(`${String(diffHrs).padStart(2, '0')}:${String(diffMins).padStart(2, '0')}`);
+      // Calcula duração a partir das partes da string (sem new Date() que converte timezone)
+      const [hIni, mIni] = (initialData.dataInicio.split('T')[1] || '00:00').split(':').map(Number);
+      const [hFim, mFim] = (initialData.dataFim.split('T')[1] || '00:00').split(':').map(Number);
+      let totalMinsInicio = hIni * 60 + mIni;
+      let totalMinsFim = hFim * 60 + mFim;
+      // Se o fim for no dia seguinte, adiciona 24h
+      if (totalMinsFim < totalMinsInicio) totalMinsFim += 24 * 60;
+      const diffMins = totalMinsFim - totalMinsInicio;
+      const diffHrs = Math.floor(diffMins / 60);
+      const diffRestMins = diffMins % 60;
+      setDuracao(`${String(diffHrs).padStart(2, '0')}:${String(diffRestMins).padStart(2, '0')}`);
       
     } else if (isOpen) {
       setClienteNome(""); setTelefone(""); setServico("");
@@ -97,18 +103,28 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
   }, [initialData, isOpen, carregarConfiguracao]);
 
   const handleSave = async () => {
-    // Monta dados (conversões básicas)
-    const dateTimeInicio = dataInicio && horaInicio ? `${dataInicio}T${horaInicio}:00` : new Date().toISOString();
+    // Monta string de data/hora diretamente (sem new Date() para evitar conversão de fuso)
+    const hoje = formatDate(new Date(), "yyyy-MM-dd'T'HH:mm:ss");
+    const dateTimeInicio = dataInicio && horaInicio ? `${dataInicio}T${horaInicio}:00` : hoje;
     
-    // Calcula fim baseado na duração
+    // Calcula fim somando a duração puramente aritmética (sem new Date() que converte timezone)
     let dateTimeFim = dateTimeInicio;
     if (dataInicio && horaInicio && duracao) {
        const [dHours, dMins] = duracao.split(':').map(Number);
-       const dateF = new Date(dateTimeInicio);
-       dateF.setHours(dateF.getHours() + dHours);
-       dateF.setMinutes(dateF.getMinutes() + dMins);
-       // Usar format do date-fns para manter o formato local e evitar o "Z" do toISOString
-       dateTimeFim = formatDate(dateF, "yyyy-MM-dd'T'HH:mm:ss");
+       const [baseDate, baseTimeRaw] = dateTimeInicio.split('T');
+       const [bH, bM, bS] = baseTimeRaw.split(':').map(Number);
+       const totalMins = bH * 60 + bM + dHours * 60 + dMins;
+       const fimH = Math.floor(totalMins / 60) % 24;
+       const fimM = totalMins % 60;
+       // Se passar da meia-noite, avança o dia
+       const diasExtra = Math.floor((bH * 60 + bM + dHours * 60 + dMins) / (24 * 60));
+       let fimDate = baseDate;
+       if (diasExtra > 0) {
+         const d = new Date(`${baseDate}T00:00:00`);
+         d.setDate(d.getDate() + diasExtra);
+         fimDate = formatDate(d, 'yyyy-MM-dd');
+       }
+       dateTimeFim = `${fimDate}T${String(fimH).padStart(2,'0')}:${String(fimM).padStart(2,'0')}:${String(bS || 0).padStart(2,'0')}`;
     }
     
     const nomeFinal = clienteNome || "Cliente Avulso";

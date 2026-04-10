@@ -109,7 +109,7 @@ export default function AgendaPage() {
                               key={a.id} 
                               className={`w-full text-[8px] font-black text-white px-1 py-0.5 rounded cursor-pointer truncate shadow-sm transition-transform hover:scale-105 ${a.cor || 'bg-primary'} ${a.status === 'concluido' ? 'opacity-40 grayscale' : ''}`}
                             >
-                              {format(parseISO(a.dataInicio), "HH:mm")}
+                              {(a.dataInicio.split('T')[1] || '').substring(0, 5)}
                             </div>
                           ))
                         }
