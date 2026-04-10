@@ -41,6 +41,8 @@ export default function DashboardPage() {
 
   const { start, end } = getPeriodoDatas();
 
+  const hoje = new Date();
+
   // -- FINANCEIRO (Baseado no Período e Conta Selecionada) --
   const baseTrans = transacoes.filter(t => {
     const d = new Date(t.data);
@@ -54,13 +56,16 @@ export default function DashboardPage() {
   const despesas = baseTrans.filter(t => t.tipo === 'despesa').reduce((a,b) => a + b.valor, 0);
   const saldo = faturamento - despesas;
 
-  // -- DÉBITOS GERAIS (Sempre Visíveis) --
+  // -- DÉBITOS GERAIS (Sempre pelo mês atual inteiro, visíveis independente do filtro de período) --
+  const inicioMesDB = new Date(hoje.getFullYear(), hoje.getMonth(), 1, 0, 0, 0);
+  const fimMesDB = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0, 23, 59, 59);
+
   const debitoParticular = transacoes
-    .filter(t => t.tipo === 'despesa' && t.conta === 'Particular' && new Date(t.data) >= start && new Date(t.data) <= end)
+    .filter(t => t.tipo === 'despesa' && t.conta === 'Particular' && new Date(t.data) >= inicioMesDB && new Date(t.data) <= fimMesDB)
     .reduce((a,b) => a + b.valor, 0);
   
   const debitoEmpresarial = transacoes
-    .filter(t => t.tipo === 'despesa' && t.conta === 'Empresa' && new Date(t.data) >= start && new Date(t.data) <= end)
+    .filter(t => t.tipo === 'despesa' && t.conta === 'Empresa' && new Date(t.data) >= inicioMesDB && new Date(t.data) <= fimMesDB)
     .reduce((a,b) => a + b.valor, 0);
 
   // -- BREAKDOWN POR MÉTODO DE PAGAMENTO --
@@ -99,7 +104,6 @@ export default function DashboardPage() {
   const concluidosCount = agendamentos.filter(a => a.status === 'concluido').length;
 
   // -- ANIVERSARIANTES DO DIA --
-  const hoje = new Date();
   const diaHoje = hoje.getDate();
   const mesHoje = hoje.getMonth() + 1;
 
