@@ -45,6 +45,7 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
   const [showClientes, setShowClientes] = useState(false);
   const [showServicos, setShowServicos] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
 
   // States de Repetição
   const [repetir, setRepetir] = useState(false);
@@ -304,29 +305,62 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
     }
   };
 
-  const handleSendAll = () => {
-    // 1. Pegar templates da store
+  // Monta a mensagem completa substituindo as variáveis dos templates
+  const buildFullMsg = () => {
     let msgComprovante = templateComprovante;
     let msgCompromisso = templateCompromisso;
 
-    // 2. Substituir variáveis do Comprovante
     msgComprovante = msgComprovante
       .replaceAll("NOME_CLIENTE", clienteNome || "Cliente")
       .replaceAll("SERVICO_TATTOO", servico || "Sessão de Tatuagem")
       .replaceAll("DURACAO_SESSION", `${duracao.replace(':', 'h ')}min`)
       .replaceAll("VALOR_TOTAL", valorTotal || "0,00");
 
-    // 3. Substituir variáveis do Compromisso
     msgCompromisso = msgCompromisso
       .replaceAll("NOME_CLIENTE", clienteNome || "Cliente")
       .replaceAll("SERVICO_TATTOO", servico || "Sessão de Tatuagem")
       .replaceAll("VALOR_SERVICO", `R$ ${valorTotal || "0,00"}`);
 
-    // 4. Unificar e Enviar
-    const fullMsg = `${msgComprovante}\n\n${msgCompromisso}`;
+    return `${msgComprovante}\n\n${msgCompromisso}`;
+  };
+
+  // Formata o número para wa.me: remove tudo que não é dígito e
+  // adiciona DDI 55 (Brasil) automaticamente se o número tiver 10 ou 11 dígitos
+  const formatWhatsappNumber = (raw: string): string => {
+    const digits = raw.replace(/\D/g, '');
+    if (!digits) return '';
+    // Já tem DDI (13 dígitos com 55 + DDD + número, ou 12 sem o 9)
+    if (digits.length >= 12) return digits;
+    // 10 dígitos (sem 9) ou 11 dígitos (com 9): adiciona DDI Brasil
+    return `55${digits}`;
+  };
+
+  const handleSendAll = () => {
+    const fullMsg = buildFullMsg();
     const encodedMsg = encodeURIComponent(fullMsg);
-    const numLimpo = telefone?.replace(/\D/g, '') || '';
-    window.open(`https://wa.me/${numLimpo}?text=${encodedMsg}`, '_blank');
+    const num = formatWhatsappNumber(telefone || '');
+    window.open(`https://wa.me/${num}?text=${encodedMsg}`, '_blank');
+  };
+
+  const handleCopyMsg = async () => {
+    const fullMsg = buildFullMsg();
+    try {
+      await navigator.clipboard.writeText(fullMsg);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2500);
+    } catch {
+      // Fallback para navegadores sem Clipboard API
+      const ta = document.createElement('textarea');
+      ta.value = fullMsg;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2500);
+    }
   };
 
   return (
@@ -350,7 +384,22 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
                 className="w-full bg-[#25D366] text-white font-black py-5 rounded-[22px] shadow-xl shadow-green-100 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3 text-sm uppercase tracking-widest"
               >
                 <Send size={20} />
-                Enviar Mensagem Completa 🚀
+                Enviar pelo WhatsApp 🚀
+              </button>
+
+              <button
+                onClick={handleCopyMsg}
+                className={`w-full font-black py-4 rounded-[22px] border-2 transition-all flex items-center justify-center gap-3 text-sm uppercase tracking-widest ${
+                  isCopied
+                    ? 'bg-primary/10 border-primary text-primary scale-[1.01]'
+                    : 'bg-white border-gray-200 text-gray-600 hover:border-primary/40 hover:text-primary active:scale-95'
+                }`}
+              >
+                {isCopied ? (
+                  <><ShieldCheck size={20} /> Mensagem Copiada! ✓</>
+                ) : (
+                  <><Send size={20} className="rotate-[-45deg]" /> Copiar Mensagem</>
+                )}
               </button>
               
               <button 
