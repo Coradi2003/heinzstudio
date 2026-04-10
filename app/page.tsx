@@ -42,8 +42,21 @@ export default function DashboardPage() {
   const { start, end } = getPeriodoDatas();
 
   const hoje = new Date();
+  const inicioMesDB = new Date(hoje.getFullYear(), hoje.getMonth(), 1, 0, 0, 0);
+  const fimMesDB = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0, 23, 59, 59);
 
-  // -- FINANCEIRO (Baseado no Período e Conta Selecionada) --
+  // -- FINANCEIRO DO MÊS (Card de Saldo - sempre o mês inteiro, por conta) --
+  const baseTransMes = transacoes.filter(t => {
+    const d = new Date(t.data);
+    return d >= inicioMesDB && d <= fimMesDB && t.conta === contaVisao;
+  });
+
+  const receitasMes = baseTransMes.filter(t => t.tipo === 'receita');
+  const faturamento = receitasMes.reduce((a,b) => a + b.valor, 0);
+  const despesas = baseTransMes.filter(t => t.tipo === 'despesa').reduce((a,b) => a + b.valor, 0);
+  const saldo = faturamento - despesas;
+
+  // -- FINANCEIRO DO PERÍODO (Gráficos / Breakdown por Método - usa filtro de período) --
   const baseTrans = transacoes.filter(t => {
     const d = new Date(t.data);
     const matchData = d >= start && d <= end;
@@ -52,13 +65,8 @@ export default function DashboardPage() {
   });
   
   const receitas = baseTrans.filter(t => t.tipo === 'receita');
-  const faturamento = receitas.reduce((a,b) => a + b.valor, 0);
-  const despesas = baseTrans.filter(t => t.tipo === 'despesa').reduce((a,b) => a + b.valor, 0);
-  const saldo = faturamento - despesas;
 
   // -- DÉBITOS GERAIS (Sempre pelo mês atual inteiro, visíveis independente do filtro de período) --
-  const inicioMesDB = new Date(hoje.getFullYear(), hoje.getMonth(), 1, 0, 0, 0);
-  const fimMesDB = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0, 23, 59, 59);
 
   const debitoParticular = transacoes
     .filter(t => t.tipo === 'despesa' && t.conta === 'Particular' && new Date(t.data) >= inicioMesDB && new Date(t.data) <= fimMesDB)

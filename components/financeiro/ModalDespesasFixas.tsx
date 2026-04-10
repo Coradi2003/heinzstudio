@@ -58,17 +58,13 @@ export function ModalDespesasFixas({ isOpen, onClose }: ModalDespesasFixasProps)
 
     try {
       for (const df of paraLancar) {
-        // Criar a data correta baseada no dia de vencimento
-        const hoje = new Date();
-        const dataVenc = new Date(hoje.getFullYear(), hoje.getMonth(), df.vencimento, 12, 0, 0);
-
         await addTransacao({
           tipo: 'despesa',
           descricao: df.descricao,
           valor: df.valor,
           categoria: df.categoria,
           metodo: 'Pix',
-          data: dataVenc.toISOString(),
+          data: new Date().toISOString(), // Usa data atual do lançamento
           conta: df.conta
         });
       }

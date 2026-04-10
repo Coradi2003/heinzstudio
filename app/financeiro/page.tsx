@@ -12,7 +12,7 @@ import Link from "next/link";
 export default function FinanceiroPage() {
   const { transacoes, removeTransacao } = useFinanceiroStore();
   const [contaVisualizacao, setContaVisualizacao] = useState<'Empresa' | 'Particular'>('Empresa');
-  const [periodo, setPeriodo] = useState<7 | 14 | 30 | 'custom'>(7);
+  const [periodo, setPeriodo] = useState<7 | 14 | 30 | 'custom'>(30);
   const [dataInicioManual, setDataInicioManual] = useState<string>("");
   const [dataFimManual, setDataFimManual] = useState<string>("");
   const [isModalOpen, setIsModalOpen] = useState(false);
