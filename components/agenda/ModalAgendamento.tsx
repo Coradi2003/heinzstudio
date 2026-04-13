@@ -150,7 +150,8 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
     };
 
     // Testar conflitos antes de começar a salvar
-    const totalAdicionar = !initialData && repetir ? Math.max(1, repeticoes) + 1 : 1;
+    // totalAdicionar = 1 agendamento original + N repetições extras
+    const totalAdicionar = !initialData && repetir ? repeticoes + 1 : 1;
     const seriesData: {s: string, e: string}[] = [];
 
     // Helper: desloca uma data ISO (yyyy-MM-dd) por N dias, semanas ou meses
@@ -165,12 +166,13 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
         return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
       } else {
         // mensal: incrementa mês, corrige overflow de dia (ex: 31/jan + 1 mês = 28/fev)
-        let newMonth = mm - 1 + n;
-        const newYear = yyyy + Math.floor(newMonth / 12);
-        newMonth = newMonth % 12;
+        // BUGFIX: não usar % 12 diretamente — causa mes=0 quando resultado é múltiplo de 12
+        const totalMonths = (mm - 1) + n; // 0-indexed total months from epoch of this year
+        const newYear = yyyy + Math.floor(totalMonths / 12);
+        const newMonth = totalMonths % 12; // 0-indexed month (0=jan, 11=dec)
         const maxDay = new Date(newYear, newMonth + 1, 0).getDate();
         const newDay = Math.min(dd, maxDay);
-        return `${newYear}-${String(newMonth+1).padStart(2,'0')}-${String(newDay).padStart(2,'0')}`;
+        return `${newYear}-${String(newMonth + 1).padStart(2,'0')}-${String(newDay).padStart(2,'0')}`;
       }
     };
 
@@ -310,18 +312,32 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
     let msgComprovante = templateComprovante;
     let msgCompromisso = templateCompromisso;
 
-    msgComprovante = msgComprovante
-      .replaceAll("NOME_CLIENTE", clienteNome || "Cliente")
-      .replaceAll("SERVICO_TATTOO", servico || "Sessão de Tatuagem")
-      .replaceAll("DURACAO_SESSION", `${duracao.replace(':', 'h ')}min`)
-      .replaceAll("VALOR_TOTAL", valorTotal || "0,00");
+    // Formata data e hora para exibição amigável (ex: 15/04/2025 às 14:30)
+    const dataFormatada = dataInicio
+      ? dataInicio.split('-').reverse().join('/')
+      : '—';
+    const horaFormatada = horaInicio || '—';
+    const duracaoFormatada = duracao
+      ? duracao.replace(':', 'h') + 'min'
+      : '—';
+    const sinalFormatado = valorSinal && Number(valorSinal) > 0
+      ? `R$ ${Number(valorSinal).toFixed(2)}`
+      : 'Sem sinal';
+    const totalFormatado = valorTotal ? `R$ ${Number(valorTotal).toFixed(2)}` : 'R$ 0,00';
 
-    msgCompromisso = msgCompromisso
-      .replaceAll("NOME_CLIENTE", clienteNome || "Cliente")
-      .replaceAll("SERVICO_TATTOO", servico || "Sessão de Tatuagem")
-      .replaceAll("VALOR_SERVICO", `R$ ${valorTotal || "0,00"}`);
+    const substituir = (tpl: string) =>
+      tpl
+        .replaceAll('NOME_CLIENTE', clienteNome || 'Cliente')
+        .replaceAll('SERVICO_TATTOO', servico || 'Sessão de Tatuagem')
+        .replaceAll('DURACAO_SESSION', duracaoFormatada)
+        .replaceAll('VALOR_TOTAL', totalFormatado)
+        .replaceAll('VALOR_SERVICO', totalFormatado)
+        .replaceAll('VALOR_SINAL', sinalFormatado)
+        .replaceAll('DATA_SESSAO', dataFormatada)
+        .replaceAll('HORA_SESSAO', horaFormatada)
+        .replaceAll('METODO_SINAL', metodoSinal || 'Pix');
 
-    return `${msgComprovante}\n\n${msgCompromisso}`;
+    return `${substituir(msgComprovante)}\n\n${substituir(msgCompromisso)}`;
   };
 
   // Formata o número para wa.me: remove tudo que não é dígito e
@@ -375,7 +391,7 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
              {initialData ? "Alteração Salva!" : "Agendamento Confirmado!"}
            </h3>
            <p className="text-gray-500 mb-10 max-w-xs font-medium">
-             As informações para *${clienteNome || 'o cliente'}* foram {initialData ? "atualizadas" : "reservadas"} com sucesso no calendário.
+             As informações para <strong>{clienteNome || 'o cliente'}</strong> foram {initialData ? "atualizadas" : "reservadas"} com sucesso no calendário.
            </p>
 
            <div className="w-full space-y-3">
@@ -738,3 +754,4 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
     </Modal>
   );
 }
+

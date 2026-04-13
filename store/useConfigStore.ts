@@ -20,9 +20,12 @@ const DEFAULT_TEMPLATES = {
 
 Olá *NOME_CLIENTE*, sua sessão foi agendada!
 
+📅 *Data:* DATA_SESSAO
+🕐 *Horário:* HORA_SESSAO
 🏁 *Trabalho:* SERVICO_TATTOO
 ⏳ *Duração estimada:* DURACAO_SESSION
-💰 *Valor total:* R$ VALOR_TOTAL
+💰 *Valor total:* VALOR_TOTAL
+💵 *Sinal pago:* VALOR_SINAL (METODO_SINAL)
 🏠 *Endereço:* Rua Euvira Popia Pavelski 255 Bairro Martelo Caçador S.C
 
 *Por favor, tente chegar 10 minutos antes.*`,
