@@ -113,10 +113,17 @@ export const useConfigStore = create<ConfigStore>()((set) => ({
 
     const { data } = await supabase.from('configuracoes').select('*').eq('user_id', userData.user.id).single();
     if (data) {
+      // Auto-migração: se o template salvo não tiver as novas variáveis (DATA_SESSAO, HORA_SESSAO),
+      // usa o novo template padrão automaticamente — sem precisar editar nas configurações
+      const templateComprovante =
+        data.template_comprovante && data.template_comprovante.includes('DATA_SESSAO')
+          ? data.template_comprovante
+          : DEFAULT_TEMPLATES.templateComprovante;
+
       set({ 
         corHexa: data.cor_hexa || 'bg-[#4F46E5]',
         bgHexa: data.fundo_hexa || '#F9FAFB',
-        templateComprovante: data.template_comprovante || DEFAULT_TEMPLATES.templateComprovante,
+        templateComprovante,
         templateCompromisso: data.template_compromisso || DEFAULT_TEMPLATES.templateCompromisso,
         templateAnamnese: data.template_anamnese || DEFAULT_TEMPLATES.templateAnamnese,
         templateMenores: data.template_menores || DEFAULT_TEMPLATES.templateMenores,
