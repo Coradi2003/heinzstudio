@@ -1,28 +1,27 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-// ─── BOT BLOCKLIST ────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// ⚠️  MODO DEBUG — NUNCA BLOQUEIA
+// Listas de referência usadas APENAS para diagnóstico via headers de resposta.
+// Nenhuma lógica de bloqueio está ativa.
+// ─────────────────────────────────────────────────────────────────────────────
+
 const BOT_BLOCKLIST = [
-  // Scrapers / HTTP libraries
   'scrapy', 'crawler', 'spider', 'scraper',
   'wget', 'python-requests', 'python-urllib', 'python-httpx', 'aiohttp',
   'go-http-client', 'okhttp', 'node-fetch', 'got/',
   'phin', 'superagent', 'needle', 'axios/',
-  // Ferramentas de ataque / reconhecimento
   'zgrab', 'masscan', 'nikto', 'sqlmap', 'nuclei',
   'dirbuster', 'gobuster', 'ffuf', 'wfuzz', 'burpsuite',
   'nessus', 'openvas', 'acunetix', 'appscan',
-  // Bots de SEO agressivos
   'semrushbot', 'ahrefsbot', 'mj12bot', 'dotbot', 'petalbot',
   'yandexbot', 'baiduspider', 'rogerbot', 'blexbot', 'exabot',
   'dataprovider', 'linkdexbot', 'spbot', 'seokicks',
-  // Headless / automação
   'headlesschrome', 'phantomjs', 'selenium', 'webdriver', 'puppeteer',
   'playwright', 'cypress', 'testcafe', 'nightmare',
 ] as const
 
-// ─── ALLOWLIST ────────────────────────────────────────────────────────────────
-// Motores de busca legítimos + bots de preview social.
 const ALLOWED_BOTS = [
   'googlebot', 'google-inspectiontool', 'google-read-aloud',
   'bingbot', 'duckduckbot', 'slurp',
@@ -31,19 +30,13 @@ const ALLOWED_BOTS = [
 ] as const
 
 export async function middleware(request: NextRequest) {
-  // ── Bloqueio de bots ─────────────────────────────────────────────────────
-  // Executado ANTES de qualquer chamada ao Supabase para não desperdiçar
-  // invocações com tráfego malicioso.
-  const ua = (request.headers.get('user-agent') ?? '').toLowerCase()
-  const isAllowed = ALLOWED_BOTS.some(b => ua.includes(b))
-  if (!isAllowed && (!ua.trim() || BOT_BLOCKLIST.some(b => ua.includes(b)))) {
-    return new NextResponse('Acesso negado.', {
-      status: 403,
-      headers: { 'content-type': 'text/plain; charset=utf-8' },
-    })
-  }
-  // ─────────────────────────────────────────────────────────────────────────
+  // ⚠️ DEBUG: captura UA no início — sem bloquear nada
+  const _ua = request.headers.get('user-agent') ?? ''
+  const _uaLower = _ua.toLowerCase()
+  const _debugAllowed = ALLOWED_BOTS.find(b => _uaLower.includes(b)) ?? 'none'
+  const _debugBlocked = BOT_BLOCKLIST.find(b => _uaLower.includes(b)) ?? 'none'
 
+  // ── Lógica original intacta ───────────────────────────────────────────────
   let response = NextResponse.next({
     request: {
       headers: request.headers,
@@ -111,6 +104,13 @@ export async function middleware(request: NextRequest) {
     url.pathname = '/'
     return NextResponse.redirect(url)
   }
+
+  // ⚠️ DEBUG: injeta headers de diagnóstico antes do return final
+  // Visíveis no DevTools → Network → response headers de qualquer página
+  response.headers.set('x-debug-ua', _ua.slice(0, 250))
+  response.headers.set('x-debug-ua-empty', !_ua.trim() ? 'true' : 'false')
+  response.headers.set('x-debug-allowed-match', _debugAllowed)
+  response.headers.set('x-debug-blocked-match', _debugBlocked)
 
   return response
 }
