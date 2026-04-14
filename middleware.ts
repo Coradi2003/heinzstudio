@@ -1,11 +1,7 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ⚠️  MODO DEBUG — NUNCA BLOQUEIA
-// Listas de referência usadas APENAS para diagnóstico via headers de resposta.
-// Nenhuma lógica de bloqueio está ativa.
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── BLOCKLIST ────────────────────────────────────────────────────────────────
 
 const BOT_BLOCKLIST = [
   'scrapy', 'crawler', 'spider', 'scraper',
@@ -30,13 +26,24 @@ const ALLOWED_BOTS = [
 ] as const
 
 export async function middleware(request: NextRequest) {
-  // ⚠️ DEBUG: captura UA no início — sem bloquear nada
-  const _ua = request.headers.get('user-agent') ?? ''
-  const _uaLower = _ua.toLowerCase()
-  const _debugAllowed = ALLOWED_BOTS.find(b => _uaLower.includes(b)) ?? 'none'
-  const _debugBlocked = BOT_BLOCKLIST.find(b => _uaLower.includes(b)) ?? 'none'
+  try {
+    const ua = (request.headers.get('user-agent') ?? '').toLowerCase()
 
-  // ── Lógica original intacta ───────────────────────────────────────────────
+    // Regra 1 e 2: allowlist e UA vazio passam livremente
+    if (!ALLOWED_BOTS.some(b => ua.includes(b)) && ua.trim()) {
+      // Regra 3: UA na blocklist → bloqueia
+      if (BOT_BLOCKLIST.some(b => ua.includes(b))) {
+        return new NextResponse('Acesso negado.', {
+          status: 403,
+          headers: { 'content-type': 'text/plain; charset=utf-8' },
+        })
+      }
+    }
+  } catch {
+    // Fail-safe: em caso de erro as regras de bloqueio são ignoradas
+  }
+
+  // ── Lógica de Autenticação Supabase ───────────────────────────────────────
   let response = NextResponse.next({
     request: {
       headers: request.headers,
@@ -104,13 +111,6 @@ export async function middleware(request: NextRequest) {
     url.pathname = '/'
     return NextResponse.redirect(url)
   }
-
-  // ⚠️ DEBUG: injeta headers de diagnóstico antes do return final
-  // Visíveis no DevTools → Network → response headers de qualquer página
-  response.headers.set('x-debug-ua', _ua.slice(0, 250))
-  response.headers.set('x-debug-ua-empty', !_ua.trim() ? 'true' : 'false')
-  response.headers.set('x-debug-allowed-match', _debugAllowed)
-  response.headers.set('x-debug-blocked-match', _debugBlocked)
 
   return response
 }
