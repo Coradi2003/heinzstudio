@@ -117,11 +117,24 @@ export default function DashboardPage() {
 
   const aniversariantes = clientes.filter(c => {
     if (!c.dataNascimento) return false;
-    // Formato esperado: YYYY-MM-DD
-    const parts = c.dataNascimento.split('-');
-    if (parts.length !== 3) return false;
-    const mes = parseInt(parts[1]);
-    const dia = parseInt(parts[2]);
+    let dia: number, mes: number;
+
+    if (c.dataNascimento.includes('/')) {
+      // Formato DD/MM/AAAA (salvo pelo ModalCliente com máscara)
+      const parts = c.dataNascimento.split('/');
+      if (parts.length !== 3) return false;
+      dia = parseInt(parts[0]);
+      mes = parseInt(parts[1]);
+    } else if (c.dataNascimento.includes('-')) {
+      // Formato YYYY-MM-DD (ISO)
+      const parts = c.dataNascimento.split('-');
+      if (parts.length !== 3) return false;
+      mes = parseInt(parts[1]);
+      dia = parseInt(parts[2]);
+    } else {
+      return false;
+    }
+
     return dia === diaHoje && mes === mesHoje;
   });
 
