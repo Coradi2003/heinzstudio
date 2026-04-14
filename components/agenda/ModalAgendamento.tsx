@@ -49,7 +49,7 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
 
   // States de Repetição
   const [repetir, setRepetir] = useState(false);
-  const [frequencia, setFrequencia] = useState<'diario' | 'semanal' | 'mensal'>('semanal');
+  const [frequencia, setFrequencia] = useState<'diario' | 'semanal' | 'mensal' | 'anual'>('semanal');
   const [repeticoes, setRepeticoes] = useState(1);
 
   useEffect(() => {
@@ -131,18 +131,21 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
     const telefoneFinal = telefone || "";
 
     // -- VALIDAÇÃO DE CONFLITO --
+    // IMPORTANTE: Usamos comparação direta de strings ISO (sem new Date()) para evitar
+    // conversão de fuso horário. Strings no formato "YYYY-MM-DDThh:mm:ss" são comparáveis
+    // lexicograficamente, o que garante ordem correta sem offset de UTC.
     const checkConflict = (startStr: string, endStr: string) => {
-      const startNew = new Date(startStr).getTime();
-      const endNew = new Date(endStr).getTime();
-
       return agendamentos.find(a => {
         // Ignorar se estivermos editando o próprio agendamento
         if (initialData && a.id === initialData.id) return false;
         // Ignorar cancelados
         if (a.status === 'cancelado') return false;
 
-        const startEx = new Date(a.dataInicio).getTime();
-        const endEx = new Date(a.dataFim).getTime();
+        // Normaliza para o mesmo formato (remove possível sufixo Z ou +00:00)
+        const startEx = a.dataInicio.substring(0, 19);
+        const endEx = a.dataFim.substring(0, 19);
+        const startNew = startStr.substring(0, 19);
+        const endNew = endStr.substring(0, 19);
         
         // Lógica de Sobreposição: (Inicio1 < Fim2) && (Fim1 > Inicio2)
         return (startNew < endEx) && (endNew > startEx);
@@ -154,9 +157,9 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
     const totalAdicionar = !initialData && repetir ? repeticoes + 1 : 1;
     const seriesData: {s: string, e: string}[] = [];
 
-    // Helper: desloca uma data ISO (yyyy-MM-dd) por N dias, semanas ou meses
-    // sem usar Date objects (evita conversão de fuso horário)
-    const offsetDateStr = (dateStr: string, n: number, freq: 'diario' | 'semanal' | 'mensal'): string => {
+    // Helper: desloca uma data ISO (yyyy-MM-dd) por N dias, semanas, meses ou anos
+    // sem usar Date objects para o offset principal (evita conversão de fuso horário)
+    const offsetDateStr = (dateStr: string, n: number, freq: 'diario' | 'semanal' | 'mensal' | 'anual'): string => {
       const [yyyy, mm, dd] = dateStr.split('-').map(Number);
       if (freq === 'diario') {
         const d = new Date(yyyy, mm - 1, dd + n);
@@ -164,10 +167,15 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
       } else if (freq === 'semanal') {
         const d = new Date(yyyy, mm - 1, dd + n * 7);
         return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+      } else if (freq === 'anual') {
+        const newYear = yyyy + n;
+        // Corrige 29/fev em anos não-bissextos
+        const maxDay = new Date(newYear, mm, 0).getDate();
+        const newDay = Math.min(dd, maxDay);
+        return `${newYear}-${String(mm).padStart(2,'0')}-${String(newDay).padStart(2,'0')}`;
       } else {
         // mensal: incrementa mês, corrige overflow de dia (ex: 31/jan + 1 mês = 28/fev)
-        // BUGFIX: não usar % 12 diretamente — causa mes=0 quando resultado é múltiplo de 12
-        const totalMonths = (mm - 1) + n; // 0-indexed total months from epoch of this year
+        const totalMonths = (mm - 1) + n;
         const newYear = yyyy + Math.floor(totalMonths / 12);
         const newMonth = totalMonths % 12; // 0-indexed month (0=jan, 11=dec)
         const maxDay = new Date(newYear, newMonth + 1, 0).getDate();
@@ -679,6 +687,7 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
                         <option value="diario">Diário</option>
                         <option value="semanal">Semanal</option>
                         <option value="mensal">Mensal</option>
+                        <option value="anual">Anual</option>
                       </select>
                    </div>
                    <div>
@@ -692,7 +701,7 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
                         className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-xs font-bold text-gray-700 outline-none focus:border-primary"
                       />
                    </div>
-                   <p className="col-span-2 text-[10px] text-gray-400 ml-1">Serão criados {repeticoes + 1} agendamentos no total (todo {frequencia === 'mensal' ? 'm\u00eas' : frequencia === 'semanal' ? 'semana' : 'dia'}, no mesmo dia e horario).</p>
+                   <p className="col-span-2 text-[10px] text-gray-400 ml-1">Serão criados {repeticoes + 1} agendamentos no total (todo {frequencia === 'mensal' ? 'm\u00eas' : frequencia === 'semanal' ? 'semana' : frequencia === 'anual' ? 'ano' : 'dia'}, no mesmo dia e hor\u00e1rio).</p>
                  </div>
                )}
             </div>
