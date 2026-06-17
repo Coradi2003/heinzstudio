@@ -1,0 +1,277 @@
+"use client";
+
+import { useState } from "react";
+import { Plus, Building2, User, ArrowUpRight, ArrowDownRight, Wallet, Pencil, Trash2, Calendar, FileText, QrCode, Banknote, CreditCard, Zap } from "lucide-react";
+import { useFinanceiroStore, Transacao } from "@/store/useFinanceiroStore";
+import { format, parseISO } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { ModalTransacao } from "@/components/financeiro/ModalTransacao";
+import { ModalDespesasFixas } from "@/components/financeiro/ModalDespesasFixas";
+import Link from "next/link";
+
+export default function FinanceiroPage() {
+  const { transacoes, removeTransacao } = useFinanceiroStore();
+  const [contaVisualizacao, setContaVisualizacao] = useState<'Empresa' | 'Particular'>('Empresa');
+  const [periodo, setPeriodo] = useState<7 | 14 | 30 | 'custom'>(30);
+  const [dataInicioManual, setDataInicioManual] = useState<string>("");
+  const [dataFimManual, setDataFimManual] = useState<string>("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isFixedModalOpen, setIsFixedModalOpen] = useState(false);
+  const [transEdit, setTransEdit] = useState<Transacao | null>(null);
+
+  const transacoesFiltradas = transacoes.filter(t => {
+    const matchConta = t.conta === contaVisualizacao;
+    const dataT = new Date(t.data);
+    
+    // Filtro de Data
+    if (periodo === 'custom' && dataInicioManual && dataFimManual) {
+      const start = new Date(dataInicioManual + 'T00:00:00');
+      const end = new Date(dataFimManual + 'T23:59:59');
+      return matchConta && dataT >= start && dataT <= end;
+    }
+
+    const dateLimit = new Date();
+    dateLimit.setDate(dateLimit.getDate() - (periodo as number));
+    dateLimit.setHours(0,0,0,0);
+    const matchData = dataT >= dateLimit;
+
+    return matchConta && matchData;
+  });
+  
+  const totalReceitas = transacoesFiltradas.filter(t => t.tipo === 'receita').reduce((acc, curr) => acc + curr.valor, 0);
+  const totalDespesas = transacoesFiltradas.filter(t => t.tipo === 'despesa').reduce((acc, curr) => acc + curr.valor, 0);
+  const saldo = totalReceitas - totalDespesas;
+
+  // -- CUSTO FIXO TOTAL (Mês inteiro, igual ao relatório) --
+  const hoje = new Date();
+  const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1, 0, 0, 0);
+  const fimMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0, 23, 59, 59);
+  const custoFixoMes = transacoes
+    .filter(t => {
+      const d = new Date(t.data);
+      return t.tipo === 'despesa' &&
+             t.conta === contaVisualizacao &&
+             d >= inicioMes && d <= fimMes;
+    })
+    .reduce((acc, curr) => acc + curr.valor, 0);
+
+  const [metodoRelatorio, setMetodoRelatorio] = useState<'todos' | 'Pix' | 'Dinheiro' | 'Cartão'>('todos');
+
+  return (
+    <div className="min-h-screen p-4 md:p-8 max-w-7xl mx-auto">
+      {/* 0. Relatórios Quick Actions */}
+      <div className="bg-white border border-gray-100 p-4 rounded-[28px] shadow-sm space-y-4 no-print mb-8">
+         <div className="flex items-center justify-between px-1">
+            <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Filtro do Relatório</span>
+            <div className="flex bg-gray-50 p-1 rounded-xl border border-gray-100">
+               {[
+                 { id: 'todos', label: 'Todos' },
+                 { id: 'Pix', icon: QrCode },
+                 { id: 'Dinheiro', icon: Banknote },
+                 { id: 'Cartão', icon: CreditCard }
+               ].map((m) => (
+                 <button
+                   key={m.id}
+                   onClick={() => setMetodoRelatorio(m.id as any)}
+                   className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-2 ${metodoRelatorio === m.id ? 'bg-white shadow-sm text-primary ring-1 ring-black/5' : 'text-gray-400 hover:text-gray-600'}`}
+                 >
+                   {m.icon ? <m.icon size={14} /> : <span className="text-[10px] font-bold uppercase px-1">Geral</span>}
+                   {m.id !== 'todos' && <span className="text-[10px] font-bold uppercase hidden md:inline">{m.id}</span>}
+                 </button>
+               ))}
+            </div>
+         </div>
+         
+         <div className="flex gap-2">
+            <Link 
+              href={`/relatorio?tipo=mensal&mes=${new Date().getMonth() + 1}&ano=${new Date().getFullYear()}&metodo=${metodoRelatorio}&conta=${contaVisualizacao}`}
+              className="flex-1 bg-gray-900 text-white p-3.5 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest hover:bg-black transition shadow-lg active:scale-95"
+            >
+              <FileText size={14} /> Relatório Mensal
+            </Link>
+            <Link 
+              href={`/relatorio?tipo=anual&ano=${new Date().getFullYear()}&metodo=${metodoRelatorio}&conta=${contaVisualizacao}`}
+              className="flex-1 bg-white border-2 border-gray-900 p-3.5 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-900 hover:bg-gray-50 transition active:scale-95"
+            >
+              <FileText size={14} /> Relatório Anual
+            </Link>
+         </div>
+      </div>
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+        <div>
+          <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Financeiro</h2>
+          <p className="text-gray-500">Controle completo de caixa e faturamento</p>
+        </div>
+        <div className="flex gap-2">
+          <button 
+            onClick={() => setIsFixedModalOpen(true)} 
+            className="bg-white border-2 border-gray-900 text-gray-900 px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-gray-50 transition"
+          >
+            <Zap size={20} className="text-primary fill-primary/20" />
+            <span>Despesas Fixas</span>
+          </button>
+          <button onClick={() => { setTransEdit(null); setIsModalOpen(true); }} className="bg-primary text-white px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-primary-dark transition shadow-md shadow-primary/20">
+            <Plus size={20} />
+            <span>Novo Registro</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Abas e Filtros */}
+      <div className="flex flex-col md:flex-row gap-4 mb-8">
+        <div className="flex bg-gray-100 p-1 rounded-2xl w-full max-w-sm">
+          <button 
+            onClick={() => setContaVisualizacao('Empresa')}
+            className={`flex-1 py-2.5 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition ${contaVisualizacao === 'Empresa' ? 'bg-white shadow-sm text-primary' : 'text-gray-500 hover:text-gray-700'}`}
+          >
+            <Building2 size={18} /> Empresa
+          </button>
+          <button 
+            onClick={() => setContaVisualizacao('Particular')}
+            className={`flex-1 py-2.5 px-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition ${contaVisualizacao === 'Particular' ? 'bg-white shadow-sm text-primary' : 'text-gray-500 hover:text-gray-700'}`}
+          >
+            <User size={18} /> Particular
+          </button>
+        </div>
+
+        <div className="flex flex-wrap gap-2 items-center">
+          {[7, 14, 30].map(dia => (
+            <button 
+              key={dia}
+              onClick={() => {
+                setPeriodo(dia as any);
+                setDataInicioManual("");
+                setDataFimManual("");
+              }}
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition flex-shrink-0 ${periodo === dia ? 'bg-primary text-white shadow-md shadow-primary/20' : 'bg-white border border-gray-100 text-gray-400 hover:bg-gray-50'}`}
+            >
+              {dia} dias
+            </button>
+          ))}
+          <button 
+            onClick={() => setPeriodo('custom')}
+            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition flex-shrink-0 flex items-center gap-2 ${periodo === 'custom' ? 'bg-primary text-white shadow-md shadow-primary/20' : 'bg-white border border-gray-100 text-gray-400 hover:bg-gray-50'}`}
+          >
+            <Calendar size={14} />
+            {periodo === 'custom' && dataInicioManual && dataFimManual ? `${format(parseISO(dataInicioManual), "dd/MM")} - ${format(parseISO(dataFimManual), "dd/MM")}` : 'Personalizado'}
+          </button>
+        </div>
+      </div>
+
+      {periodo === 'custom' && (
+        <div className="grid grid-cols-2 gap-3 mb-8 animate-in fade-in slide-in-from-top-2 max-w-sm">
+          <div className="space-y-1">
+            <label className="block text-[10px] uppercase font-bold text-gray-400 ml-1">Início</label>
+            <input 
+              type="date" 
+              value={dataInicioManual} 
+              onChange={e => setDataInicioManual(e.target.value)}
+              className="w-full h-11 px-4 rounded-2xl border border-gray-700/50 bg-gray-800/40 text-sm font-bold text-gray-200 outline-none focus:border-primary transition-all shadow-inner appearance-none"
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="block text-[10px] uppercase font-bold text-gray-400 ml-1">Fim</label>
+            <input 
+              type="date" 
+              value={dataFimManual} 
+              onChange={e => setDataFimManual(e.target.value)}
+              className="w-full h-11 px-4 rounded-2xl border border-gray-100 bg-white text-sm font-bold text-gray-200 outline-none focus:border-primary transition-all shadow-inner appearance-none"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Cards de Resumo */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+              <Wallet size={20} />
+            </div>
+            <p className="text-gray-500 font-medium">Saldo Atual</p>
+          </div>
+          <h3 className="text-4xl font-bold text-gray-800 tracking-tight mt-4">
+            {saldo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+          </h3>
+        </div>
+
+        <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center text-green-500">
+              <ArrowUpRight size={20} />
+            </div>
+            <p className="text-gray-500 font-medium">Entradas</p>
+          </div>
+          <h3 className="text-4xl font-bold text-green-600 tracking-tight mt-4">
+            {totalReceitas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+          </h3>
+        </div>
+
+        <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-red-500">
+              <ArrowDownRight size={20} />
+            </div>
+            <p className="text-gray-500 font-medium">Saídas (Mês)</p>
+          </div>
+          <h3 className="text-4xl font-bold text-red-600 tracking-tight mt-4">
+            {custoFixoMes.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+          </h3>
+          <p className="text-xs text-gray-400 mt-2">Total de despesas no mês atual</p>
+        </div>
+      </div>
+
+      {/* Lista de Transações */}
+      <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="p-6 border-b border-gray-50">
+          <h3 className="text-xl font-bold text-gray-800">Histórico de Transações</h3>
+        </div>
+        
+        <div className="p-0">
+          {transacoesFiltradas.length > 0 ? (
+            <div className="divide-y divide-gray-50">
+              {transacoesFiltradas.map((t) => (
+                <div key={t.id} className="p-4 md:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-gray-50 transition group">
+                  <div className="flex items-center gap-4">
+                    <div className={`w-12 h-12 rounded-full shrink-0 flex items-center justify-center ${t.tipo === 'receita' ? 'bg-green-50 text-green-500' : 'bg-red-50 text-red-500'}`}>
+                      {t.tipo === 'receita' ? <ArrowUpRight size={24} /> : <ArrowDownRight size={24} />}
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-gray-900">{t.descricao}</h4>
+                      <div className="flex flex-wrap items-center gap-1.5 md:gap-2 text-xs md:text-sm mt-1">
+                        <span className="text-gray-500">{format(parseISO(t.data), "dd/MM/yyyy • HH:mm", { locale: ptBR })}</span>
+                        <span className="text-gray-300 hidden md:inline">•</span>
+                        <span className="font-medium text-gray-600 px-2 py-0.5 bg-gray-100 rounded-md">{t.categoria}</span>
+                        <span className="text-gray-300 hidden md:inline">•</span>
+                        <span className="font-medium text-gray-600">{t.metodo}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between md:justify-end gap-3 md:gap-6 mt-2 md:mt-0 pt-3 md:pt-0 border-t md:border-0 border-gray-100 w-full md:w-auto pl-16 md:pl-0">
+                    <div className={`text-xl font-bold ${t.tipo === 'receita' ? 'text-green-600' : 'text-red-600'}`}>
+                      {t.tipo === 'receita' ? '+' : '-'} {t.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                    </div>
+                    <div className="flex gap-2 md:opacity-0 md:group-hover:opacity-100 transition">
+                      <button onClick={() => { setTransEdit(t); setIsModalOpen(true); }} className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"><Pencil size={18} /></button>
+                      <button onClick={() => { if(confirm('Apagar registro financeiro?')) removeTransacao(t.id) }} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"><Trash2 size={18} /></button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="p-12 text-center text-gray-400">
+              <Wallet size={48} className="mx-auto mb-4 opacity-20" />
+              <p className="text-lg">Nenhuma movimentação registrada.</p>
+              <p className="text-sm mt-1">As entradas aparecerão aqui quando você concluir um agendamento.</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <ModalTransacao isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} initialData={transEdit} />
+      <ModalDespesasFixas isOpen={isFixedModalOpen} onClose={() => setIsFixedModalOpen(false)} />
+    </div>
+  );
+}
