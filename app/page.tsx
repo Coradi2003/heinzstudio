@@ -76,10 +76,10 @@ export default function DashboardPage() {
     .filter(t => t.tipo === 'despesa' && t.conta === 'Empresa' && new Date(t.data) >= inicioMesDB && new Date(t.data) <= fimMesDB)
     .reduce((a,b) => a + b.valor, 0);
 
-  // -- BREAKDOWN POR MÉTODO DE PAGAMENTO --
-  const porPix = receitas.filter(t => t.metodo === 'Pix').reduce((a,b) => a + b.valor, 0);
-  const porDinheiro = receitas.filter(t => t.metodo === 'Dinheiro').reduce((a,b) => a + b.valor, 0);
-  const porCartao = receitas.filter(t => t.metodo === 'Cartão').reduce((a,b) => a + b.valor, 0);
+  // -- BREAKDOWN POR MÉTODO DE PAGAMENTO (sempre mês inteiro, igual ao card de saldo) --
+  const porPix = receitasMes.filter(t => t.metodo === 'Pix').reduce((a,b) => a + b.valor, 0);
+  const porDinheiro = receitasMes.filter(t => t.metodo === 'Dinheiro').reduce((a,b) => a + b.valor, 0);
+  const porCartao = receitasMes.filter(t => t.metodo === 'Cartão').reduce((a,b) => a + b.valor, 0);
   const totalMetodos = Math.max(porPix + porDinheiro + porCartao, 1);
 
   // -- EVOLUÇÃO (Agendamentos - Gráfico usa o período fechado) --
