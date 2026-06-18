@@ -6,7 +6,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { format, parseISO, startOfMonth, endOfMonth, startOfYear, endOfYear, isWithinInterval } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Printer, ArrowLeft, BarChart2, Wallet, QrCode, Banknote, CreditCard, MessageCircle, Loader2, Download, Save } from "lucide-react";
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState, useMemo } from "react";
 
 
 function RelatorioContent() {
@@ -21,6 +21,11 @@ function RelatorioContent() {
   const ano = parseInt(searchParams.get("ano") || String(new Date().getFullYear()));
   const metodoFiltro = searchParams.get("metodo") || "todos";
   const contaFiltro = searchParams.get("conta") || "Empresa";
+
+  // Filtros locais para reatividade e suporte a categoria
+  const [conta, setConta] = useState(contaFiltro);
+  const [metodo, setMetodo] = useState(metodoFiltro);
+  const [categoria, setCategoria] = useState("todas");
 
   useEffect(() => {
     const root = document.documentElement;
@@ -38,6 +43,14 @@ function RelatorioContent() {
   const { agendamentos } = useAgendaStore();
   const { transacoes } = useFinanceiroStore();
 
+  const categoriasDisponiveis = useMemo(() => {
+    const cats = transacoes
+      .filter(t => t.conta === conta)
+      .map(t => t.categoria)
+      .filter(Boolean);
+    return Array.from(new Set(cats)).sort();
+  }, [transacoes, conta]);
+
   let startDate: Date;
   let endDate: Date;
 
@@ -53,11 +66,15 @@ function RelatorioContent() {
 
   let transactionsPeriod = transacoes.filter(t => {
     const d = new Date(t.data);
-    return isWithinInterval(d, { start: startDate, end: endDate }) && t.conta === contaFiltro;
+    return isWithinInterval(d, { start: startDate, end: endDate }) && t.conta === conta;
   });
 
-  if (metodoFiltro !== "todos") {
-    transactionsPeriod = transactionsPeriod.filter(t => t.metodo === metodoFiltro);
+  if (metodo !== "todos") {
+    transactionsPeriod = transactionsPeriod.filter(t => t.metodo === metodo);
+  }
+
+  if (categoria !== "todas") {
+    transactionsPeriod = transactionsPeriod.filter(t => t.categoria === categoria);
   }
 
   const agendamentosPeriod = agendamentos.filter(a =>
@@ -132,7 +149,7 @@ function RelatorioContent() {
     const periodoLabel = tipo === 'mensal'
       ? format(startDate, "MMMM-yyyy", { locale: ptBR })
       : `ano-${ano}`;
-    const fileName = `relatorio-heinz-${contaFiltro.toLowerCase()}-${periodoLabel}.pdf`;
+    const fileName = `relatorio-heinz-${conta.toLowerCase()}-${periodoLabel}.pdf`;
 
     return { pdf, fileName };
   };
@@ -224,7 +241,7 @@ function RelatorioContent() {
         `}</style>
 
         {/* Barra de Ações */}
-        <div className="flex justify-between items-center mb-10 no-print bg-gray-50 p-4 rounded-2xl border border-gray-200 gap-2 flex-wrap">
+        <div className="flex justify-between items-center mb-6 no-print bg-gray-50 p-4 rounded-2xl border border-gray-200 gap-2 flex-wrap">
           <button
             onClick={() => router.back()}
             className="flex items-center gap-2 text-gray-900 font-bold px-4 py-2 rounded-xl transition hover:bg-gray-200 shrink-0"
@@ -235,7 +252,7 @@ function RelatorioContent() {
 
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest hidden lg:inline">
-              Relatório {metodoFiltro === 'todos' ? 'Geral' : metodoFiltro.toUpperCase()}
+              Relatório {metodo === 'todos' ? 'Geral' : metodo.toUpperCase()} {categoria !== 'todas' ? `/ ${categoria.toUpperCase()}` : ''}
             </span>
 
             {/* Compartilhar WhatsApp */}
@@ -274,16 +291,60 @@ function RelatorioContent() {
           </div>
         </div>
 
+        {/* Filtros de Visualização e Impressão (Apenas na tela) */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10 p-4 bg-gray-50 border border-gray-200 rounded-2xl no-print">
+          <div className="flex flex-col gap-1">
+            <label className="text-[9px] font-black uppercase text-gray-500 tracking-wider">Conta</label>
+            <select
+              value={conta}
+              onChange={(e) => setConta(e.target.value as any)}
+              className="bg-white border border-gray-300 rounded-xl px-3 py-2 text-xs font-bold text-gray-800 outline-none focus:border-black"
+            >
+              <option value="Empresa">Empresa</option>
+              <option value="Particular">Particular</option>
+            </select>
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-[9px] font-black uppercase text-gray-500 tracking-wider">Forma de Pagamento</label>
+            <select
+              value={metodo}
+              onChange={(e) => setMetodo(e.target.value)}
+              className="bg-white border border-gray-300 rounded-xl px-3 py-2 text-xs font-bold text-gray-800 outline-none focus:border-black"
+            >
+              <option value="todos">Todos</option>
+              <option value="Pix">Pix</option>
+              <option value="Dinheiro">Dinheiro</option>
+              <option value="Cartão">Cartão</option>
+            </select>
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-[9px] font-black uppercase text-gray-500 tracking-wider">Filtrar por Categoria</label>
+            <select
+              value={categoria}
+              onChange={(e) => setCategoria(e.target.value)}
+              className="bg-white border border-gray-300 rounded-xl px-3 py-2 text-xs font-bold text-gray-800 outline-none focus:border-black"
+            >
+              <option value="todas">Todas as Categorias</option>
+              {categoriasDisponiveis.map((cat) => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
         {/* CONTEÚDO DO RELATÓRIO (capturado para gerar o PDF) */}
         <div ref={reportRef}>
 
           {/* CABEÇALHO */}
           <div className="border-b-4 border-black pb-8 mb-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
             <div>
-              <h1 className="text-5xl font-black uppercase tracking-tighter leading-none mb-2">Relatório {contaFiltro}</h1>
+              <h1 className="text-5xl font-black uppercase tracking-tighter leading-none mb-2">Relatório {conta}</h1>
               <p className="text-xl font-black text-gray-900 uppercase tracking-tight">
                 ESTÚDIO {tipo === 'mensal' ? `/ ${format(startDate, 'MMMM yyyy', { locale: ptBR })}` : `/ ANO ${ano}`}
-                {metodoFiltro !== 'todos' && <span className="text-gray-500 ml-2">[{metodoFiltro}]</span>}
+                {metodo !== 'todos' && <span className="text-gray-500 ml-2">[{metodo.toUpperCase()}]</span>}
+                {categoria !== 'todas' && <span className="text-gray-500 ml-2">[{categoria.toUpperCase()}]</span>}
               </p>
             </div>
             <div className="text-left md:text-right border-l-2 md:border-l-0 md:border-r-2 border-black pl-4 md:pr-4">
@@ -331,7 +392,8 @@ function RelatorioContent() {
               <div className="bg-gray-50 p-6 border-l-4 border-black">
                 <p className="text-[10px] font-black uppercase text-black mb-3 tracking-widest underline decoration-2 underline-offset-4">Nota Operacional</p>
                 <p className="text-sm leading-relaxed font-bold">
-                  Este relatório contém dados filtrados {metodoFiltro === 'todos' ? 'de todas as formas de pagamento' : `exclusivamente para pagamentos via ${metodoFiltro.toUpperCase()}`}.
+                  Este relatório contém dados filtrados {metodo === 'todos' ? 'de todas as formas de pagamento' : `exclusivamente para pagamentos via ${metodo.toUpperCase()}`}
+                  {categoria !== 'todas' && ` e categoria "${categoria}"`}.
                   O volume total capturado é de <b>{totalReceitas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</b>.
                 </p>
               </div>
