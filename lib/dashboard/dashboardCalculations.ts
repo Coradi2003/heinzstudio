@@ -12,8 +12,10 @@ import {
 // Helper function to parse dates in a timezone-safe local manner
 export function parseLocalDate(dateStr: string): Date {
   if (!dateStr) return new Date();
-  if (dateStr.length === 10 && dateStr.includes('-')) {
-    const [year, month, day] = dateStr.split('-').map(Number);
+  if (dateStr.length >= 10 && dateStr[4] === '-' && dateStr[7] === '-') {
+    const year = parseInt(dateStr.substring(0, 4), 10);
+    const month = parseInt(dateStr.substring(5, 7), 10);
+    const day = parseInt(dateStr.substring(8, 10), 10);
     return new Date(year, month - 1, day);
   }
   const d = new Date(dateStr);

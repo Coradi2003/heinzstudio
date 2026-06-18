@@ -14,8 +14,11 @@ import {
   TrendingDown,
   X
 } from "lucide-react";
+import { useAgendaStore } from "@/store/useAgendaStore";
+import { useClientesStore } from "@/store/useClientesStore";
+import { useFinanceiroStore } from "@/store/useFinanceiroStore";
+import { calculateDashboardData } from "@/lib/dashboard/dashboardCalculations";
 import { useDashboardStore } from "@/store/dashboard/useDashboardStore";
-import { getDashboardData } from "@/lib/dashboard/dashboardService";
 import { DashboardCard } from "./DashboardCard";
 import { ExpenseDonutChart } from "./ExpenseDonutChart";
 import { ClientRetentionGauge } from "./ClientRetentionGauge";
@@ -54,21 +57,25 @@ export function DashboardSection({ contaVisao, onClose }: DashboardSectionProps)
     setHorasMeta 
   } = useDashboardStore();
 
+  const { agendamentos } = useAgendaStore();
+  const { clientes } = useClientesStore();
+  const { transacoes } = useFinanceiroStore();
+
   // Compute dashboard metrics based on selected month/year/hours goal/account
   const data = useMemo(() => {
-    return getDashboardData(mesSelected, anoSelected, horasMeta, contaVisao);
-  }, [mesSelected, anoSelected, horasMeta, contaVisao]);
+    return calculateDashboardData(agendamentos, clientes, transacoes, mesSelected, anoSelected, horasMeta, contaVisao);
+  }, [agendamentos, clientes, transacoes, mesSelected, anoSelected, horasMeta, contaVisao]);
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-top-4 duration-300">
       
       {/* 1. Header Bar */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-[#161b26] border border-gray-800/50 p-4 rounded-3xl shadow-md">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white border border-gray-100 p-4 rounded-3xl shadow-sm">
         <div>
-          <h3 className="text-xl font-black text-white tracking-tight uppercase flex items-center gap-2">
+          <h3 className="text-xl font-black text-gray-900 tracking-tight uppercase flex items-center gap-2">
             📊 Painel Analítico <span className="text-xs text-primary bg-primary/10 px-2 py-0.5 rounded-full normal-case font-bold">{contaVisao}</span>
           </h3>
-          <p className="text-xs text-gray-500 font-medium">Relatórios e desempenho detalhados</p>
+          <p className="text-xs text-gray-400 font-medium">Relatórios e desempenho detalhados</p>
         </div>
 
         <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -76,7 +83,7 @@ export function DashboardSection({ contaVisao, onClose }: DashboardSectionProps)
           <select
             value={mesSelected}
             onChange={(e) => setMesSelected(Number(e.target.value))}
-            className="bg-[#0a0c12] border border-gray-800 rounded-xl px-3 py-2 text-xs font-bold text-gray-300 outline-none focus:border-primary flex-1 sm:flex-initial"
+            className="bg-gray-50 border border-gray-100 rounded-xl px-3 py-2 text-xs font-bold text-gray-700 outline-none focus:border-primary flex-1 sm:flex-initial"
           >
             {MESES.map(m => (
               <option key={m.val} value={m.val}>{m.label}</option>
@@ -87,7 +94,7 @@ export function DashboardSection({ contaVisao, onClose }: DashboardSectionProps)
           <select
             value={anoSelected}
             onChange={(e) => setAnoSelected(Number(e.target.value))}
-            className="bg-[#0a0c12] border border-gray-800 rounded-xl px-3 py-2 text-xs font-bold text-gray-300 outline-none focus:border-primary flex-1 sm:flex-initial"
+            className="bg-gray-50 border border-gray-100 rounded-xl px-3 py-2 text-xs font-bold text-gray-700 outline-none focus:border-primary flex-1 sm:flex-initial"
           >
             {ANOS.map(y => (
               <option key={y} value={y}>{y}</option>

@@ -27,12 +27,12 @@ export function RevenueChart({ data }: RevenueChartProps) {
   const hasRevenue = data.some(d => d.receita > 0);
 
   return (
-    <div className="bg-[#161b26] border border-gray-800/50 p-6 rounded-[28px] shadow-lg flex flex-col h-full">
+    <div className="bg-white border border-gray-100 p-6 rounded-[28px] shadow-sm flex flex-col h-full">
       <div className="mb-6">
-        <h4 className="text-sm font-black text-gray-400 uppercase tracking-widest">
+        <h4 className="text-sm font-black text-gray-500 uppercase tracking-widest">
           Evolução do Faturamento
         </h4>
-        <p className="text-xs text-gray-500 font-medium">Histórico diário de receitas</p>
+        <p className="text-xs text-gray-400 font-medium">Histórico diário de receitas</p>
       </div>
 
       <div className="flex-1 w-full h-52 min-h-[200px]">
@@ -45,10 +45,10 @@ export function RevenueChart({ data }: RevenueChartProps) {
                   <stop offset="95%" stopColor="#4F46E5" stopOpacity={0.0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
               <XAxis 
                 dataKey="dateLabel" 
-                stroke="#6b7280" 
+                stroke="#9ca3af" 
                 fontSize={9} 
                 tickLine={false} 
                 axisLine={false}
@@ -56,7 +56,7 @@ export function RevenueChart({ data }: RevenueChartProps) {
                 tickFormatter={(tick) => tick.split("/")[0]} // Show just day number on axis
               />
               <YAxis 
-                stroke="#6b7280" 
+                stroke="#9ca3af" 
                 fontSize={9} 
                 tickLine={false} 
                 axisLine={false}
@@ -91,7 +91,7 @@ export function RevenueChart({ data }: RevenueChartProps) {
           </ResponsiveContainer>
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <div className="w-8 h-8 border-4 border-gray-800 border-t-primary rounded-full animate-spin"></div>
+            <div className="w-8 h-8 border-4 border-gray-200 border-t-primary rounded-full animate-spin"></div>
           </div>
         )}
       </div>

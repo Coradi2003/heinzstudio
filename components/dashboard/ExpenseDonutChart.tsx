@@ -25,12 +25,12 @@ export function ExpenseDonutChart({ data }: ExpenseDonutChartProps) {
     : [{ name: "Sem despesas", value: 1, color: "#374151" }];
 
   return (
-    <div className="bg-[#161b26] border border-gray-800/50 p-6 rounded-[28px] shadow-lg flex flex-col h-full">
+    <div className="bg-white border border-gray-100 p-6 rounded-[28px] shadow-sm flex flex-col h-full">
       <div className="mb-4">
-        <h4 className="text-sm font-black text-gray-400 uppercase tracking-widest">
+        <h4 className="text-sm font-black text-gray-500 uppercase tracking-widest">
           Despesas por Categoria
         </h4>
-        <p className="text-xs text-gray-500 font-medium">Breakdown mensal de saídas</p>
+        <p className="text-xs text-gray-400 font-medium">Breakdown mensal de saídas</p>
       </div>
 
       <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-6 items-center">
@@ -49,7 +49,7 @@ export function ExpenseDonutChart({ data }: ExpenseDonutChartProps) {
                   dataKey="value"
                 >
                   {displayData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
+                     <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
                   ))}
                 </Pie>
                 {hasExpenses && (
@@ -72,15 +72,15 @@ export function ExpenseDonutChart({ data }: ExpenseDonutChartProps) {
               </PieChart>
             </ResponsiveContainer>
           ) : (
-            <div className="w-32 h-32 rounded-full border-4 border-gray-800 border-t-primary animate-spin"></div>
+            <div className="w-32 h-32 rounded-full border-4 border-gray-200 border-t-primary animate-spin"></div>
           )}
 
           {/* Centered Total Text */}
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none select-none">
-            <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">
+            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
               Total
             </span>
-            <span className="text-lg font-black text-white leading-tight">
+            <span className="text-lg font-black text-gray-900 leading-tight">
               {data.total.toLocaleString("pt-BR", {
                 style: "currency",
                 currency: "BRL",
@@ -99,11 +99,11 @@ export function ExpenseDonutChart({ data }: ExpenseDonutChartProps) {
                   className="w-3 h-3 rounded-full shrink-0"
                   style={{ backgroundColor: cat.color }}
                 />
-                <span className="font-bold text-gray-300 truncate">
+                <span className="font-bold text-gray-700 truncate">
                   {cat.name}
                 </span>
               </div>
-              <span className="font-black text-white shrink-0 ml-2">
+              <span className="font-black text-gray-900 shrink-0 ml-2">
                 {cat.value.toLocaleString("pt-BR", {
                   style: "currency",
                   currency: "BRL",
