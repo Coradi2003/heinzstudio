@@ -9,6 +9,17 @@ import { Users, FileText, Wrench, Box, TrendingUp, TrendingDown, BarChart2, Chec
 import Link from "next/link";
 import { useState } from "react";
 import { startOfMonth, endOfMonth, isWithinInterval, parseISO } from "date-fns";
+import dynamic from "next/dynamic";
+import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
+
+const DashboardSection = dynamic(
+  () => import("@/components/dashboard/DashboardSection").then((mod) => mod.DashboardSection),
+  {
+    loading: () => <DashboardSkeleton />,
+    ssr: false,
+  }
+);
+
 
 export default function DashboardPage() {
   const { agendamentos } = useAgendaStore();
@@ -21,6 +32,8 @@ export default function DashboardPage() {
   const [dataInicioManual, setDataInicioManual] = useState<string>("");
   const [dataFimManual, setDataFimManual] = useState<string>("");
   const [contaVisao, setContaVisao] = useState<'Empresa' | 'Particular'>('Empresa');
+  const [mostrarAnalitico, setMostrarAnalitico] = useState(false);
+
 
   // -- LOGICA DE FILTRO DE DATA --
   const getPeriodoDatas = () => {
@@ -152,45 +165,59 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen p-4 md:p-6 lg:p-8 max-w-lg mx-auto md:max-w-4xl space-y-4 mb-20 md:mb-0">
-      
-      {/* 0. Relatórios Quick Actions */}
-      <div className="bg-white border border-gray-100 p-4 rounded-[28px] shadow-sm space-y-4 no-print">
-         <div className="flex items-center justify-between px-1">
-            <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Filtro do Relatório</span>
-            <div className="flex bg-gray-50 p-1 rounded-xl border border-gray-100">
-               {[
-                 { id: 'todos', label: 'Todos' },
-                 { id: 'Pix', icon: QrCode },
-                 { id: 'Dinheiro', icon: Banknote },
-                 { id: 'Cartão', icon: CreditCard }
-               ].map((m) => (
-                 <button
-                   key={m.id}
-                   onClick={() => setMetodoRelatorio(m.id as any)}
-                   className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-2 ${metodoRelatorio === m.id ? 'bg-white shadow-sm text-primary ring-1 ring-black/5' : 'text-gray-400 hover:text-gray-600'}`}
-                 >
-                   {m.icon ? <m.icon size={14} /> : <span className="text-[10px] font-bold uppercase px-1">Geral</span>}
-                   {m.id !== 'todos' && <span className="text-[10px] font-bold uppercase hidden md:inline">{m.id}</span>}
-                 </button>
-               ))}
-            </div>
-         </div>
-         
-         <div className="flex gap-2">
-            <Link 
-              href={`/relatorio?tipo=mensal&mes=${new Date().getMonth() + 1}&ano=${new Date().getFullYear()}&metodo=${metodoRelatorio}&conta=${contaVisao}`}
-              className="flex-1 bg-gray-900 text-white p-3.5 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest hover:bg-black transition shadow-lg active:scale-95"
-            >
-              <FileText size={14} /> Relatório Mensal
-            </Link>
-            <Link 
-              href={`/relatorio?tipo=anual&ano=${new Date().getFullYear()}&metodo=${metodoRelatorio}&conta=${contaVisao}`}
-              className="flex-1 bg-white border-2 border-gray-900 p-3.5 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-900 hover:bg-gray-50 transition active:scale-95"
-            >
-              <FileText size={14} /> Relatório Anual
-            </Link>
+      {mostrarAnalitico ? (
+        <DashboardSection 
+          contaVisao={contaVisao} 
+          onClose={() => setMostrarAnalitico(false)} 
+        />
+      ) : (
+        <>
+          {/* 0. Relatórios Quick Actions */}
+          <div className="bg-white border border-gray-100 p-4 rounded-[28px] shadow-sm space-y-4 no-print">
+             <div className="flex items-center justify-between px-1">
+                <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Filtro do Relatório</span>
+                <div className="flex bg-gray-50 p-1 rounded-xl border border-gray-100">
+                   {[
+                     { id: 'todos', label: 'Todos' },
+                     { id: 'Pix', icon: QrCode },
+                     { id: 'Dinheiro', icon: Banknote },
+                     { id: 'Cartão', icon: CreditCard }
+                   ].map((m) => (
+                     <button
+                       key={m.id}
+                       onClick={() => setMetodoRelatorio(m.id as any)}
+                       className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-2 ${metodoRelatorio === m.id ? 'bg-white shadow-sm text-primary ring-1 ring-black/5' : 'text-gray-400 hover:text-gray-600'}`}
+                     >
+                       {m.icon ? <m.icon size={14} /> : <span className="text-[10px] font-bold uppercase px-1">Geral</span>}
+                       {m.id !== 'todos' && <span className="text-[10px] font-bold uppercase hidden md:inline">{m.id}</span>}
+                     </button>
+                   ))}
+                </div>
+             </div>
+             
+             <div className="flex flex-col gap-2">
+                <button
+                  onClick={() => setMostrarAnalitico(true)}
+                  className="w-full bg-gradient-to-r from-primary to-secondary text-white p-4 rounded-2xl flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest hover:opacity-90 transition shadow-lg active:scale-95 pointer-events-auto"
+                >
+                  <BarChart2 size={16} /> Painel Analítico Geral 📊
+                </button>
+                <div className="flex gap-2">
+                   <Link 
+                     href={`/relatorio?tipo=mensal&mes=${new Date().getMonth() + 1}&ano=${new Date().getFullYear()}&metodo=${metodoRelatorio}&conta=${contaVisao}`}
+                     className="flex-1 bg-gray-900 text-white p-3.5 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest hover:bg-black transition shadow-lg active:scale-95"
+                   >
+                     <FileText size={14} /> Relatório Mensal
+                   </Link>
+                   <Link 
+                     href={`/relatorio?tipo=anual&ano=${new Date().getFullYear()}&metodo=${metodoRelatorio}&conta=${contaVisao}`}
+                     className="flex-1 bg-white border-2 border-gray-900 p-3.5 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-900 hover:bg-gray-50 transition active:scale-95"
+                   >
+                     <FileText size={14} /> Relatório Anual
+                   </Link>
+                </div>
+             </div>
           </div>
-        </div>
 
         {/* 0.5 Seletor de Conta */}
         <div className="flex bg-gray-100 p-1 rounded-2xl w-full no-print">
@@ -507,8 +534,9 @@ export default function DashboardPage() {
           <h3 className="text-xl font-bold text-gray-800">{produtos.length}</h3>
           <p className="text-[10px] uppercase font-bold text-gray-400">Produtos</p>
         </Link>
-
       </div>
+    </>
+  )}
     </div>
   );
 }
