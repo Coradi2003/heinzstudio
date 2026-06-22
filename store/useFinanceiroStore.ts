@@ -44,7 +44,13 @@ export const useFinanceiroStore = create<FinanceiroStore>()((set) => ({
     const { data: userData } = await supabase.auth.getUser();
     if (!userData.user) return;
 
-    const { data, error } = await supabase.from('transacoes').select('*').eq('user_id', userData.user.id).order('data', { ascending: false });
+    const { data, error } = await supabase
+      .from('transacoes')
+      .select('*')
+      .eq('user_id', userData.user.id)
+      .not('valor', 'is', null)
+      .gt('valor', 0)
+      .order('data', { ascending: false });
     if (data) set({ transacoes: data as Transacao[] });
   },
 
