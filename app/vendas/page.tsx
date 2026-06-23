@@ -9,7 +9,7 @@ export default function VendasPage() {
   const { agendamentos } = useAgendaStore();
 
   const confirmadas = agendamentos.filter(a => a.status === 'concluido');
-  const aReceber = agendamentos.filter(a => a.status === 'agendado' || a.status === 'pendente');
+  const aReceber = agendamentos.filter(a => (a.status === 'agendado' || a.status === 'pendente') && (a.valorTotal - a.valorSinal > 0));
   const canceladas = agendamentos.filter(a => a.status === 'cancelado');
 
   const totalConfirmado = confirmadas.reduce((sum, a) => sum + a.valorTotal, 0);
