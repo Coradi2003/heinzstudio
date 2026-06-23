@@ -32,7 +32,7 @@ export function ModalDiaSelecionado({ isOpen, onClose, selectedDate, agendamento
       <div className="flex-1 space-y-4 max-h-[65vh] overflow-y-auto pr-2 pb-4">
         {agendamentosDia.length > 0 ? (
           agendamentosDia.map(agendamento => (
-            <div key={agendamento.id} className="p-4 border border-gray-100 rounded-2xl bg-white shadow-sm hover:shadow-md transition group relative overflow-hidden">
+            <div key={agendamento.id} className={`p-4 border rounded-2xl shadow-sm transition group relative overflow-hidden ${agendamento.status === 'concluido' ? 'bg-gray-100 border-gray-200 opacity-70' : 'bg-white border-gray-100 hover:shadow-md'}`}>
               {/* Status accent border with Custom Color logic */}
               <div className={`absolute top-0 left-0 w-2 h-full ${agendamento.status === 'concluido' ? 'bg-gray-300' : agendamento.cor || 'bg-primary'}`}></div>
               
