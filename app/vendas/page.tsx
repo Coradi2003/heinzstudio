@@ -6,7 +6,8 @@ import { ptBR } from "date-fns/locale";
 import { CheckCircle2, Clock, XCircle } from "lucide-react";
 
 export default function VendasPage() {
-  const { agendamentos } = useAgendaStore();
+  const { agendamentos: rawAgendamentos } = useAgendaStore();
+  const agendamentos = rawAgendamentos.filter(a => a.valorTotal > 0);
 
   const confirmadas = agendamentos.filter(a => a.status === 'concluido');
   const aReceber = agendamentos.filter(a => (a.status === 'agendado' || a.status === 'pendente') && (a.valorTotal - a.valorSinal > 0));

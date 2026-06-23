@@ -40,7 +40,8 @@ function RelatorioContent() {
     };
   }, []);
 
-  const { agendamentos } = useAgendaStore();
+  const { agendamentos: rawAgendamentos } = useAgendaStore();
+  const agendamentos = rawAgendamentos.filter(a => a.valorTotal > 0);
   const { transacoes } = useFinanceiroStore();
 
   const categoriasDisponiveis = useMemo(() => {

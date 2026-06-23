@@ -57,7 +57,8 @@ export function DashboardSection({ contaVisao, onClose }: DashboardSectionProps)
     setHorasMeta 
   } = useDashboardStore();
 
-  const { agendamentos } = useAgendaStore();
+  const { agendamentos: rawAgendamentos } = useAgendaStore();
+  const agendamentos = useMemo(() => rawAgendamentos.filter(a => a.valorTotal > 0), [rawAgendamentos]);
   const { clientes } = useClientesStore();
   const { transacoes } = useFinanceiroStore();
 

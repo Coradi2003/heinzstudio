@@ -23,7 +23,8 @@ const DashboardSection = dynamic(
 
 
 export default function DashboardPage() {
-  const { agendamentos } = useAgendaStore();
+  const { agendamentos: rawAgendamentos } = useAgendaStore();
+  const agendamentos = rawAgendamentos.filter(a => a.valorTotal > 0);
   const { transacoes, despesasFixas } = useFinanceiroStore();
   const { produtos } = useProdutosStore();
   const { servicos } = useServicosStore();
