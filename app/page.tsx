@@ -61,7 +61,6 @@ export default function DashboardPage() {
   const start = startOfMonth(baseDate);
   const end = endOfMonth(baseDate);
 
-  const hoje = new Date();
   const inicioMesDB = new Date(hoje.getFullYear(), hoje.getMonth(), 1, 0, 0, 0);
   const fimMesDB = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0, 23, 59, 59);
 
