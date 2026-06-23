@@ -5,10 +5,11 @@ import { useFinanceiroStore } from "@/store/useFinanceiroStore";
 import { useProdutosStore } from "@/store/useProdutosStore";
 import { useServicosStore } from "@/store/useServicosStore";
 import { useClientesStore } from "@/store/useClientesStore";
-import { Users, FileText, Wrench, Box, TrendingUp, TrendingDown, BarChart2, CheckCircle2, Clock, XCircle, QrCode, Banknote, CreditCard, Calendar, Gift, AlertTriangle } from "lucide-react";
+import { Users, FileText, Wrench, Box, TrendingUp, TrendingDown, BarChart2, CheckCircle2, Clock, XCircle, QrCode, Banknote, CreditCard, Calendar, Gift, AlertTriangle, X, MessageCircle } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { startOfMonth, endOfMonth, isWithinInterval, parseISO } from "date-fns";
+import { startOfMonth, endOfMonth, isWithinInterval, parseISO, format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import dynamic from "next/dynamic";
 import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
 
@@ -33,6 +34,8 @@ export default function DashboardPage() {
   const [dataFimManual, setDataFimManual] = useState<string>("");
   const [contaVisao, setContaVisao] = useState<'Empresa' | 'Particular'>('Empresa');
   const [mostrarAnalitico, setMostrarAnalitico] = useState(false);
+  const [modalListaStatus, setModalListaStatus] = useState<'pendente' | 'concluido' | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
 
   // -- LOGICA DE FILTRO DE DATA --
@@ -162,6 +165,24 @@ export default function DashboardPage() {
   const despesasFixasPendentes = despesasFixas.filter(df => !despesasFixasJaLancadas.includes(df.descricao.toLowerCase()));
 
   const [metodoRelatorio, setMetodoRelatorio] = useState<'todos' | 'Pix' | 'Dinheiro' | 'Cartão'>('todos');
+
+  const agendamentosFiltrados = agendamentos
+    .filter(a => {
+      if (!modalListaStatus) return false;
+      const matchStatus = modalListaStatus === 'pendente' 
+        ? (a.status === 'pendente' || a.status === 'agendado')
+        : a.status === 'concluido';
+      
+      const matchSearch = (a.clienteNome || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          (a.servico || '').toLowerCase().includes(searchQuery.toLowerCase());
+      
+      return matchStatus && matchSearch;
+    })
+    .sort((a, b) => {
+      const dateA = new Date(a.dataInicio || '').getTime();
+      const dateB = new Date(b.dataInicio || '').getTime();
+      return modalListaStatus === 'pendente' ? dateA - dateB : dateB - dateA;
+    });
 
   return (
     <div className="min-h-screen p-4 md:p-6 lg:p-8 max-w-lg mx-auto md:max-w-4xl space-y-4 mb-20 md:mb-0">
@@ -503,21 +524,27 @@ export default function DashboardPage() {
           <p className="text-[10px] uppercase font-bold text-gray-400">Clientes</p>
         </Link>
 
-        <Link href="/vendas" className="bg-white rounded-3xl p-4 flex flex-col items-center justify-center text-center shadow-sm border border-gray-100/50 gap-2 hover:bg-gray-50 transition">
+        <button 
+          onClick={() => setModalListaStatus('pendente')}
+          className="bg-white rounded-3xl p-4 flex flex-col items-center justify-center text-center shadow-sm border border-gray-100/50 gap-2 hover:bg-gray-50 transition w-full"
+        >
           <div className="w-10 h-10 rounded-full bg-yellow-50 flex items-center justify-center text-yellow-600">
             <Clock size={18} strokeWidth={2.5}/>
           </div>
           <h3 className="text-xl font-bold text-gray-800">{pendentesCount}</h3>
           <p className="text-[10px] uppercase font-bold text-gray-400">Pendentes</p>
-        </Link>
+        </button>
 
-        <Link href="/vendas" className="bg-white rounded-3xl p-4 flex flex-col items-center justify-center text-center shadow-sm border border-gray-100/50 gap-2 hover:bg-gray-50 transition">
+        <button 
+          onClick={() => setModalListaStatus('concluido')}
+          className="bg-white rounded-3xl p-4 flex flex-col items-center justify-center text-center shadow-sm border border-gray-100/50 gap-2 hover:bg-gray-50 transition w-full"
+        >
           <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center text-green-500">
             <CheckCircle2 size={18} strokeWidth={2.5}/>
           </div>
           <h3 className="text-xl font-bold text-gray-800">{concluidosCount}</h3>
           <p className="text-[10px] uppercase font-bold text-gray-400">Concluídos</p>
-        </Link>
+        </button>
 
         <Link href="/servicos" className="bg-white rounded-3xl p-4 flex flex-col items-center justify-center text-center shadow-sm border border-gray-100/50 gap-2 hover:bg-gray-50 transition">
           <div className="w-10 h-10 rounded-full bg-yellow-50 flex items-center justify-center text-yellow-500">
@@ -537,6 +564,86 @@ export default function DashboardPage() {
       </div>
     </>
   )}
+
+      {modalListaStatus && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity">
+          <div className="bg-white w-full max-w-lg rounded-[28px] shadow-2xl overflow-hidden border border-gray-100 flex flex-col max-h-[85vh] transition-transform scale-100">
+            {/* Header */}
+            <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-xl ${modalListaStatus === 'pendente' ? 'bg-yellow-50 text-yellow-600' : 'bg-green-50 text-green-600'}`}>
+                  {modalListaStatus === 'pendente' ? <Clock size={20} /> : <CheckCircle2 size={20} />}
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900 text-lg">
+                    {modalListaStatus === 'pendente' ? 'Agendamentos Pendentes' : 'Agendamentos Concluídos'}
+                  </h3>
+                  <p className="text-xs text-gray-500">
+                    {agendamentosFiltrados.length} {agendamentosFiltrados.length === 1 ? 'registro encontrado' : 'registros encontrados'}
+                  </p>
+                </div>
+              </div>
+              <button 
+                onClick={() => { setModalListaStatus(null); setSearchQuery(""); }}
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-full transition"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Search Bar */}
+            <div className="p-4 bg-gray-50/50 border-b border-gray-100">
+              <input 
+                type="text"
+                placeholder="Buscar por cliente ou serviço..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="w-full h-11 px-4 rounded-xl border border-gray-200 bg-white text-sm outline-none focus:border-primary transition"
+              />
+            </div>
+
+            {/* List */}
+            <div className="p-6 overflow-y-auto space-y-4 flex-1">
+              {agendamentosFiltrados.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-400 text-sm">Nenhum agendamento encontrado.</p>
+                </div>
+              ) : (
+                agendamentosFiltrados.map(a => (
+                  <div key={a.id} className="bg-gray-50/50 border border-gray-100 p-4 rounded-2xl flex items-center justify-between hover:bg-gray-50 transition">
+                    <div className="min-w-0 flex-1 pr-4">
+                      <h4 className="font-bold text-gray-800 truncate">{a.clienteNome}</h4>
+                      <p className="text-xs text-gray-500 truncate mt-0.5">{a.servico}</p>
+                      <p className="text-[10px] text-gray-400 mt-1 font-semibold">
+                        {a.dataInicio ? format(parseISO(a.dataInicio), "dd 'de' MMMM 'às' HH:mm", { locale: ptBR }) : ''}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <div className="text-right">
+                        <p className="text-xs font-bold text-gray-400">Total</p>
+                        <p className="text-sm font-extrabold text-primary">
+                          {a.valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                        </p>
+                      </div>
+                      {a.telefone && (
+                        <a 
+                          href={`https://wa.me/55${a.telefone.replace(/\D/g, "")}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-9 h-9 bg-green-50 text-green-600 rounded-xl flex items-center justify-center hover:bg-green-100 transition"
+                          title="Enviar mensagem no WhatsApp"
+                        >
+                          <MessageCircle size={16} />
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
