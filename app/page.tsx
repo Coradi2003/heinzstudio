@@ -22,6 +22,23 @@ const DashboardSection = dynamic(
 );
 
 
+const MESES = [
+  { val: 1, label: "Janeiro" },
+  { val: 2, label: "Fevereiro" },
+  { val: 3, label: "Março" },
+  { val: 4, label: "Abril" },
+  { val: 5, label: "Maio" },
+  { val: 6, label: "Junho" },
+  { val: 7, label: "Julho" },
+  { val: 8, label: "Agosto" },
+  { val: 9, label: "Setembro" },
+  { val: 10, label: "Outubro" },
+  { val: 11, label: "Novembro" },
+  { val: 12, label: "Dezembro" },
+];
+
+const ANOS = [2025, 2026, 2027, 2028];
+
 export default function DashboardPage() {
   const { agendamentos: rawAgendamentos } = useAgendaStore();
   const agendamentos = rawAgendamentos.filter(a => a.valorTotal > 0);
@@ -30,33 +47,19 @@ export default function DashboardPage() {
   const { servicos } = useServicosStore();
   const { clientes } = useClientesStore();
 
-  const [periodo, setPeriodo] = useState<7 | 14 | 30 | 'custom'>(7);
-  const [dataInicioManual, setDataInicioManual] = useState<string>("");
-  const [dataFimManual, setDataFimManual] = useState<string>("");
+  const hoje = new Date();
+  const [mesGrafico, setMesGrafico] = useState<number>(hoje.getMonth() + 1);
+  const [anoGrafico, setAnoGrafico] = useState<number>(hoje.getFullYear());
   const [contaVisao, setContaVisao] = useState<'Empresa' | 'Particular'>('Empresa');
   const [mostrarAnalitico, setMostrarAnalitico] = useState(false);
   const [modalListaStatus, setModalListaStatus] = useState<'pendente' | 'concluido' | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
 
-  // -- LOGICA DE FILTRO DE DATA --
-  const getPeriodoDatas = () => {
-    if (periodo === 'custom' && dataInicioManual && dataFimManual) {
-      return {
-        start: new Date(dataInicioManual + 'T00:00:00'),
-        end: new Date(dataFimManual + 'T23:59:59')
-      };
-    }
-    const start = new Date();
-    start.setDate(start.getDate() - (periodo as number));
-    start.setHours(0,0,0,0);
-
-    // Para gráficos e financeiro, o fim é agora. 
-    // Para agendamentos futuros (pendentes), o filtro de cards usará apenas o start.
-    return { start, end: new Date() };
-  };
-
-  const { start, end } = getPeriodoDatas();
+  // -- LOGICA DE FILTRO DE DATA POR MÊS/ANO SELECIONADO --
+  const baseDate = new Date(anoGrafico, mesGrafico - 1, 1);
+  const start = startOfMonth(baseDate);
+  const end = endOfMonth(baseDate);
 
   const hoje = new Date();
   const inicioMesDB = new Date(hoje.getFullYear(), hoje.getMonth(), 1, 0, 0, 0);
@@ -109,17 +112,17 @@ export default function DashboardPage() {
   // Aprovados: O que foi concluído no período selecionado
   const aprovadosTot = agndsPeriodo.filter(a => a.status === 'concluido').reduce((acc, curr) => acc + curr.valorTotal, 0);
   
-  // Pendentes: O que está agendado/pendente a partir do início do período (inclui futuro)
+  // Pendentes: O que está agendado/pendente no período selecionado
   const agndsFuturos = agendamentos.filter(a => {
     const d = new Date(a.dataInicio);
-    return d >= start && (a.status === 'agendado' || a.status === 'pendente');
+    return d >= start && d <= end && (a.status === 'agendado' || a.status === 'pendente');
   });
   const pendentesTot = agndsFuturos.reduce((acc, curr) => acc + (curr.valorTotal - (curr.valorSinal || 0)), 0);
   
-  // Rejeitados: Cancelados a partir do início do período (inclui futuro)
+  // Rejeitados: Cancelados no período selecionado
   const agndsRejeitados = agendamentos.filter(a => {
     const d = new Date(a.dataInicio);
-    return d >= start && a.status === 'cancelado';
+    return d >= start && d <= end && a.status === 'cancelado';
   });
   const rejeitadosTot = agndsRejeitados.reduce((acc, curr) => acc + curr.valorTotal, 0);
 
@@ -415,56 +418,30 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Toggles */}
-        <div className="flex flex-wrap gap-2 mb-6">
-          {[7, 14, 30].map(dia => (
-            <button 
-              key={dia}
-              onClick={() => {
-                setPeriodo(dia as any);
-                setDataInicioManual("");
-                setDataFimManual("");
-              }}
-              className={`px-4 py-2 rounded-full text-xs font-bold transition flex-shrink-0 ${periodo === dia ? 'bg-primary text-white shadow-md shadow-primary/20' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}`}
-            >
-              {dia} dias
-            </button>
-          ))}
-          <button 
-            onClick={() => setPeriodo('custom')}
-            className={`px-4 py-2 rounded-full text-xs font-bold transition flex-shrink-0 flex items-center gap-2 ${periodo === 'custom' ? 'bg-primary text-white shadow-md shadow-primary/20' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}`}
+        {/* Seletor de Mês e Ano */}
+        <div className="flex items-center gap-3 mb-6 no-print">
+          {/* Month Dropdown */}
+          <select
+            value={mesGrafico}
+            onChange={(e) => setMesGrafico(Number(e.target.value))}
+            className="bg-gray-50 border border-gray-100 rounded-xl px-3 py-2 text-xs font-bold text-gray-700 outline-none focus:border-primary flex-1 sm:flex-initial"
           >
-            <Calendar size={14} />
-            Personalizado
-          </button>
-        </div>
+            {MESES.map(m => (
+              <option key={m.val} value={m.val}>{m.label}</option>
+            ))}
+          </select>
 
-        {periodo === 'custom' && (
-          <div className="grid grid-cols-2 gap-3 mb-8 animate-in fade-in slide-in-from-top-2">
-            <div className="space-y-1">
-              <label className="block text-[10px] uppercase font-bold text-gray-400 ml-1">Início</label>
-              <div className="relative">
-                <input 
-                  type="date" 
-                  value={dataInicioManual} 
-                  onChange={e => setDataInicioManual(e.target.value)}
-                  className="w-full h-11 px-4 rounded-2xl border border-gray-700/50 bg-gray-800/40 text-sm font-bold text-gray-200 outline-none focus:border-primary transition-all shadow-inner appearance-none"
-                />
-              </div>
-            </div>
-            <div className="space-y-1">
-              <label className="block text-[10px] uppercase font-bold text-gray-400 ml-1">Fim</label>
-              <div className="relative">
-                <input 
-                  type="date" 
-                  value={dataFimManual} 
-                  onChange={e => setDataFimManual(e.target.value)}
-                  className="w-full h-11 px-4 rounded-2xl border border-gray-700/50 bg-gray-800/40 text-sm font-bold text-gray-200 outline-none focus:border-primary transition-all shadow-inner appearance-none"
-                />
-              </div>
-            </div>
-          </div>
-        )}
+          {/* Year Dropdown */}
+          <select
+            value={anoGrafico}
+            onChange={(e) => setAnoGrafico(Number(e.target.value))}
+            className="bg-gray-50 border border-gray-100 rounded-xl px-3 py-2 text-xs font-bold text-gray-700 outline-none focus:border-primary flex-1 sm:flex-initial"
+          >
+            {ANOS.map(y => (
+              <option key={y} value={y}>{y}</option>
+            ))}
+          </select>
+        </div>
 
         {/* 3 Status Cards (Estilo Dark Colors na imagem mas usamos tailwind padrao q fica dark automatico no darkmode) */}
         <div className="grid grid-cols-3 gap-3 mb-8">
