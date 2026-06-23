@@ -127,19 +127,19 @@ export function DashboardSection({ contaVisao, onClose }: DashboardSectionProps)
           />
           <DashboardCard
             title="Realizados"
-            value={data.metrics.realizados}
+            value={data.metrics.realizados.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })}
             icon={<CheckCircle2 size={20} className="text-green-500" />}
             subtitle={`${data.metrics.realizadosPorcentagem}% do total`}
           />
           <DashboardCard
             title="Projetados"
-            value={data.metrics.projetados}
+            value={data.metrics.projetados.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })}
             icon={<Clock size={20} className="text-yellow-500" />}
             subtitle={`${data.metrics.projetadosPorcentagem}% do total`}
           />
           <DashboardCard
             title="Cancelamentos"
-            value={data.metrics.cancelamentos}
+            value={data.metrics.cancelamentos.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })}
             icon={<XCircle size={20} className="text-red-500" />}
             subtitle={`${data.metrics.cancelamentosPorcentagem}% do total`}
           />

@@ -96,15 +96,15 @@ export function calculateDashboardData(
     return d.getFullYear() === ano && (d.getMonth() + 1) === mes;
   });
 
-  const realizados = agendamentosMes.filter(a => a.status === 'concluido').length;
-  const projetados = agendamentosMes.filter(a => a.status === 'agendado' || a.status === 'pendente').length;
-  const cancelamentos = agendamentosMes.filter(a => a.status === 'cancelado').length;
-  const compromissosMes = realizados + projetados;
+  const realizadosCount = agendamentosMes.filter(a => a.status === 'concluido').length;
+  const projetadosCount = agendamentosMes.filter(a => a.status === 'agendado' || a.status === 'pendente').length;
+  const cancelamentosCount = agendamentosMes.filter(a => a.status === 'cancelado').length;
+  const compromissosMes = realizadosCount + projetadosCount;
   
-  const totalAgendaStatus = realizados + projetados + cancelamentos;
-  const realizadosPorcentagem = totalAgendaStatus > 0 ? (realizados / totalAgendaStatus) * 100 : 0;
-  const projetadosPorcentagem = totalAgendaStatus > 0 ? (projetados / totalAgendaStatus) * 100 : 0;
-  const cancelamentosPorcentagem = totalAgendaStatus > 0 ? (cancelamentos / totalAgendaStatus) * 100 : 0;
+  const totalAgendaStatus = realizadosCount + projetadosCount + cancelamentosCount;
+  const realizadosPorcentagem = totalAgendaStatus > 0 ? (realizadosCount / totalAgendaStatus) * 100 : 0;
+  const projetadosPorcentagem = totalAgendaStatus > 0 ? (projetadosCount / totalAgendaStatus) * 100 : 0;
+  const cancelamentosPorcentagem = totalAgendaStatus > 0 ? (cancelamentosCount / totalAgendaStatus) * 100 : 0;
 
   // 2. FILTER TRANSACTIONS FOR THE SELECTED MONTH/YEAR & ACCOUNT
   const transacoesMes = transacoes.filter(t => {
@@ -131,16 +131,29 @@ export function calculateDashboardData(
     }, 0);
 
   const taxaUtilizacao = horasMeta > 0 ? (horasTrabalhadas / horasMeta) * 100 : 0;
-  const lucroMedio = realizados > 0 ? lucroLiquido / realizados : 0;
+  const lucroMedio = realizadosCount > 0 ? lucroLiquido / realizadosCount : 0;
   const salarioHora = horasTrabalhadas > 0 ? lucroLiquido / horasTrabalhadas : 0;
+
+  // Financial values
+  const realizadosValor = agendamentosMes
+    .filter(a => a.status === 'concluido')
+    .reduce((acc, a) => acc + (a.valorTotal || 0), 0);
+
+  const projetadosValor = agendamentosMes
+    .filter(a => a.status === 'agendado' || a.status === 'pendente')
+    .reduce((acc, a) => acc + ((a.valorTotal || 0) - (a.valorSinal || 0)), 0);
+
+  const cancelamentosValor = agendamentosMes
+    .filter(a => a.status === 'cancelado')
+    .reduce((acc, a) => acc + (a.valorTotal || 0), 0);
 
   const metrics: DashboardMetrics = {
     compromissosMes,
-    realizados,
+    realizados: realizadosValor,
     realizadosPorcentagem: Math.round(realizadosPorcentagem),
-    projetados,
+    projetados: projetadosValor,
     projetadosPorcentagem: Math.round(projetadosPorcentagem),
-    cancelamentos,
+    cancelamentos: cancelamentosValor,
     cancelamentosPorcentagem: Math.round(cancelamentosPorcentagem),
     lucroLiquido,
     faturamento,
