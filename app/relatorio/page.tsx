@@ -2,6 +2,7 @@
 
 import { useAgendaStore } from "@/store/useAgendaStore";
 import { useFinanceiroStore } from "@/store/useFinanceiroStore";
+import { parseLocalDate } from "@/lib/dashboard/dashboardCalculations";
 import { useSearchParams, useRouter } from "next/navigation";
 import { format, parseISO, startOfMonth, endOfMonth, startOfYear, endOfYear, isWithinInterval } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -66,8 +67,11 @@ function RelatorioContent() {
   }
 
   let transactionsPeriod = transacoes.filter(t => {
-    const d = new Date(t.data);
-    return isWithinInterval(d, { start: startDate, end: endDate }) && t.conta === conta;
+    const d = parseLocalDate(t.data);
+    const matchPeriod = tipo === "mensal"
+      ? (d.getFullYear() === ano && (d.getMonth() + 1) === mes)
+      : d.getFullYear() === ano;
+    return matchPeriod && t.conta === conta;
   });
 
   if (metodo !== "todos") {
@@ -78,9 +82,12 @@ function RelatorioContent() {
     transactionsPeriod = transactionsPeriod.filter(t => t.categoria === categoria);
   }
 
-  const agendamentosPeriod = agendamentos.filter(a =>
-    isWithinInterval(parseISO(a.dataInicio), { start: startDate, end: endDate })
-  );
+  const agendamentosPeriod = agendamentos.filter(a => {
+    const d = parseLocalDate(a.dataInicio);
+    return tipo === "mensal"
+      ? (d.getFullYear() === ano && (d.getMonth() + 1) === mes)
+      : d.getFullYear() === ano;
+  });
 
   const receitas = transactionsPeriod.filter(t => t.tipo === 'receita');
   const totalReceitas = receitas.reduce((acc, t) => acc + t.valor, 0);

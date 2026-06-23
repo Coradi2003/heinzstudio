@@ -12,6 +12,7 @@ import { startOfMonth, endOfMonth, isWithinInterval, parseISO, format } from "da
 import { ptBR } from "date-fns/locale";
 import dynamic from "next/dynamic";
 import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
+import { parseLocalDate } from "@/lib/dashboard/dashboardCalculations";
 
 const DashboardSection = dynamic(
   () => import("@/components/dashboard/DashboardSection").then((mod) => mod.DashboardSection),
@@ -57,17 +58,10 @@ export default function DashboardPage() {
 
 
   // -- LOGICA DE FILTRO DE DATA POR MÊS/ANO SELECIONADO --
-  const baseDate = new Date(anoGrafico, mesGrafico - 1, 1);
-  const start = startOfMonth(baseDate);
-  const end = endOfMonth(baseDate);
-
-  const inicioMesDB = new Date(hoje.getFullYear(), hoje.getMonth(), 1, 0, 0, 0);
-  const fimMesDB = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0, 23, 59, 59);
-
-  // -- FINANCEIRO DO MÊS (Card de Saldo - sempre o mês inteiro, por conta) --
+  // -- FINANCEIRO DO MÊS (Card de Saldo - sempre o mês atual inteiro, por conta) --
   const baseTransMes = transacoes.filter(t => {
-    const d = new Date(t.data);
-    return d >= inicioMesDB && d <= fimMesDB && t.conta === contaVisao;
+    const d = parseLocalDate(t.data);
+    return d.getFullYear() === hoje.getFullYear() && (d.getMonth() + 1) === (hoje.getMonth() + 1) && t.conta === contaVisao;
   });
 
   const receitasMes = baseTransMes.filter(t => t.tipo === 'receita');
@@ -77,8 +71,8 @@ export default function DashboardPage() {
 
   // -- FINANCEIRO DO PERÍODO (Gráficos / Breakdown por Método - usa filtro de período) --
   const baseTrans = transacoes.filter(t => {
-    const d = new Date(t.data);
-    const matchData = d >= start && d <= end;
+    const d = parseLocalDate(t.data);
+    const matchData = d.getFullYear() === anoGrafico && (d.getMonth() + 1) === mesGrafico;
     const matchConta = t.conta === contaVisao;
     return matchData && matchConta;
   });
@@ -86,13 +80,18 @@ export default function DashboardPage() {
   const receitas = baseTrans.filter(t => t.tipo === 'receita');
 
   // -- DÉBITOS GERAIS (Sempre pelo mês atual inteiro, visíveis independente do filtro de período) --
-
   const debitoParticular = transacoes
-    .filter(t => t.tipo === 'despesa' && t.conta === 'Particular' && new Date(t.data) >= inicioMesDB && new Date(t.data) <= fimMesDB)
+    .filter(t => {
+      const d = parseLocalDate(t.data);
+      return t.tipo === 'despesa' && t.conta === 'Particular' && d.getFullYear() === hoje.getFullYear() && (d.getMonth() + 1) === (hoje.getMonth() + 1);
+    })
     .reduce((a,b) => a + b.valor, 0);
   
   const debitoEmpresarial = transacoes
-    .filter(t => t.tipo === 'despesa' && t.conta === 'Empresa' && new Date(t.data) >= inicioMesDB && new Date(t.data) <= fimMesDB)
+    .filter(t => {
+      const d = parseLocalDate(t.data);
+      return t.tipo === 'despesa' && t.conta === 'Empresa' && d.getFullYear() === hoje.getFullYear() && (d.getMonth() + 1) === (hoje.getMonth() + 1);
+    })
     .reduce((a,b) => a + b.valor, 0);
 
   // -- BREAKDOWN POR MÉTODO DE PAGAMENTO (sempre mês inteiro, igual ao card de saldo) --
@@ -103,8 +102,8 @@ export default function DashboardPage() {
 
   // -- EVOLUÇÃO (Agendamentos - Gráfico usa o período fechado) --
   const agndsPeriodo = agendamentos.filter(a => {
-    const d = new Date(a.dataInicio);
-    return d >= start && d <= end;
+    const d = parseLocalDate(a.dataInicio);
+    return d.getFullYear() === anoGrafico && (d.getMonth() + 1) === mesGrafico;
   });
 
   // -- CARDS DE STATUS --
@@ -112,17 +111,11 @@ export default function DashboardPage() {
   const aprovadosTot = agndsPeriodo.filter(a => a.status === 'concluido').reduce((acc, curr) => acc + curr.valorTotal, 0);
   
   // Pendentes: O que está agendado/pendente no período selecionado
-  const agndsFuturos = agendamentos.filter(a => {
-    const d = new Date(a.dataInicio);
-    return d >= start && d <= end && (a.status === 'agendado' || a.status === 'pendente');
-  });
+  const agndsFuturos = agndsPeriodo.filter(a => a.status === 'agendado' || a.status === 'pendente');
   const pendentesTot = agndsFuturos.reduce((acc, curr) => acc + (curr.valorTotal - (curr.valorSinal || 0)), 0);
   
   // Rejeitados: Cancelados no período selecionado
-  const agndsRejeitados = agendamentos.filter(a => {
-    const d = new Date(a.dataInicio);
-    return d >= start && d <= end && a.status === 'cancelado';
-  });
+  const agndsRejeitados = agndsPeriodo.filter(a => a.status === 'cancelado');
   const rejeitadosTot = agndsRejeitados.reduce((acc, curr) => acc + curr.valorTotal, 0);
 
   const maxVal = Math.max(aprovadosTot, pendentesTot, rejeitadosTot, 1);
@@ -158,11 +151,11 @@ export default function DashboardPage() {
   });
 
   // -- LEMBRETE DE DESPESAS FIXAS PENDENTES --
-  const inicioMesAtual = startOfMonth(hoje);
-  const fimMesAtual = endOfMonth(hoje);
-
   const despesasFixasJaLancadas = transacoes
-    .filter(t => isWithinInterval(parseISO(t.data), { start: inicioMesAtual, end: fimMesAtual }))
+    .filter(t => {
+      const d = parseLocalDate(t.data);
+      return d.getFullYear() === hoje.getFullYear() && (d.getMonth() + 1) === (hoje.getMonth() + 1);
+    })
     .map(t => t.descricao.toLowerCase());
 
   const despesasFixasPendentes = despesasFixas.filter(df => !despesasFixasJaLancadas.includes(df.descricao.toLowerCase()));
