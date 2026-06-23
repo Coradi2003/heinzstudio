@@ -406,22 +406,22 @@ function RelatorioContent() {
             <h2 className="text-xl font-black uppercase border-b-2 border-black mb-6 flex items-center gap-2 pb-1 tracking-tight">
               <BarChart2 size={20} /> Evolução Comercial (Geral)
             </h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="p-5 border border-black rounded-sm text-center">
                 <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1">Total</p>
-                <p className="text-3xl font-black">{agendamentosPeriod.length}</p>
+                <p className="text-xl font-black">{agendamentosPeriod.reduce((acc, a) => acc + (a.valorTotal || 0), 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })}</p>
               </div>
               <div className="p-5 border border-black rounded-sm text-center">
                 <p className="text-[9px] font-black text-gray-900 uppercase tracking-widest mb-1">Concluídos</p>
-                <p className="text-3xl font-black">{concluidos.length}</p>
+                <p className="text-xl font-black">{concluidos.reduce((acc, a) => acc + (a.valorTotal || 0), 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })}</p>
               </div>
               <div className="p-5 border border-black rounded-sm text-center">
                 <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1">Cancelados</p>
-                <p className="text-3xl font-black">{cancelados.length}</p>
+                <p className="text-xl font-black">{cancelados.reduce((acc, a) => acc + (a.valorTotal || 0), 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })}</p>
               </div>
               <div className="p-5 border border-black rounded-sm text-center">
                 <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1">Pendentes</p>
-                <p className="text-3xl font-black">{pendentes.length}</p>
+                <p className="text-xl font-black">{pendentes.reduce((acc, a) => acc + ((a.valorTotal || 0) - (a.valorSinal || 0)), 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })}</p>
               </div>
             </div>
           </div>
