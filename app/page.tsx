@@ -466,7 +466,7 @@ export default function DashboardPage() {
             <div className="bg-white/60 rounded-full p-1 mb-2">
                <XCircle size={12} className="text-red-500" />
             </div>
-            <p className="text-[9px] font-bold text-red-700 uppercase mb-1 whitespace-nowrap">Rejeitados</p>
+            <p className="text-[9px] font-bold text-red-700 uppercase mb-1 whitespace-nowrap">Cancelados</p>
             <p className="text-sm font-black text-red-900">{rejeitadosTot.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0})}</p>
           </div>
         </div>
@@ -475,7 +475,7 @@ export default function DashboardPage() {
         <div className="flex justify-center gap-4 md:gap-6 mb-4">
           <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-green-500"></div><span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Aprovados</span></div>
           <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-yellow-500"></div><span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Pendentes</span></div>
-          <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-red-500"></div><span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Rejeitados</span></div>
+          <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-red-500"></div><span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Cancelados</span></div>
         </div>
 
         {/* Graph area */}
@@ -503,7 +503,7 @@ export default function DashboardPage() {
           <p className="text-[10px] uppercase font-bold text-gray-400">Clientes</p>
         </Link>
 
-        <Link href="/agenda" className="bg-white rounded-3xl p-4 flex flex-col items-center justify-center text-center shadow-sm border border-gray-100/50 gap-2 hover:bg-gray-50 transition">
+        <Link href="/vendas" className="bg-white rounded-3xl p-4 flex flex-col items-center justify-center text-center shadow-sm border border-gray-100/50 gap-2 hover:bg-gray-50 transition">
           <div className="w-10 h-10 rounded-full bg-yellow-50 flex items-center justify-center text-yellow-600">
             <Clock size={18} strokeWidth={2.5}/>
           </div>
@@ -511,7 +511,7 @@ export default function DashboardPage() {
           <p className="text-[10px] uppercase font-bold text-gray-400">Pendentes</p>
         </Link>
 
-        <Link href="/agenda" className="bg-white rounded-3xl p-4 flex flex-col items-center justify-center text-center shadow-sm border border-gray-100/50 gap-2 hover:bg-gray-50 transition">
+        <Link href="/vendas" className="bg-white rounded-3xl p-4 flex flex-col items-center justify-center text-center shadow-sm border border-gray-100/50 gap-2 hover:bg-gray-50 transition">
           <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center text-green-500">
             <CheckCircle2 size={18} strokeWidth={2.5}/>
           </div>

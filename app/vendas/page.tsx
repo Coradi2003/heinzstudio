@@ -26,9 +26,11 @@ export default function VendasPage() {
       </div>
       <p className="text-sm text-gray-500 mb-3">{v.servico}</p>
       <div className="flex justify-between items-center pt-3 border-t border-gray-50">
-        <div className="text-xs text-gray-400">
-          Sinal pago: R$ {v.valorSinal}
-        </div>
+        {v.valorSinal > 0 && (
+          <div className="text-xs text-gray-400">
+            Sinal pago: R$ {v.valorSinal}
+          </div>
+        )}
         <div className="font-bold text-primary">
           R$ {v.valorTotal}
         </div>
