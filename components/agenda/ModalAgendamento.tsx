@@ -230,6 +230,7 @@ export function ModalAgendamento({ isOpen, onClose, initialData }: ModalAgendame
           dataFim: seriesData[0].e,
           valorTotal: Number(valorTotal) || 0,
           valorSinal: Number(valorSinal) || 0,
+          metodoSinal,
           cor,
           imagens,
           imagem: imagens[0] || null

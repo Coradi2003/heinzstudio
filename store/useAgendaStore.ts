@@ -81,6 +81,32 @@ export const useAgendaStore = create<AgendaStore>()((set) => ({
         throw error;
      }
      
+     // Se atualizou o sinal e ele é > 0, garante a transação no financeiro
+     if (dataToUpdate.valorSinal && dataToUpdate.valorSinal > 0) {
+       const state = useAgendaStore.getState();
+       const current = state.agendamentos.find(a => a.id === id);
+       const clienteNome = dataToUpdate.clienteNome || current?.clienteNome || "Cliente";
+       const servico = dataToUpdate.servico || current?.servico || "Tatuagem";
+       const metodoSinal = dataToUpdate.metodoSinal || current?.metodoSinal || 'Pix';
+       
+       const hoje = new Date();
+       const dataHoje = `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}-${String(hoje.getDate()).padStart(2,'0')}T12:00:00.000Z`;
+       
+       const transacoes = useFinanceiroStore.getState().transacoes;
+       const jaExiste = transacoes.some(t => t.descricao.toLowerCase().includes(clienteNome.toLowerCase()) && Math.abs(t.valor - dataToUpdate.valorSinal!) < 0.01);
+       if (!jaExiste) {
+         await useFinanceiroStore.getState().addTransacao({
+           tipo: 'receita',
+           categoria: 'Sinal de Tatuagem',
+           descricao: `Sinal - ${clienteNome} (${servico})`,
+           valor: dataToUpdate.valorSinal,
+           metodo: metodoSinal,
+           data: dataHoje,
+           conta: 'Empresa'
+         });
+       }
+     }
+
      set((state) => ({
        agendamentos: state.agendamentos.map(a => a.id === id ? { ...a, ...dataToUpdate } : a)
      }));

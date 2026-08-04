@@ -65,7 +65,69 @@ export default function DashboardPage() {
   });
 
   const receitasMes = baseTransMes.filter(t => t.tipo === 'receita');
-  const faturamento = receitasMes.reduce((a,b) => a + b.valor, 0);
+
+  // Normalização de nome de método de pagamento (insensível a maiúsculas/minúsculas e acentos)
+  const getMetodoNorm = (m?: string): 'Pix' | 'Dinheiro' | 'Cartão' | null => {
+    if (!m) return null;
+    const lower = m.toLowerCase().trim();
+    if (lower.includes('pix')) return 'Pix';
+    if (lower.includes('dinheiro')) return 'Dinheiro';
+    if (lower.includes('cart')) return 'Cartão';
+    return null;
+  };
+
+  // 1. Somar por método a partir das transações do financeiro
+  let porPix = 0;
+  let porDinheiro = 0;
+  let porCartao = 0;
+
+  receitasMes.forEach(t => {
+    const norm = getMetodoNorm(t.metodo);
+    if (norm === 'Pix') porPix += t.valor;
+    else if (norm === 'Dinheiro') porDinheiro += t.valor;
+    else if (norm === 'Cartão') porCartao += t.valor;
+  });
+
+  // 2. Incluir sinais ou recebimentos de agendamentos que estejam no mês atual mas não tenham sido registrados no financeiro
+  const agndMesAtual = agendamentos.filter(a => {
+    const d = parseLocalDate(a.dataInicio);
+    return d.getFullYear() === hoje.getFullYear() && (d.getMonth() + 1) === (hoje.getMonth() + 1);
+  });
+
+  agndMesAtual.forEach(a => {
+    // Sinal do agendamento
+    if (a.valorSinal && a.valorSinal > 0) {
+      const jaNoFinanceiro = receitasMes.some(t => 
+        (t.descricao.toLowerCase().includes((a.clienteNome || '').toLowerCase()) || t.categoria === 'Sinal de Tatuagem') && 
+        Math.abs(t.valor - a.valorSinal) < 0.01
+      );
+      if (!jaNoFinanceiro) {
+        const norm = getMetodoNorm(a.metodoSinal) || 'Pix';
+        if (norm === 'Pix') porPix += a.valorSinal;
+        else if (norm === 'Dinheiro') porDinheiro += a.valorSinal;
+        else if (norm === 'Cartão') porCartao += a.valorSinal;
+      }
+    }
+    // Restante de agendamento concluído
+    if (a.status === 'concluido') {
+      const valorRestante = a.valorTotal - (a.valorSinal || 0);
+      if (valorRestante > 0) {
+        const jaNoFinanceiro = receitasMes.some(t => 
+          t.descricao.toLowerCase().includes((a.clienteNome || '').toLowerCase()) && 
+          Math.abs(t.valor - valorRestante) < 0.01
+        );
+        if (!jaNoFinanceiro) {
+          const norm = getMetodoNorm(a.metodoSinal) || 'Pix';
+          if (norm === 'Pix') porPix += valorRestante;
+          else if (norm === 'Dinheiro') porDinheiro += valorRestante;
+          else if (norm === 'Cartão') porCartao += valorRestante;
+        }
+      }
+    }
+  });
+
+  const totalMetodos = Math.max(porPix + porDinheiro + porCartao, 1);
+  const faturamento = porPix + porDinheiro + porCartao + receitasMes.filter(t => !getMetodoNorm(t.metodo)).reduce((a,b) => a + b.valor, 0);
   const despesas = baseTransMes.filter(t => t.tipo === 'despesa').reduce((a,b) => a + b.valor, 0);
   const saldo = faturamento - despesas;
 
@@ -93,12 +155,6 @@ export default function DashboardPage() {
       return t.tipo === 'despesa' && t.conta === 'Empresa' && d.getFullYear() === hoje.getFullYear() && (d.getMonth() + 1) === (hoje.getMonth() + 1);
     })
     .reduce((a,b) => a + b.valor, 0);
-
-  // -- BREAKDOWN POR MÉTODO DE PAGAMENTO (sempre mês inteiro, igual ao card de saldo) --
-  const porPix = receitasMes.filter(t => t.metodo === 'Pix').reduce((a,b) => a + b.valor, 0);
-  const porDinheiro = receitasMes.filter(t => t.metodo === 'Dinheiro').reduce((a,b) => a + b.valor, 0);
-  const porCartao = receitasMes.filter(t => t.metodo === 'Cartão').reduce((a,b) => a + b.valor, 0);
-  const totalMetodos = Math.max(porPix + porDinheiro + porCartao, 1);
 
   // -- EVOLUÇÃO (Agendamentos - Gráfico usa o período fechado) --
   const agndsPeriodo = agendamentos.filter(a => {
