@@ -8,6 +8,7 @@ import { ptBR } from "date-fns/locale";
 import { ModalTransacao } from "@/components/financeiro/ModalTransacao";
 import { ModalDespesasFixas } from "@/components/financeiro/ModalDespesasFixas";
 import Link from "next/link";
+import { parseLocalDate } from "@/lib/dashboard/dashboardCalculations";
 
 export default function FinanceiroPage() {
   const { transacoes, removeTransacao } = useFinanceiroStore();
@@ -21,18 +22,19 @@ export default function FinanceiroPage() {
 
   const transacoesFiltradas = transacoes.filter(t => {
     const matchConta = t.conta === contaVisualizacao;
-    const dataT = new Date(t.data);
+    const dataT = parseLocalDate(t.data);
     
     // Filtro de Data
     if (periodo === 'custom' && dataInicioManual && dataFimManual) {
-      const start = new Date(dataInicioManual + 'T00:00:00');
-      const end = new Date(dataFimManual + 'T23:59:59');
+      const start = parseLocalDate(dataInicioManual);
+      const end = parseLocalDate(dataFimManual);
+      // Set end to end of day
+      end.setHours(23, 59, 59, 999);
       return matchConta && dataT >= start && dataT <= end;
     }
 
-    const dateLimit = new Date();
-    dateLimit.setDate(dateLimit.getDate() - (periodo as number));
-    dateLimit.setHours(0,0,0,0);
+    const hoje = new Date();
+    const dateLimit = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() - (periodo as number));
     const matchData = dataT >= dateLimit;
 
     return matchConta && matchData;
@@ -44,14 +46,13 @@ export default function FinanceiroPage() {
 
   // -- CUSTO FIXO TOTAL (Mês inteiro, igual ao relatório) --
   const hoje = new Date();
-  const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1, 0, 0, 0);
-  const fimMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0, 23, 59, 59);
   const custoFixoMes = transacoes
     .filter(t => {
-      const d = new Date(t.data);
+      const d = parseLocalDate(t.data);
       return t.tipo === 'despesa' &&
              t.conta === contaVisualizacao &&
-             d >= inicioMes && d <= fimMes;
+             d.getFullYear() === hoje.getFullYear() &&
+             (d.getMonth() + 1) === (hoje.getMonth() + 1);
     })
     .reduce((acc, curr) => acc + curr.valor, 0);
 

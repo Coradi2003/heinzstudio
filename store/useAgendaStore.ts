@@ -46,13 +46,16 @@ export const useAgendaStore = create<AgendaStore>()((set) => ({
 
      // Se tiver sinal, lança de imediato lá no Financeiro
      if (dataToInsert.valorSinal > 0) {
+        // Usar meio-dia UTC para evitar o bug de virada de dia em fusos negativos (BRT -3h)
+        const hoje = new Date();
+        const dataHoje = `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}-${String(hoje.getDate()).padStart(2,'0')}T12:00:00.000Z`;
         await useFinanceiroStore.getState().addTransacao({
           tipo: 'receita',
           categoria: 'Sinal de Tatuagem',
           descricao: `Sinal - ${dataToInsert.clienteNome} (${dataToInsert.servico})`,
           valor: dataToInsert.valorSinal,
           metodo: dataToInsert.metodoSinal || 'Pix',
-          data: new Date().toISOString(),
+          data: dataHoje,
           conta: 'Empresa'
         });
      }
@@ -97,13 +100,16 @@ export const useAgendaStore = create<AgendaStore>()((set) => ({
      // Lança a receita restante
      const valorRestante = agendamento.valorTotal - agendamento.valorSinal;
      if (valorRestante > 0) {
+        // Usar meio-dia UTC para evitar o bug de virada de dia em fusos negativos (BRT -3h)
+        const hoje = new Date();
+        const dataHoje = `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}-${String(hoje.getDate()).padStart(2,'0')}T12:00:00.000Z`;
         await useFinanceiroStore.getState().addTransacao({
           tipo: 'receita',
           categoria: 'Sessão Concluída',
           descricao: `Restante - ${agendamento.clienteNome} (${agendamento.servico})`,
           valor: valorRestante,
           metodo: metodo || 'Pix',
-          data: new Date().toISOString(),
+          data: dataHoje,
           conta: 'Empresa'
         });
      }

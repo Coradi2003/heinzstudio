@@ -36,8 +36,10 @@ export function ModalTransacao({ isOpen, onClose, initialData }: Props) {
   }, [initialData, isOpen]);
 
   const handleSave = () => {
-    // Combina data selecionada com hora atual
-    const dataISO = new Date(data + 'T' + new Date().toTimeString().slice(0, 8)).toISOString();
+    // Save as midday UTC so the local date stays correct in any timezone (UTC-11 to UTC+11).
+    // Using "T12:00:00.000Z" avoids the bug where a local evening transaction
+    // (e.g. 21:30 BRT = 00:30+1day UTC) shifts to the next day.
+    const dataISO = data + 'T12:00:00.000Z';
 
     if (initialData) {
       updateTransacao(initialData.id, {

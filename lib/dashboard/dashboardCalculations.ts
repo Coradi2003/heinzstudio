@@ -9,18 +9,29 @@ import {
   ChartDataPoint 
 } from "@/types/dashboard";
 
-// Helper function to parse dates in a timezone-safe local manner
+// Helper function to parse dates in a timezone-safe local manner.
+// - Pure date strings "YYYY-MM-DD" are treated as local (no UTC shift).
+// - Full ISO timestamps "YYYY-MM-DDTHH:mm:ss..." are parsed via new Date()
+//   which gives the correct local time, and we then extract local day/month/year.
 export function parseLocalDate(dateStr: string): Date {
   if (!dateStr) return new Date();
-  if (dateStr.length >= 10 && dateStr[4] === '-' && dateStr[7] === '-') {
+
+  // Check if it's a pure date-only string (no time component)
+  const isDateOnly = dateStr.length === 10 && dateStr[4] === '-' && dateStr[7] === '-';
+  if (isDateOnly) {
     const year = parseInt(dateStr.substring(0, 4), 10);
     const month = parseInt(dateStr.substring(5, 7), 10);
     const day = parseInt(dateStr.substring(8, 10), 10);
     return new Date(year, month - 1, day);
   }
+
+  // For full ISO timestamps (with time / timezone), parse natively so the
+  // JS engine converts UTC → local correctly, then return a midnight-local
+  // Date at the resulting local day so comparisons work uniformly.
   const d = new Date(dateStr);
   if (isNaN(d.getTime())) return new Date();
-  return d;
+  // Return a clean local-midnight Date using the local year/month/day
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
 
 // Maps raw database categories & descriptions to standard dashboard expense groups
