@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, ChevronLeft, ChevronRight, User, CheckCircle2, MessageCircle, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { Plus, ChevronLeft, ChevronRight, User, CheckCircle2, MessageCircle, Trash2, LayoutDashboard } from "lucide-react";
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, parseISO, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useAgendaStore } from "@/store/useAgendaStore";
@@ -41,13 +42,22 @@ export default function AgendaPage() {
           <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Agenda</h2>
           <p className="text-gray-500">Seus horários e visões do mês</p>
         </div>
-        <button 
-          onClick={() => setIsModalOpen(true)}
-          className="bg-primary text-white px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-primary-dark transition shadow-md shadow-primary/20"
-        >
-          <Plus size={20} />
-          <span>Novo Agendamento</span>
-        </button>
+        <div className="flex gap-3">
+          <Link
+            href="/"
+            className="bg-white border border-gray-200 text-gray-700 px-5 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-gray-50 transition shadow-sm"
+          >
+            <LayoutDashboard size={18} />
+            <span className="hidden sm:inline">Dashboard</span>
+          </Link>
+          <button 
+            onClick={() => setIsModalOpen(true)}
+            className="bg-primary text-white px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-primary-dark transition shadow-md shadow-primary/20"
+          >
+            <Plus size={20} />
+            <span>Novo Agendamento</span>
+          </button>
+        </div>
       </div>
 
       <div className="max-w-4xl mx-auto">
