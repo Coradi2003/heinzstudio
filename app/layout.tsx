@@ -4,6 +4,7 @@ import "./globals.css";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { DataLoader } from "@/components/DataLoader";
 import { GlobalModals } from "@/components/layout/GlobalModals";
+import { ThemeApplier } from "@/components/layout/ThemeApplier";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -35,6 +36,7 @@ export default function RootLayout({
     <html lang="pt-BR">
       <body className={`${inter.className}`}>
         <DataLoader />
+        <ThemeApplier />
         <GlobalModals />
         <div className="flex flex-col md:flex-row h-screen overflow-hidden">
           <Sidebar />

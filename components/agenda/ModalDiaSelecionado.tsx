@@ -3,7 +3,7 @@
 import { Modal } from "@/components/ui/Modal";
 import { format, isToday, parseISO, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { User, CheckCircle2, MessageCircle, Trash2, Pencil, Image as ImageIcon, X } from "lucide-react";
+import { User, CheckCircle2, MessageCircle, Trash2, Pencil, Image as ImageIcon, X, RotateCcw } from "lucide-react";
 import { Agendamento, useAgendaStore } from "@/store/useAgendaStore";
 import { useState } from "react";
 import { ModalAgendamento } from "./ModalAgendamento";
@@ -32,7 +32,7 @@ export function ModalDiaSelecionado({ isOpen, onClose, selectedDate, agendamento
       <div className="flex-1 space-y-4 max-h-[65vh] overflow-y-auto pr-2 pb-4">
         {agendamentosDia.length > 0 ? (
           agendamentosDia.map(agendamento => (
-            <div key={agendamento.id} className={`p-4 border rounded-2xl shadow-sm transition group relative overflow-hidden ${(agendamento.status === 'concluido' || agendamento.status === 'cancelado') ? 'bg-gray-100 border-gray-200 opacity-75' : 'bg-white border-gray-100 hover:shadow-md'}`}>
+            <div key={agendamento.id} className={`p-4 border rounded-2xl shadow-sm transition group relative overflow-hidden ${(agendamento.status === 'concluido' || agendamento.status === 'cancelado') ? 'bg-gray-50 border-gray-200' : 'bg-white border-gray-100 hover:shadow-md'}`}>
               {/* Status accent border with Custom Color logic */}
               <div className={`absolute top-0 left-0 w-2 h-full ${(agendamento.status === 'concluido' || agendamento.status === 'cancelado') ? 'bg-gray-400' : agendamento.cor || 'bg-primary'}`}></div>
               
@@ -140,6 +140,19 @@ export function ModalDiaSelecionado({ isOpen, onClose, selectedDate, agendamento
                             </button>
                           </div>
                         )}
+                      </div>
+                    )}
+
+                    {agendamento.status === 'cancelado' && (
+                      <div className="w-full flex-1 flex flex-col gap-2">
+                        <div className="flex gap-2">
+                          <button 
+                            onClick={() => { if(confirm('Reativar este agendamento?')) updateAgendamento(agendamento.id, { status: 'agendado' })}}
+                            className="flex-1 flex justify-center items-center gap-1.5 text-xs font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 p-2.5 rounded-lg transition"
+                          >
+                            <RotateCcw size={14} /> Reativar
+                          </button>
+                        </div>
                       </div>
                     )}
                     <div className="flex gap-2">
