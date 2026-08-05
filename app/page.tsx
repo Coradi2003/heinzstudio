@@ -60,10 +60,10 @@ export default function DashboardPage() {
 
 
   // -- LOGICA DE FILTRO DE DATA POR MÊS/ANO SELECIONADO --
-  // -- FINANCEIRO DO MÊS (Card de Saldo - sempre o mês atual inteiro, por conta) --
+  // -- FINANCEIRO DO MÊS (Card de Saldo - usa anoGrafico e mesGrafico selecionados) --
   const baseTransMes = transacoes.filter(t => {
     const d = parseLocalDate(t.data);
-    return d.getFullYear() === hoje.getFullYear() && (d.getMonth() + 1) === (hoje.getMonth() + 1) && t.conta === contaVisao;
+    return d.getFullYear() === anoGrafico && (d.getMonth() + 1) === mesGrafico && t.conta === contaVisao;
   });
 
   const receitasMes = baseTransMes.filter(t => t.tipo === 'receita');
@@ -90,10 +90,10 @@ export default function DashboardPage() {
     else if (norm === 'Cartão') porCartao += t.valor;
   });
 
-  // 2. Incluir sinais ou recebimentos de agendamentos que estejam no mês atual mas não tenham sido registrados no financeiro
+  // 2. Incluir sinais ou recebimentos de agendamentos que estejam no mês/ano selecionado
   const agndMesAtual = agendamentos.filter(a => {
     const d = parseLocalDate(a.dataInicio);
-    return d.getFullYear() === hoje.getFullYear() && (d.getMonth() + 1) === (hoje.getMonth() + 1);
+    return d.getFullYear() === anoGrafico && (d.getMonth() + 1) === mesGrafico;
   });
 
   agndMesAtual.forEach(a => {
@@ -232,8 +232,33 @@ export default function DashboardPage() {
         />
       ) : (
         <>
-          {/* 0. Relatórios Quick Actions */}
+          {/* 0. Seletor de Período e Quick Actions */}
           <div className="bg-white border border-gray-100 p-4 rounded-[28px] shadow-sm space-y-4 no-print">
+             {/* Seletor de Mês e Ano Geral */}
+             <div className="flex items-center justify-between gap-3 bg-gray-50 p-2 rounded-2xl border border-gray-100">
+                <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 pl-2">📅 Período:</span>
+                <div className="flex gap-2 flex-1 max-w-xs">
+                  <select
+                    value={mesGrafico}
+                    onChange={(e) => setMesGrafico(Number(e.target.value))}
+                    className="bg-white border border-gray-200 rounded-xl px-3 py-1.5 text-xs font-bold text-gray-800 outline-none focus:border-primary flex-1 shadow-sm"
+                  >
+                    {MESES.map(m => (
+                      <option key={m.val} value={m.val}>{m.label}</option>
+                    ))}
+                  </select>
+                  <select
+                    value={anoGrafico}
+                    onChange={(e) => setAnoGrafico(Number(e.target.value))}
+                    className="bg-white border border-gray-200 rounded-xl px-3 py-1.5 text-xs font-bold text-gray-800 outline-none focus:border-primary flex-1 shadow-sm"
+                  >
+                    {ANOS.map(y => (
+                      <option key={y} value={y}>{y}</option>
+                    ))}
+                  </select>
+                </div>
+             </div>
+
              <div className="flex items-center justify-between px-1">
                 <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Filtro do Relatório</span>
                 <div className="flex bg-gray-50 p-1 rounded-xl border border-gray-100">
@@ -272,13 +297,13 @@ export default function DashboardPage() {
                 </div>
                 <div className="flex gap-2">
                    <Link 
-                     href={`/relatorio?tipo=mensal&mes=${new Date().getMonth() + 1}&ano=${new Date().getFullYear()}&metodo=${metodoRelatorio}&conta=${contaVisao}`}
+                     href={`/relatorio?tipo=mensal&mes=${mesGrafico}&ano=${anoGrafico}&metodo=${metodoRelatorio}&conta=${contaVisao}`}
                      className="flex-1 bg-gray-900 text-white p-3.5 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest hover:bg-black transition shadow-lg active:scale-95"
                    >
                      <FileText size={14} /> Relatórios & Clientes
                    </Link>
                    <Link 
-                     href={`/relatorio?tipo=anual&ano=${new Date().getFullYear()}&metodo=${metodoRelatorio}&conta=${contaVisao}`}
+                     href={`/relatorio?tipo=anual&ano=${anoGrafico}&metodo=${metodoRelatorio}&conta=${contaVisao}`}
                      className="flex-1 bg-white border-2 border-gray-900 p-3.5 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-900 hover:bg-gray-50 transition active:scale-95"
                    >
                      <FileText size={14} /> Relatório Anual
@@ -291,7 +316,7 @@ export default function DashboardPage() {
       <div className="bg-gradient-to-br from-primary to-secondary p-6 rounded-[28px] shadow-lg text-white relative overflow-hidden">
         <div className="absolute -right-4 -top-8 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
         
-        <p className="text-sm font-medium opacity-80 mb-1 z-10 relative">Faturamento do Mês</p>
+        <p className="text-sm font-medium opacity-80 mb-1 z-10 relative">Faturamento ({MESES.find(m => m.val === mesGrafico)?.label} / {anoGrafico})</p>
         <h2 className="text-4xl font-bold mb-6 z-10 relative">{faturamento.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL'})}</h2>
         
         <div className="flex items-center gap-6 relative z-10">
