@@ -472,9 +472,7 @@ export default function DashboardPage() {
                   {/* Valor em cima */}
                   {hasValue && (
                     <span className={`text-[8px] font-black leading-none mb-1 text-center ${isCurrentMonth ? 'text-primary' : 'text-gray-500'}`}>
-                      {item.total >= 1000
-                        ? `${(item.total / 1000).toFixed(1)}k`
-                        : item.total.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}
+                      {item.total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </span>
                   )}
                   {!hasValue && <span className="text-[8px] text-gray-200 mb-1">—</span>}
