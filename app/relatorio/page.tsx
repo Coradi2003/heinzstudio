@@ -49,6 +49,7 @@ function RelatorioContent() {
   const [modoRelatorio, setModoRelatorio] = useState<'geral' | 'cliente'>(tipo === 'cliente' ? 'cliente' : 'geral');
   const [clienteSelecionadoId, setClienteSelecionadoId] = useState<string>('');
   const [searchClienteText, setSearchClienteText] = useState<string>('');
+  const [metodoCliente, setMetodoCliente] = useState<'todos' | 'Pix' | 'Dinheiro' | 'Cartão' | 'cancelados'>('todos');
 
   const mesParam = parseInt(searchParams.get("mes") || String(new Date().getMonth() + 1));
   const anoParam = parseInt(searchParams.get("ano") || String(new Date().getFullYear()));
@@ -129,13 +130,28 @@ function RelatorioContent() {
     return canceladosCliente.reduce((acc, a) => acc + (a.valorTotal || 0), 0);
   }, [canceladosCliente]);
 
-  const totalConcluidoCliente = useMemo(() => {
-    return concluidosCliente.reduce((acc, a) => acc + (a.valorTotal || 0), 0);
-  }, [concluidosCliente]);
+  // Totais por forma de pagamento (com base nas receitas registradas no financeiro)
+  const metodoNorm = (m?: string): 'Pix' | 'Dinheiro' | 'Cartão' | null => {
+    if (!m) return null;
+    const lower = m.toLowerCase().trim();
+    if (lower.includes('pix')) return 'Pix';
+    if (lower.includes('dinheiro')) return 'Dinheiro';
+    if (lower.includes('cart')) return 'Cartão';
+    return null;
+  };
 
-  const totalPendenteCliente = useMemo(() => {
-    return pendentesCliente.reduce((acc, a) => acc + (a.valorTotal || 0), 0);
-  }, [pendentesCliente]);
+  const transacoesCliente = useMemo(() => {
+    if (!clienteObj) return [];
+    const nome = (clienteObj.nome || '').toLowerCase().trim();
+    return transacoes.filter(t =>
+      t.tipo === 'receita' &&
+      (t.descricao || '').toLowerCase().includes(nome)
+    );
+  }, [transacoes, clienteObj]);
+
+  const totalPixCliente = transacoesCliente.filter(t => metodoNorm(t.metodo) === 'Pix').reduce((acc, t) => acc + t.valor, 0);
+  const totalDinheiroCliente = transacoesCliente.filter(t => metodoNorm(t.metodo) === 'Dinheiro').reduce((acc, t) => acc + t.valor, 0);
+  const totalCartaoCliente = transacoesCliente.filter(t => metodoNorm(t.metodo) === 'Cartão').reduce((acc, t) => acc + t.valor, 0);
 
   let startDate: Date;
   let endDate: Date;
@@ -447,6 +463,23 @@ function RelatorioContent() {
                   ))}
                 </div>
               )}
+              {/* Filtro por forma de pagamento */}
+              <div className="flex flex-col gap-1.5 max-w-sm">
+                <label className="text-[10px] font-black uppercase text-gray-500 tracking-wider">
+                  Forma de Pagamento
+                </label>
+                <select
+                  value={metodoCliente}
+                  onChange={(e) => setMetodoCliente(e.target.value as 'todos' | 'Pix' | 'Dinheiro' | 'Cartão' | 'cancelados')}
+                  className="bg-white border-2 border-gray-300 rounded-xl px-3 py-3 text-sm font-bold text-gray-800 outline-none focus:border-black shadow-sm"
+                >
+                  <option value="todos">Todos</option>
+                  <option value="Pix">Somente Pix</option>
+                  <option value="Dinheiro">Somente Dinheiro</option>
+                  <option value="Cartão">Somente Cartão</option>
+                  <option value="cancelados">Somente Cancelados</option>
+                </select>
+              </div>
             </div>
           ) : (
             /* FILTROS DO RELATÓRIO GERAL */
@@ -496,16 +529,21 @@ function RelatorioContent() {
               {tipoPeriodo === 'mensal' && (
                 <div className="flex flex-col gap-1">
                   <label className="text-[9px] font-black uppercase text-gray-500 tracking-wider">Forma de Pagamento</label>
-                  <select
-                    value={metodo}
-                    onChange={(e) => setMetodo(e.target.value)}
-                    className="bg-white border border-gray-300 rounded-xl px-3 py-2 text-xs font-bold text-gray-800 outline-none focus:border-black"
-                  >
-                    <option value="todos">Todas (Pix, Cartão, Dinheiro)</option>
-                    <option value="Pix">Pix</option>
-                    <option value="Dinheiro">Dinheiro</option>
-                    <option value="Cartão">Cartão</option>
-                  </select>
+                  <div className="flex flex-wrap gap-1.5">
+                    {(['todos', 'Pix', 'Dinheiro', 'Cartão'] as const).map(op => (
+                      <button
+                        key={op}
+                        onClick={() => setMetodo(op)}
+                        className={`px-3 py-2 rounded-lg text-[11px] font-black uppercase tracking-wider border transition ${
+                          metodo === op
+                            ? 'bg-black text-white border-black'
+                            : 'bg-white text-gray-600 border-gray-300 hover:border-black hover:text-black'
+                        }`}
+                      >
+                        {op === 'todos' ? 'Todas' : op}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
@@ -599,160 +637,66 @@ function RelatorioContent() {
                   </div>
                 </div>
 
-                {/* HISTÓRICO DETALHADO */}
-                {agendamentosDoCliente.length === 0 ? (
-                  <div className="p-8 border-2 border-dashed border-gray-300 text-center font-bold text-gray-500">
-                    Nenhum agendamento registrado para este cliente.
-                  </div>
-                ) : (
-                  <>
-                    {/* CONCLUÍDAS */}
-                    {concluidosCliente.length > 0 && (
-                      <div>
-                        <div className="flex items-end justify-between border-b-2 border-black mb-4 pb-1">
-                          <h3 className="text-lg font-black uppercase">Sessões Concluídas ({concluidosCliente.length})</h3>
-                          <span className="text-sm font-black text-gray-600">
-                            Total: {totalConcluidoCliente.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                          </span>
-                        </div>
-                        <table className="w-full text-left text-xs border-collapse">
-                          <thead>
-                            <tr className="border-b-2 border-black bg-gray-100">
-                              <th className="p-3 uppercase font-black border border-black">Data</th>
-                              <th className="p-3 uppercase font-black border border-black">Serviço</th>
-                              <th className="p-3 uppercase font-black border border-black text-right">Sinal Pago</th>
-                              <th className="p-3 uppercase font-black border border-black text-right">Valor Pago</th>
-                              <th className="p-3 uppercase font-black border border-black text-right">Valor Total</th>
-                              <th className="p-3 uppercase font-black border border-black text-center">Status</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {concluidosCliente.map((a) => (
-                              <tr key={a.id} className="border-b border-black">
-                                <td className="p-3 font-bold border border-black whitespace-nowrap">
-                                  {format(parseLocalDate(a.dataInicio), "dd/MM/yyyy")}
-                                </td>
-                                <td className="p-3 font-bold border border-black">{a.servico || 'Sessão de Tatuagem'}</td>
-                                <td className="p-3 font-bold border border-black text-right whitespace-nowrap">
-                                  {a.valorSinal > 0 ? (
-                                    <span>{a.valorSinal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} <span className="text-[9px] uppercase font-black">({a.metodoSinal || 'Pix'})</span></span>
-                                  ) : (
-                                    <span className="text-gray-400">—</span>
-                                  )}
-                                </td>
-                                <td className="p-3 font-black border border-black text-right whitespace-nowrap">
-                                  {(a.valorTotal || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                                </td>
-                                <td className="p-3 font-black border border-black text-right whitespace-nowrap">
-                                  {a.valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                                </td>
-                                <td className="p-3 font-black border border-black text-center text-[10px] uppercase">✅ Concluído</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
+                {/* VALORES POR FORMA DE PAGAMENTO */}
+                <div>
+                  <h2 className="text-xl font-black uppercase border-b-2 border-black mb-6 flex items-center gap-2 pb-1 tracking-tight">
+                    <Wallet size={20} /> Valores por Forma de Pagamento
+                  </h2>
 
-                    {/* AGENDADAS / PENDENTES */}
-                    {pendentesCliente.length > 0 && (
-                      <div>
-                        <div className="flex items-end justify-between border-b-2 border-black mb-4 pb-1">
-                          <h3 className="text-lg font-black uppercase">Agendadas / Pendentes ({pendentesCliente.length})</h3>
-                          <span className="text-sm font-black text-gray-600">
-                            Total: {totalPendenteCliente.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                          </span>
-                        </div>
-                        <table className="w-full text-left text-xs border-collapse">
-                          <thead>
-                            <tr className="border-b-2 border-black bg-gray-100">
-                              <th className="p-3 uppercase font-black border border-black">Data</th>
-                              <th className="p-3 uppercase font-black border border-black">Serviço</th>
-                              <th className="p-3 uppercase font-black border border-black text-right">Sinal Pago</th>
-                              <th className="p-3 uppercase font-black border border-black text-right">Valor Pago</th>
-                              <th className="p-3 uppercase font-black border border-black text-right">Valor Total</th>
-                              <th className="p-3 uppercase font-black border border-black text-right">Em Aberto</th>
-                              <th className="p-3 uppercase font-black border border-black text-center">Status</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {pendentesCliente.map((a) => (
-                              <tr key={a.id} className="border-b border-black">
-                                <td className="p-3 font-bold border border-black whitespace-nowrap">
-                                  {format(parseLocalDate(a.dataInicio), "dd/MM/yyyy")}
-                                </td>
-                                <td className="p-3 font-bold border border-black">{a.servico || 'Sessão de Tatuagem'}</td>
-                                <td className="p-3 font-bold border border-black text-right whitespace-nowrap">
-                                  {a.valorSinal > 0 ? (
-                                    <span>{a.valorSinal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} <span className="text-[9px] uppercase font-black">({a.metodoSinal || 'Pix'})</span></span>
-                                  ) : (
-                                    <span className="text-gray-400">—</span>
-                                  )}
-                                </td>
-                                <td className="p-3 font-black border border-black text-right whitespace-nowrap">
-                                  {(a.valorSinal || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                                </td>
-                                <td className="p-3 font-black border border-black text-right whitespace-nowrap">
-                                  {a.valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                                </td>
-                                <td className="p-3 font-black border border-black text-right whitespace-nowrap">
-                                  {((a.valorTotal || 0) - (a.valorSinal || 0)).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                                </td>
-                                <td className="p-3 font-black border border-black text-center text-[10px] uppercase">
-                                  {a.status === 'agendado' ? '📅 Agendado' : '⏳ Pendente'}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                  {metodoCliente === 'todos' ? (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="border-2 border-black p-4 rounded-sm">
+                        <p className="text-[10px] font-black uppercase text-gray-500 tracking-widest mb-1">Total via Pix</p>
+                        <p className="text-xl font-black">{totalPixCliente.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
                       </div>
-                    )}
+                      <div className="border-2 border-black p-4 rounded-sm">
+                        <p className="text-[10px] font-black uppercase text-gray-500 tracking-widest mb-1">Total via Dinheiro</p>
+                        <p className="text-xl font-black">{totalDinheiroCliente.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+                      </div>
+                      <div className="border-2 border-black p-4 rounded-sm">
+                        <p className="text-[10px] font-black uppercase text-gray-500 tracking-widest mb-1">Total via Cartão</p>
+                        <p className="text-xl font-black">{totalCartaoCliente.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+                      </div>
+                      <div className="bg-black p-4 rounded-sm text-white">
+                        <p className="text-[10px] font-black uppercase tracking-widest mb-1 opacity-80">Total Cancelados</p>
+                        <p className="text-xl font-black">{totalCanceladoCliente.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-xl">
+                      {metodoCliente === 'Pix' && (
+                        <div className="border-2 border-black p-5 rounded-sm">
+                          <p className="text-[10px] font-black uppercase text-gray-500 tracking-widest mb-1">Total via Pix</p>
+                          <p className="text-3xl font-black">{totalPixCliente.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+                        </div>
+                      )}
+                      {metodoCliente === 'Dinheiro' && (
+                        <div className="border-2 border-black p-5 rounded-sm">
+                          <p className="text-[10px] font-black uppercase text-gray-500 tracking-widest mb-1">Total via Dinheiro</p>
+                          <p className="text-3xl font-black">{totalDinheiroCliente.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+                        </div>
+                      )}
+                      {metodoCliente === 'Cartão' && (
+                        <div className="border-2 border-black p-5 rounded-sm">
+                          <p className="text-[10px] font-black uppercase text-gray-500 tracking-widest mb-1">Total via Cartão</p>
+                          <p className="text-3xl font-black">{totalCartaoCliente.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+                        </div>
+                      )}
+                      {metodoCliente === 'cancelados' && (
+                        <div className="bg-black p-5 rounded-sm text-white">
+                          <p className="text-[10px] font-black uppercase tracking-widest mb-1 opacity-80">Total Cancelados</p>
+                          <p className="text-3xl font-black">{totalCanceladoCliente.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
-                    {/* CANCELAMENTOS */}
-                    {canceladosCliente.length > 0 && (
-                      <div>
-                        <div className="flex items-end justify-between border-b-2 border-black mb-4 pb-1">
-                          <h3 className="text-lg font-black uppercase">Cancelamentos ({canceladosCliente.length})</h3>
-                          <span className="text-sm font-black text-gray-600">
-                            Total cancelado: {totalCanceladoCliente.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                          </span>
-                        </div>
-                        <table className="w-full text-left text-xs border-collapse">
-                          <thead>
-                            <tr className="border-b-2 border-black bg-gray-100">
-                              <th className="p-3 uppercase font-black border border-black">Data</th>
-                              <th className="p-3 uppercase font-black border border-black">Serviço</th>
-                              <th className="p-3 uppercase font-black border border-black text-right">Sinal Pago (Perdido)</th>
-                              <th className="p-3 uppercase font-black border border-black text-right">Valor Total</th>
-                              <th className="p-3 uppercase font-black border border-black text-center">Status</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {canceladosCliente.map((a) => (
-                              <tr key={a.id} className="border-b border-black">
-                                <td className="p-3 font-bold border border-black whitespace-nowrap">
-                                  {format(parseLocalDate(a.dataInicio), "dd/MM/yyyy")}
-                                </td>
-                                <td className="p-3 font-bold border border-black">{a.servico || 'Sessão de Tatuagem'}</td>
-                                <td className="p-3 font-bold border border-black text-right whitespace-nowrap">
-                                  {a.valorSinal > 0 ? (
-                                    <span>{a.valorSinal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} <span className="text-[9px] uppercase font-black">({a.metodoSinal || 'Pix'})</span></span>
-                                  ) : (
-                                    <span className="text-gray-400">—</span>
-                                  )}
-                                </td>
-                                <td className="p-3 font-black border border-black text-right whitespace-nowrap">
-                                  {a.valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                                </td>
-                                <td className="p-3 font-black border border-black text-center text-[10px] uppercase">❌ Cancelado</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
-                  </>
-                )}
+                  {agendamentosDoCliente.length === 0 && (
+                    <div className="p-8 border-2 border-dashed border-gray-300 text-center font-bold text-gray-500">
+                      Nenhum agendamento registrado para este cliente.
+                    </div>
+                  )}
+                </div>
               </>
             ) : (
               <div className="p-12 border-2 border-dashed border-black text-center rounded-2xl no-print">
@@ -832,7 +776,7 @@ function RelatorioContent() {
                 /* ---------- RELATÓRIO MENSAL (DETALHADO) ---------- */
                 <>
                   {/* RESUMO RÁPIDO GERAL */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div className="border-2 border-black p-5 rounded-sm flex flex-col justify-center min-h-[100px]">
                       <p className="text-[10px] font-black uppercase mb-1 text-gray-500 tracking-widest">Total de Entradas</p>
                       <p className="text-2xl font-black truncate">{totalReceitasGeral.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
@@ -841,9 +785,13 @@ function RelatorioContent() {
                       <p className="text-[10px] font-black uppercase mb-1 text-gray-500 tracking-widest">Total via Pix</p>
                       <p className="text-2xl font-black truncate">{porPixGeral.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
                     </div>
+                    <div className="border-2 border-black p-5 rounded-sm flex flex-col justify-center min-h-[100px]">
+                      <p className="text-[10px] font-black uppercase mb-1 text-gray-500 tracking-widest">Total via Dinheiro</p>
+                      <p className="text-2xl font-black truncate">{porDinheiroGeral.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+                    </div>
                     <div className="bg-black p-5 rounded-sm flex flex-col justify-center min-h-[100px] text-white">
-                      <p className="text-[10px] font-black uppercase mb-1 opacity-80 tracking-widest">Cartão / Dinheiro</p>
-                      <p className="text-2xl font-black truncate">{(porCartaoGeral + porDinheiroGeral).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+                      <p className="text-[10px] font-black uppercase mb-1 opacity-80 tracking-widest">Total via Cartão</p>
+                      <p className="text-2xl font-black truncate">{porCartaoGeral.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
                     </div>
                   </div>
 

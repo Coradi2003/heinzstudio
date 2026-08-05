@@ -67,6 +67,46 @@ export default function DashboardPage() {
     return null;
   };
 
+  // Faturamento de um mês (mesma lógica do card superior): receitas do financeiro
+  // + sinais/recebimentos de agendamentos do mês que ainda não foram lançados
+  const calcularFaturamentoMes = (mes: number, ano: number): number => {
+    const receitasMesLoc = transacoes.filter(t => {
+      const d = parseLocalDate(t.data);
+      return d.getFullYear() === ano && (d.getMonth() + 1) === mes && t.conta === contaVisao && t.tipo === 'receita';
+    });
+
+    let total = receitasMesLoc.reduce((acc, t) => acc + t.valor, 0);
+
+    const agndsMesLoc = agendamentos.filter(a => {
+      const d = parseLocalDate(a.dataInicio);
+      return d.getFullYear() === ano && (d.getMonth() + 1) === mes;
+    });
+
+    agndsMesLoc.forEach(a => {
+      // Sinal do agendamento
+      if (a.valorSinal && a.valorSinal > 0) {
+        const jaNoFinanceiro = receitasMesLoc.some(t =>
+          (t.descricao.toLowerCase().includes((a.clienteNome || '').toLowerCase()) || t.categoria === 'Sinal de Tatuagem') &&
+          Math.abs(t.valor - a.valorSinal) < 0.01
+        );
+        if (!jaNoFinanceiro) total += a.valorSinal;
+      }
+      // Restante de agendamento concluído
+      if (a.status === 'concluido') {
+        const valorRestante = a.valorTotal - (a.valorSinal || 0);
+        if (valorRestante > 0) {
+          const jaNoFinanceiro = receitasMesLoc.some(t =>
+            t.descricao.toLowerCase().includes((a.clienteNome || '').toLowerCase()) &&
+            Math.abs(t.valor - valorRestante) < 0.01
+          );
+          if (!jaNoFinanceiro) total += valorRestante;
+        }
+      }
+    });
+
+    return total;
+  };
+
   // 1. Somar por método a partir das transações do financeiro
   let porPix = 0;
   let porDinheiro = 0;
@@ -118,7 +158,7 @@ export default function DashboardPage() {
   });
 
   const totalMetodos = Math.max(porPix + porDinheiro + porCartao, 1);
-  const faturamento = porPix + porDinheiro + porCartao + receitasMes.filter(t => !getMetodoNorm(t.metodo)).reduce((a,b) => a + b.valor, 0);
+  const faturamento = calcularFaturamentoMes(mesGrafico, anoGrafico);
   const despesas = baseTransMes.filter(t => t.tipo === 'despesa').reduce((a,b) => a + b.valor, 0);
   const saldo = faturamento - despesas;
 
@@ -150,22 +190,12 @@ export default function DashboardPage() {
   const agndsRejeitados = agndsPeriodo.filter(a => a.status === 'cancelado');
   const rejeitadosTot = agndsRejeitados.reduce((acc, curr) => acc + curr.valorTotal, 0);
 
-  // -- GRÁFICO ANUAL: valor de vendas por mês do ano selecionado --
+  // -- GRÁFICO ANUAL: faturamento (mesma regra do card) por mês do ano selecionado --
   const vendasPorMes = MESES.map(m => {
-    const agndsMes = agendamentos.filter(a => {
-      const d = parseLocalDate(a.dataInicio);
-      return d.getFullYear() === anoGrafico && (d.getMonth() + 1) === m.val;
-    });
-    const transacoesMes = transacoes.filter(t => {
-      const d = parseLocalDate(t.data);
-      return d.getFullYear() === anoGrafico && (d.getMonth() + 1) === m.val && t.tipo === 'receita';
-    });
-    const totalAgenda = agndsMes.reduce((acc, a) => acc + (a.valorTotal || 0), 0);
-    const totalTrans = transacoesMes.reduce((acc, t) => acc + t.valor, 0);
     return {
       mes: m.label.substring(0, 3),
       val: m.val,
-      total: Math.max(totalAgenda, totalTrans),
+      total: calcularFaturamentoMes(m.val, anoGrafico),
     };
   });
   const maxVendasMes = Math.max(...vendasPorMes.map(v => v.total), 1);
