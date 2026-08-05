@@ -7,6 +7,7 @@ import { ptBR } from "date-fns/locale";
 import { useAgendaStore } from "@/store/useAgendaStore";
 import { ModalAgendamento } from "@/components/agenda/ModalAgendamento";
 import { ModalDiaSelecionado } from "@/components/agenda/ModalDiaSelecionado";
+import { getFeriadoDoDia } from "@/lib/feriados";
 
 export default function AgendaPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -81,22 +82,39 @@ export default function AgendaPage() {
             {monthDays.map((day) => {
               const dayAgendamentos = agendamentos.filter(a => isSameDay(parseISO(a.dataInicio), day));
               const qty = dayAgendamentos.length;
-              
-              let randomStatus: 'cheio' | 'livre' | 'parcial' = 'livre';
-              if (qty > 3) randomStatus = 'cheio';
-              else if (qty > 0) randomStatus = 'parcial';
+              const feriado = getFeriadoDoDia(day);
+              const isFeriado = !!feriado;
               
               return (
                 <div 
                   key={day.toISOString()} 
                   onClick={() => { setSelectedDate(day); setIsModalDiaOpen(true); }}
                   className={`h-20 md:h-24 rounded-xl border p-1 md:p-2 flex flex-col justify-between cursor-pointer transition relative group
-                    ${isSameDay(selectedDate, day) ? 'border-primary ring-1 ring-primary shadow-sm bg-primary/5' : 'border-gray-100 hover:border-primary/50 hover:shadow-md bg-white'}
+                    ${isFeriado && !isSameDay(selectedDate, day) ? 'bg-orange-50 border-orange-200 hover:border-orange-400' : ''}
+                    ${isSameDay(selectedDate, day) ? 'border-primary ring-1 ring-primary shadow-sm bg-primary/5' : !isFeriado ? 'border-gray-100 hover:border-primary/50 hover:shadow-md bg-white' : ''}
                   `}
                 >
-                  <span className={`text-xs md:text-sm font-bold ${isToday(day) ? 'text-white bg-primary w-5 h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center' : isSameMonth(day, currentDate) ? 'text-gray-700' : 'text-gray-300'}`}>
-                    {format(day, 'd')}
-                  </span>
+                  <div className="flex items-start justify-between">
+                    <span className={`text-xs md:text-sm font-bold ${isToday(day) ? 'text-white bg-primary w-5 h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center shrink-0' : isSameMonth(day, currentDate) ? (isFeriado ? 'text-orange-700' : 'text-gray-700') : 'text-gray-300'}`}>
+                      {format(day, 'd')}
+                    </span>
+                    {/* Badge de Feriado */}
+                    {isFeriado && (
+                      <span
+                        title={feriado.nome}
+                        className="text-[7px] md:text-[8px] font-black leading-tight text-orange-600 bg-orange-100 rounded px-0.5 py-px truncate max-w-[60px] md:max-w-[70px] text-right"
+                      >
+                        🎉
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Nome do Feriado (só no desktop ou em dias sem agendamentos) */}
+                  {isFeriado && qty === 0 && (
+                    <p className="text-[7px] font-bold text-orange-500 truncate leading-tight hidden md:block px-0.5">
+                      {feriado.nome.split('(')[0].trim()}
+                    </p>
+                  )}
                   
                   {/* Indicadores de cor dos agendamentos empilhados verticalmente */}
                   {qty > 0 && (
@@ -121,10 +139,11 @@ export default function AgendaPage() {
             })}
           </div>
           
-          <div className="flex gap-4 mt-6 text-xs text-gray-500 font-medium">
+          <div className="flex flex-wrap gap-4 mt-6 text-xs text-gray-500 font-medium">
             <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-full bg-green-500"></div> Dia Livre</div>
             <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-full bg-yellow-500"></div> Poucos Horários</div>
             <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-full bg-red-500"></div> Dia Cheio</div>
+            <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-orange-100 border border-orange-200"></div> Feriado Nacional 🎉</div>
           </div>
         </div>
 
