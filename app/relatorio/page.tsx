@@ -185,20 +185,27 @@ function RelatorioContent() {
   const porDinheiroGeral = transactionsPeriod.filter(t => t.metodo === 'Dinheiro').reduce((acc, t) => acc + t.valor, 0);
   const porCartaoGeral = transactionsPeriod.filter(t => t.metodo === 'Cartão').reduce((acc, t) => acc + t.valor, 0);
 
-  // -- FATURAMENTO PIX MENSAL (Relatório Anual) --
-  const pixPorMes = useMemo(() => {
+  // -- FATURAMENTO ANUAL POR MÊS E FORMA DE PAGAMENTO (Relatório Anual) --
+  const faturamentoAnualPorMes = useMemo(() => {
     return MESES_PT.map((nome, i) => {
-      const total = transacoes
+      const transMes = transacoes
         .filter(t => {
           const d = parseLocalDate(t.data);
-          return d.getFullYear() === ano && d.getMonth() === i && t.conta === conta && t.tipo === 'receita' && t.metodo === 'Pix';
-        })
-        .reduce((acc, t) => acc + t.valor, 0);
-      return { mes: nome, valor: total };
+          return d.getFullYear() === ano && d.getMonth() === i && t.conta === conta && t.tipo === 'receita';
+        });
+      return {
+        mes: nome,
+        todos: transMes.reduce((acc, t) => acc + t.valor, 0),
+        Pix: transMes.filter(t => t.metodo === 'Pix').reduce((acc, t) => acc + t.valor, 0),
+        Dinheiro: transMes.filter(t => t.metodo === 'Dinheiro').reduce((acc, t) => acc + t.valor, 0),
+        Cartão: transMes.filter(t => t.metodo === 'Cartão').reduce((acc, t) => acc + t.valor, 0),
+      };
     });
   }, [transacoes, ano, conta]);
 
-  const totalPixAnual = pixPorMes.reduce((acc, m) => acc + m.valor, 0);
+  const metodoAnual: 'todos' | 'Pix' | 'Dinheiro' | 'Cartão' =
+    metodo === 'Pix' || metodo === 'Dinheiro' || metodo === 'Cartão' ? metodo : 'todos';
+  const totalAnualSelecionado = faturamentoAnualPorMes.reduce((acc, m) => acc + (metodoAnual === 'todos' ? m.todos : m[metodoAnual]), 0);
 
   // Helper para gerar PDF
   const generatePDF = async () => {
@@ -526,26 +533,24 @@ function RelatorioContent() {
                 </select>
               </div>
 
-              {tipoPeriodo === 'mensal' && (
-                <div className="flex flex-col gap-1">
-                  <label className="text-[9px] font-black uppercase text-gray-500 tracking-wider">Forma de Pagamento</label>
-                  <div className="flex flex-wrap gap-1.5">
-                    {(['todos', 'Pix', 'Dinheiro', 'Cartão'] as const).map(op => (
-                      <button
-                        key={op}
-                        onClick={() => setMetodo(op)}
-                        className={`px-3 py-2 rounded-lg text-[11px] font-black uppercase tracking-wider border transition ${
-                          metodo === op
-                            ? 'bg-black text-white border-black'
-                            : 'bg-white text-gray-600 border-gray-300 hover:border-black hover:text-black'
-                        }`}
-                      >
-                        {op === 'todos' ? 'Todas' : op}
-                      </button>
-                    ))}
-                  </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-[9px] font-black uppercase text-gray-500 tracking-wider">Forma de Pagamento</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {(['todos', 'Pix', 'Dinheiro', 'Cartão'] as const).map(op => (
+                    <button
+                      key={op}
+                      onClick={() => setMetodo(op)}
+                      className={`px-3 py-2 rounded-lg text-[11px] font-black uppercase tracking-wider border transition ${
+                        metodo === op
+                          ? 'bg-black text-white border-black'
+                          : 'bg-white text-gray-600 border-gray-300 hover:border-black hover:text-black'
+                      }`}
+                    >
+                      {op === 'todos' ? 'Todas' : op}
+                    </button>
+                  ))}
                 </div>
-              )}
+              </div>
             </div>
           )}
         </div>
@@ -714,7 +719,7 @@ function RelatorioContent() {
                   <h1 className="text-5xl font-black uppercase tracking-tighter leading-none mb-2">Relatório {conta}</h1>
                   <p className="text-xl font-black text-gray-900 uppercase tracking-tight">
                     ESTÚDIO / {tipoPeriodo === 'mensal' ? `${format(startDate, 'MMMM yyyy', { locale: ptBR })}` : `ANO ${ano}`}
-                    {tipoPeriodo === 'anual' && <span className="text-gray-500 ml-2">[PIX]</span>}
+                    {tipoPeriodo === 'anual' && <span className="text-gray-500 ml-2">[{metodoAnual.toUpperCase()}]</span>}
                     {metodo !== 'todos' && tipoPeriodo !== 'anual' && <span className="text-gray-500 ml-2">[{metodo.toUpperCase()}]</span>}
                   </p>
                 </div>
@@ -725,47 +730,58 @@ function RelatorioContent() {
               </div>
 
               {tipoPeriodo === 'anual' ? (
-                /* ---------- RELATÓRIO ANUAL SIMPLES (PIX POR MÊS) ---------- */
+                /* ---------- RELATÓRIO ANUAL (POR FORMA DE PAGAMENTO) ---------- */
                 <>
-                  {/* RESUMO PIX ANUAL */}
+                  {/* RESUMO ANUAL */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="border-2 border-black p-5 rounded-sm flex flex-col justify-center min-h-[100px]">
-                      <p className="text-[10px] font-black uppercase mb-1 text-gray-500 tracking-widest">Total via Pix no Ano</p>
-                      <p className="text-3xl font-black truncate">{totalPixAnual.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+                      <p className="text-[10px] font-black uppercase mb-1 text-gray-500 tracking-widest">
+                        {metodoAnual === 'todos' ? 'Total no Ano' : `Total via ${metodoAnual} no Ano`}
+                      </p>
+                      <p className="text-3xl font-black truncate">{totalAnualSelecionado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
                     </div>
                     <div className="bg-black p-5 rounded-sm flex flex-col justify-center min-h-[100px] text-white">
-                      <p className="text-[10px] font-black uppercase mb-1 opacity-80 tracking-widest">Média Mensal de Pix</p>
-                      <p className="text-3xl font-black truncate">{(totalPixAnual / 12).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+                      <p className="text-[10px] font-black uppercase mb-1 opacity-80 tracking-widest">
+                        {metodoAnual === 'todos' ? 'Média Mensal' : `Média Mensal de ${metodoAnual}`}
+                      </p>
+                      <p className="text-3xl font-black truncate">{(totalAnualSelecionado / 12).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
                     </div>
                   </div>
 
-                  {/* TABELA PIX POR MÊS */}
+                  {/* TABELA POR MÊS */}
                   <div>
-                    <h2 className="text-xl font-black uppercase border-b-2 border-black mb-4 pb-1 tracking-tight">Faturamento Pix por Mês</h2>
+                    <h2 className="text-xl font-black uppercase border-b-2 border-black mb-4 pb-1 tracking-tight">
+                      {metodoAnual === 'todos' ? 'Faturamento por Mês' : `Faturamento ${metodoAnual} por Mês`}
+                    </h2>
                     <table className="w-full text-left text-xs border-collapse">
                       <thead>
                         <tr className="border-b-2 border-black bg-gray-100">
                           <th className="p-3 uppercase font-black border border-black">Mês</th>
-                          <th className="p-3 uppercase font-black border border-black text-right">Valor via Pix</th>
+                          <th className="p-3 uppercase font-black border border-black text-right">
+                            {metodoAnual === 'todos' ? 'Valor Total' : `Valor via ${metodoAnual}`}
+                          </th>
                         </tr>
                       </thead>
                       <tbody>
-                        {pixPorMes.map((m) => (
-                          <tr key={m.mes} className="border-b border-black">
-                            <td className="p-3 font-black border border-black uppercase">{m.mes}</td>
-                            <td className={`p-3 text-right font-black text-sm border border-black whitespace-nowrap ${m.valor > 0 ? '' : 'text-gray-400'}`}>
-                              {m.valor > 0
-                                ? m.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-                                : <span>R$ 0,00</span>}
-                            </td>
-                          </tr>
-                        ))}
+                        {faturamentoAnualPorMes.map((m) => {
+                          const valor = metodoAnual === 'todos' ? m.todos : m[metodoAnual];
+                          return (
+                            <tr key={m.mes} className="border-b border-black">
+                              <td className="p-3 font-black border border-black uppercase">{m.mes}</td>
+                              <td className={`p-3 text-right font-black text-sm border border-black whitespace-nowrap ${valor > 0 ? '' : 'text-gray-400'}`}>
+                                {valor > 0
+                                  ? valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+                                  : <span>R$ 0,00</span>}
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                       <tfoot>
                         <tr className="border-t-2 border-black bg-gray-100">
                           <td className="p-3 uppercase font-black border border-black">Total do Ano</td>
                           <td className="p-3 text-right font-black text-base border border-black whitespace-nowrap">
-                            {totalPixAnual.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                            {totalAnualSelecionado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                           </td>
                         </tr>
                       </tfoot>
