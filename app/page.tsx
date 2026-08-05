@@ -10,18 +10,8 @@ import Link from "next/link";
 import { useState } from "react";
 import { startOfMonth, endOfMonth, isWithinInterval, parseISO, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import dynamic from "next/dynamic";
-import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
 import { parseLocalDate } from "@/lib/dashboard/dashboardCalculations";
 import { ModalTransacao } from "@/components/financeiro/ModalTransacao";
-
-const DashboardSection = dynamic(
-  () => import("@/components/dashboard/DashboardSection").then((mod) => mod.DashboardSection),
-  {
-    loading: () => <DashboardSkeleton />,
-    ssr: false,
-  }
-);
 
 
 const MESES = [
@@ -53,7 +43,6 @@ export default function DashboardPage() {
   const [mesGrafico, setMesGrafico] = useState<number>(hoje.getMonth() + 1);
   const [anoGrafico, setAnoGrafico] = useState<number>(hoje.getFullYear());
   const contaVisao = 'Empresa';
-  const [mostrarAnalitico, setMostrarAnalitico] = useState(false);
   const [modalListaStatus, setModalListaStatus] = useState<'pendente' | 'concluido' | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalEntradaOpen, setIsModalEntradaOpen] = useState(false);
@@ -225,14 +214,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen p-4 md:p-6 lg:p-8 max-w-lg mx-auto md:max-w-4xl space-y-4 mb-20 md:mb-0">
-      {mostrarAnalitico ? (
-        <DashboardSection 
-          contaVisao={contaVisao} 
-          onClose={() => setMostrarAnalitico(false)} 
-        />
-      ) : (
-        <>
-          {/* 0. Seletor de Período e Quick Actions */}
+      {/* 0. Seletor de Período e Quick Actions */}
           <div className="bg-white border border-gray-100 p-4 rounded-[28px] shadow-sm space-y-4 no-print">
              {/* Seletor de Mês e Ano Geral */}
              <div className="flex items-center justify-between gap-3 bg-gray-50 p-2 rounded-2xl border border-gray-100">
@@ -281,20 +263,12 @@ export default function DashboardPage() {
              </div>
              
              <div className="flex flex-col gap-2">
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setIsModalEntradaOpen(true)}
-                    className="flex-1 bg-emerald-600 text-white p-3.5 rounded-2xl flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest hover:bg-emerald-700 transition shadow-lg active:scale-95 pointer-events-auto"
-                  >
-                    <Plus size={16} /> Nova Entrada 📈
-                  </button>
-                  <button
-                    onClick={() => setMostrarAnalitico(true)}
-                    className="flex-1 bg-gradient-to-r from-primary to-secondary text-white p-3.5 rounded-2xl flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest hover:opacity-90 transition shadow-lg active:scale-95 pointer-events-auto"
-                  >
-                    <BarChart2 size={16} /> Painel Analítico 📊
-                  </button>
-                </div>
+                <button
+                  onClick={() => setIsModalEntradaOpen(true)}
+                  className="w-full bg-emerald-600 text-white p-3.5 rounded-2xl flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest hover:bg-emerald-700 transition shadow-lg active:scale-95 pointer-events-auto"
+                >
+                  <Plus size={16} /> Nova Entrada 📈
+                </button>
                 <div className="flex gap-2">
                    <Link 
                      href={`/relatorio?tipo=mensal&mes=${mesGrafico}&ano=${anoGrafico}&metodo=${metodoRelatorio}&conta=${contaVisao}`}
@@ -545,8 +519,6 @@ export default function DashboardPage() {
           <p className="text-[10px] uppercase font-bold text-gray-400">Produtos</p>
         </Link>
       </div>
-    </>
-  )}
 
       {modalListaStatus && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity">
