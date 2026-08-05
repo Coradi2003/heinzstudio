@@ -259,48 +259,33 @@ export default function DashboardPage() {
                 </div>
              </div>
 
-             <div className="flex items-center justify-between px-1">
-                <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Filtro do Relatório</span>
-                <div className="flex bg-gray-50 p-1 rounded-xl border border-gray-100">
-                   {[
-                     { id: 'todos', label: 'Todos' },
-                     { id: 'Pix', icon: QrCode },
-                     { id: 'Dinheiro', icon: Banknote },
-                     { id: 'Cartão', icon: CreditCard }
-                   ].map((m) => (
-                     <button
-                       key={m.id}
-                       onClick={() => setMetodoRelatorio(m.id as any)}
-                       className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-2 ${metodoRelatorio === m.id ? 'bg-white shadow-sm text-primary ring-1 ring-black/5' : 'text-gray-400 hover:text-gray-600'}`}
-                     >
-                       {m.icon ? <m.icon size={14} /> : <span className="text-[10px] font-bold uppercase px-1">Geral</span>}
-                       {m.id !== 'todos' && <span className="text-[10px] font-bold uppercase hidden md:inline">{m.id}</span>}
-                     </button>
-                   ))}
-                </div>
-             </div>
-             
-             <div className="flex flex-col gap-2">
+             <div className="flex gap-2">
                 <button
                   onClick={() => setIsModalEntradaOpen(true)}
-                  className="w-full bg-emerald-600 text-white p-3.5 rounded-2xl flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest hover:bg-emerald-700 transition shadow-lg active:scale-95 pointer-events-auto"
+                  className="flex-1 bg-emerald-600 text-white p-3.5 rounded-2xl flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest hover:bg-emerald-700 transition shadow-lg active:scale-95 pointer-events-auto"
                 >
-                  <Plus size={16} /> Nova Entrada 📈
+                  <Plus size={16} /> Nova Entrada
                 </button>
-                <div className="flex gap-2">
-                   <Link 
-                     href={`/relatorio?tipo=mensal&mes=${mesGrafico}&ano=${anoGrafico}&metodo=${metodoRelatorio}&conta=${contaVisao}`}
-                     className="flex-1 bg-gray-900 text-white p-3.5 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest hover:bg-black transition shadow-lg active:scale-95"
-                   >
-                     <FileText size={14} /> Relatórios & Clientes
-                   </Link>
-                   <Link 
-                     href={`/relatorio?tipo=anual&ano=${anoGrafico}&metodo=${metodoRelatorio}&conta=${contaVisao}`}
-                     className="flex-1 bg-white border-2 border-gray-900 p-3.5 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-900 hover:bg-gray-50 transition active:scale-95"
-                   >
-                     <FileText size={14} /> Relatório Anual
-                   </Link>
-                </div>
+                <Link
+                  href="/agenda"
+                  className="flex-1 bg-violet-600 text-white p-3.5 rounded-2xl flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest hover:bg-violet-700 transition shadow-lg active:scale-95"
+                >
+                  <Calendar size={16} /> Agenda
+                </Link>
+             </div>
+             <div className="flex gap-2">
+                <Link 
+                  href={`/relatorio?tipo=mensal&mes=${mesGrafico}&ano=${anoGrafico}&conta=${contaVisao}`}
+                  className="flex-1 bg-gray-900 text-white p-3.5 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest hover:bg-black transition shadow-lg active:scale-95"
+                >
+                  <FileText size={14} /> Relatórios & Clientes
+                </Link>
+                <Link 
+                  href={`/relatorio?tipo=anual&ano=${anoGrafico}&conta=${contaVisao}`}
+                  className="flex-1 bg-white border-2 border-gray-900 p-3.5 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-900 hover:bg-gray-50 transition active:scale-95"
+                >
+                  <FileText size={14} /> Relatório Anual
+                </Link>
              </div>
           </div>
 
