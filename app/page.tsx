@@ -150,7 +150,25 @@ export default function DashboardPage() {
   const agndsRejeitados = agndsPeriodo.filter(a => a.status === 'cancelado');
   const rejeitadosTot = agndsRejeitados.reduce((acc, curr) => acc + curr.valorTotal, 0);
 
-  const maxVal = Math.max(aprovadosTot, pendentesTot, rejeitadosTot, 1);
+  // -- GRÁFICO ANUAL: valor de vendas por mês do ano selecionado --
+  const vendasPorMes = MESES.map(m => {
+    const agndsMes = agendamentos.filter(a => {
+      const d = parseLocalDate(a.dataInicio);
+      return d.getFullYear() === anoGrafico && (d.getMonth() + 1) === m.val;
+    });
+    const transacoesMes = transacoes.filter(t => {
+      const d = parseLocalDate(t.data);
+      return d.getFullYear() === anoGrafico && (d.getMonth() + 1) === m.val && t.tipo === 'receita';
+    });
+    const totalAgenda = agndsMes.reduce((acc, a) => acc + (a.valorTotal || 0), 0);
+    const totalTrans = transacoesMes.reduce((acc, t) => acc + t.valor, 0);
+    return {
+      mes: m.label.substring(0, 3),
+      val: m.val,
+      total: Math.max(totalAgenda, totalTrans),
+    };
+  });
+  const maxVendasMes = Math.max(...vendasPorMes.map(v => v.total), 1);
 
   const pendentesCount = agendamentos.filter(a => a.status === 'pendente' || a.status === 'agendado').length;
   const concluidosCount = agendamentos.filter(a => a.status === 'concluido').length;
@@ -392,48 +410,23 @@ export default function DashboardPage() {
              <BarChart2 size={24} />
           </div>
           <div>
-            <h3 className="font-bold text-gray-800 text-lg leading-tight">Evolução dos Agendamentos</h3>
-            <p className="text-xs text-gray-400">Valores por período</p>
+            <h3 className="font-bold text-gray-800 text-lg leading-tight">Faturamento Anual</h3>
+            <p className="text-xs text-gray-400">Vendas por mês — {anoGrafico}</p>
           </div>
         </div>
 
-        {/* Seletor de Mês e Ano */}
-        <div className="flex items-center gap-3 mb-6 no-print">
-          {/* Month Dropdown */}
-          <select
-            value={mesGrafico}
-            onChange={(e) => setMesGrafico(Number(e.target.value))}
-            className="bg-gray-50 border border-gray-100 rounded-xl px-3 py-2 text-xs font-bold text-gray-700 outline-none focus:border-primary flex-1 sm:flex-initial"
-          >
-            {MESES.map(m => (
-              <option key={m.val} value={m.val}>{m.label}</option>
-            ))}
-          </select>
-
-          {/* Year Dropdown */}
-          <select
-            value={anoGrafico}
-            onChange={(e) => setAnoGrafico(Number(e.target.value))}
-            className="bg-gray-50 border border-gray-100 rounded-xl px-3 py-2 text-xs font-bold text-gray-700 outline-none focus:border-primary flex-1 sm:flex-initial"
-          >
-            {ANOS.map(y => (
-              <option key={y} value={y}>{y}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* 3 Status Cards (Estilo Dark Colors na imagem mas usamos tailwind padrao q fica dark automatico no darkmode) */}
-        <div className="grid grid-cols-3 gap-3 mb-8">
+        {/* Cards de Status do mês selecionado */}
+        <div className="grid grid-cols-3 gap-3 mb-6">
           <div className="bg-[#f0fdf4] border border-[#bbf7d0] rounded-2xl p-3 flex flex-col items-center justify-center text-center shadow-sm">
-            <div className="bg-white/60 rounded-full p-1 mb-2">
+            <div className="bg-white/60 rounded-full p-1 mb-1">
                <CheckCircle2 size={12} className="text-green-600" />
             </div>
-            <p className="text-[9px] font-bold text-green-700 uppercase mb-1 whitespace-nowrap">Aprovados</p>
+            <p className="text-[9px] font-bold text-green-700 uppercase mb-1 whitespace-nowrap">Concluídos</p>
             <p className="text-sm font-black text-green-900">{aprovadosTot.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0})}</p>
           </div>
 
           <div className="bg-[#fefce8] border border-[#fef08a] rounded-2xl p-3 flex flex-col items-center justify-center text-center shadow-sm">
-            <div className="bg-white/60 rounded-full p-1 mb-2">
+            <div className="bg-white/60 rounded-full p-1 mb-1">
                <Clock size={12} className="text-yellow-600" />
             </div>
             <p className="text-[9px] font-bold text-yellow-700 uppercase mb-1 whitespace-nowrap">Pendentes</p>
@@ -441,7 +434,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="bg-[#fef2f2] border border-[#fecaca] rounded-2xl p-3 flex flex-col items-center justify-center text-center shadow-sm">
-            <div className="bg-white/60 rounded-full p-1 mb-2">
+            <div className="bg-white/60 rounded-full p-1 mb-1">
                <XCircle size={12} className="text-red-500" />
             </div>
             <p className="text-[9px] font-bold text-red-700 uppercase mb-1 whitespace-nowrap">Cancelados</p>
@@ -449,22 +442,39 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Legend */}
-        <div className="flex justify-center gap-4 md:gap-6 mb-4">
-          <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-green-500"></div><span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Aprovados</span></div>
-          <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-yellow-500"></div><span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Pendentes</span></div>
-          <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-red-500"></div><span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Cancelados</span></div>
-        </div>
-
-        {/* Graph area */}
-        <div className="relative pt-6 pb-2">
-          {/* Axis Line */}
-          <div className="absolute bottom-0 left-0 right-0 h-[1px] border-b border-dashed border-gray-200"></div>
+        {/* Gráfico de barras mensais do ano */}
+        <div className="relative">
+          {/* Linha base */}
+          <div className="absolute bottom-6 left-0 right-0 h-[1px] bg-gray-100"></div>
           
-          <div className="flex items-end justify-center gap-6 md:gap-12 h-24 relative z-10 px-4">
-            <div className="w-8 bg-green-500 rounded-t-md transition-all duration-700 shadow-sm" style={{ height: `${Math.max((aprovadosTot/maxVal)*100, 5)}%` }}></div>
-            <div className="w-8 bg-yellow-500 rounded-t-md transition-all duration-700 shadow-sm" style={{ height: `${Math.max((pendentesTot/maxVal)*100, 5)}%` }}></div>
-            <div className="w-8 bg-red-500 rounded-t-md transition-all duration-700 shadow-sm" style={{ height: `${Math.max((rejeitadosTot/maxVal)*100, 5)}%` }}></div>
+          <div className="flex items-end justify-between gap-1 px-1 h-40">
+            {vendasPorMes.map((item) => {
+              const pct = maxVendasMes > 0 ? (item.total / maxVendasMes) * 100 : 0;
+              const isCurrentMonth = item.val === mesGrafico;
+              const hasValue = item.total > 0;
+              return (
+                <div key={item.val} className="flex flex-col items-center gap-1 flex-1 h-full justify-end">
+                  {/* Valor em cima */}
+                  {hasValue && (
+                    <span className={`text-[8px] font-black leading-none mb-1 text-center ${isCurrentMonth ? 'text-primary' : 'text-gray-500'}`}>
+                      {item.total >= 1000
+                        ? `${(item.total / 1000).toFixed(1)}k`
+                        : item.total.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}
+                    </span>
+                  )}
+                  {!hasValue && <span className="text-[8px] text-gray-200 mb-1">—</span>}
+                  {/* Barra */}
+                  <div
+                    className={`w-full rounded-t-md transition-all duration-700 ${isCurrentMonth ? 'bg-primary shadow-md shadow-primary/20' : hasValue ? 'bg-gray-200' : 'bg-gray-100'}`}
+                    style={{ height: `${Math.max(pct, hasValue ? 6 : 2)}%`, maxHeight: '120px', minHeight: hasValue ? '6px' : '2px' }}
+                  />
+                  {/* Nome do mês */}
+                  <span className={`text-[8px] font-bold uppercase tracking-wide mt-1 ${isCurrentMonth ? 'text-primary' : 'text-gray-400'}`}>
+                    {item.mes}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
 
