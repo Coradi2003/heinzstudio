@@ -275,10 +275,10 @@ export default function DashboardPage() {
              </div>
              <div className="flex gap-2">
                 <Link 
-                  href={`/relatorio?tipo=mensal&mes=${mesGrafico}&ano=${anoGrafico}&conta=${contaVisao}`}
+                  href={`/relatorio?tipo=cliente&conta=${contaVisao}`}
                   className="flex-1 bg-gray-900 text-white p-3.5 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest hover:bg-black transition shadow-lg active:scale-95"
                 >
-                  <FileText size={14} /> Relatórios & Clientes
+                  <FileText size={14} /> Relatório por Cliente
                 </Link>
                 <Link 
                   href={`/relatorio?tipo=anual&ano=${anoGrafico}&conta=${contaVisao}`}

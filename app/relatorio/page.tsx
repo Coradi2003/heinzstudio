@@ -41,22 +41,31 @@ function RelatorioContent() {
     carregarClientes();
   }, [carregarClientes]);
 
+  const tipo = searchParams.get("tipo") || "anual";
+  // Quando o relatório foi aberto por um botão específico, o modo fica fixo
+  const modoBloqueado = tipo === 'cliente' || tipo === 'anual';
+
   // Modos de Relatório: 'geral' | 'cliente'
-  const [modoRelatorio, setModoRelatorio] = useState<'geral' | 'cliente'>('geral');
+  const [modoRelatorio, setModoRelatorio] = useState<'geral' | 'cliente'>(tipo === 'cliente' ? 'cliente' : 'geral');
   const [clienteSelecionadoId, setClienteSelecionadoId] = useState<string>('');
   const [searchClienteText, setSearchClienteText] = useState<string>('');
 
-  const tipo = searchParams.get("tipo") || "anual";
   const mesParam = parseInt(searchParams.get("mes") || String(new Date().getMonth() + 1));
   const anoParam = parseInt(searchParams.get("ano") || String(new Date().getFullYear()));
   const metodoFiltro = searchParams.get("metodo") || "todos";
   const contaFiltro = searchParams.get("conta") || "Empresa";
 
-  const [tipoPeriodo, setTipoPeriodo] = useState<'anual' | 'mensal'>(tipo as any);
+  const [tipoPeriodo, setTipoPeriodo] = useState<'anual' | 'mensal'>(tipo === 'anual' ? 'anual' : 'mensal');
   const [mes, setMes] = useState(mesParam);
   const [ano, setAno] = useState(anoParam);
   const [conta, setConta] = useState(contaFiltro);
   const [metodo, setMetodo] = useState(metodoFiltro);
+
+  // Ao trocar de modo via navegação, sincroniza o estado fixo da página
+  useEffect(() => {
+    setModoRelatorio(tipo === 'cliente' ? 'cliente' : 'geral');
+    setTipoPeriodo(tipo === 'anual' ? 'anual' : 'mensal');
+  }, [tipo]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -323,7 +332,8 @@ function RelatorioContent() {
             Voltar
           </button>
 
-          {/* Seleção do Modo de Relatório */}
+          {/* Seleção do Modo de Relatório (só quando aberto sem modo fixo) */}
+          {!modoBloqueado && (
           <div className="flex bg-gray-200/80 p-1 rounded-xl">
             <button
               onClick={() => setModoRelatorio('geral')}
@@ -338,6 +348,7 @@ function RelatorioContent() {
               <User size={14} /> Por Cliente
             </button>
           </div>
+          )}
 
           <div className="flex items-center gap-2 flex-wrap">
             <button
@@ -440,6 +451,7 @@ function RelatorioContent() {
           ) : (
             /* FILTROS DO RELATÓRIO GERAL */
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {tipo !== 'anual' && (
               <div className="flex flex-col gap-1">
                 <label className="text-[9px] font-black uppercase text-gray-500 tracking-wider">Período</label>
                 <select
@@ -451,6 +463,7 @@ function RelatorioContent() {
                   <option value="mensal">Mensal</option>
                 </select>
               </div>
+              )}
 
               {tipoPeriodo === 'mensal' && (
                 <div className="flex flex-col gap-1">
