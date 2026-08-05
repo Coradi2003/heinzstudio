@@ -11,7 +11,7 @@ export function ModalTransacao({ isOpen, onClose, initialData }: Props) {
   const [desc, setDesc] = useState("");
   const [valor, setValor] = useState("");
   const [cat, setCat] = useState("Venda Genérica");
-  const [conta, setConta] = useState<'Empresa' | 'Particular'>('Empresa');
+  const conta = 'Empresa';
   const [metodo, setMetodo] = useState<'Dinheiro' | 'Cartão' | 'Pix'>('Pix');
   const [data, setData] = useState(() => new Date().toISOString().slice(0, 10));
 
@@ -21,7 +21,6 @@ export function ModalTransacao({ isOpen, onClose, initialData }: Props) {
       setDesc(initialData.descricao);
       setValor(initialData.valor.toString());
       setCat(initialData.categoria);
-      setConta(initialData.conta);
       setMetodo(initialData.metodo);
       setData(initialData.data.slice(0, 10));
     } else {
@@ -29,7 +28,6 @@ export function ModalTransacao({ isOpen, onClose, initialData }: Props) {
       setDesc("");
       setValor("");
       setCat("Venda Genérica");
-      setConta('Empresa');
       setMetodo('Pix');
       setData(new Date().toISOString().slice(0, 10));
     }
@@ -69,37 +67,11 @@ export function ModalTransacao({ isOpen, onClose, initialData }: Props) {
     <Modal isOpen={isOpen} onClose={onClose} title={initialData ? "Editar Registro" : "Novo Registro Manual"}>
       <div className="space-y-3">
 
-        {/* Tipo */}
+        {/* Tipo (Fixo Entrada) */}
         <div>
-          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Tipo</label>
-          <select
-            value={tipo}
-            onChange={e => setTipo(e.target.value as any)}
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-800 bg-white font-semibold"
-          >
-            <option value="receita">📈 Receita (Entrada)</option>
-            <option value="despesa">📉 Despesa (Saída)</option>
-          </select>
-        </div>
-
-        {/* Conta */}
-        <div>
-          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Conta</label>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => setConta('Empresa')}
-              className={`flex-1 py-3 rounded-xl font-bold text-sm border-2 transition ${conta === 'Empresa' ? 'bg-primary text-white border-primary shadow-md' : 'bg-white text-gray-500 border-gray-200'}`}
-            >
-              🏢 Empresa
-            </button>
-            <button
-              type="button"
-              onClick={() => setConta('Particular')}
-              className={`flex-1 py-3 rounded-xl font-bold text-sm border-2 transition ${conta === 'Particular' ? 'bg-primary text-white border-primary shadow-md' : 'bg-white text-gray-500 border-gray-200'}`}
-            >
-              👤 Particular
-            </button>
+          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Tipo de Registro</label>
+          <div className="w-full px-4 py-3 rounded-xl border border-green-200 text-green-700 bg-green-50 font-bold flex items-center gap-2">
+            <span>📈 Entrada (Receita)</span>
           </div>
         </div>
 
@@ -108,7 +80,7 @@ export function ModalTransacao({ isOpen, onClose, initialData }: Props) {
           <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Descrição</label>
           <input
             type="text"
-            placeholder="Luz, Internet, Água, Aluguel..."
+            placeholder="Ex: Venda de produto, Serviço avulso..."
             value={desc}
             onChange={e => setDesc(e.target.value)}
             className="w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-800"
@@ -120,7 +92,7 @@ export function ModalTransacao({ isOpen, onClose, initialData }: Props) {
           <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Categoria</label>
           <input
             type="text"
-            placeholder="ex: Despesas Fixas, Serviços..."
+            placeholder="Ex: Serviços, Venda Genérica..."
             value={cat}
             onChange={e => setCat(e.target.value)}
             className="w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-800"

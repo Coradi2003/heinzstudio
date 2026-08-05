@@ -9,7 +9,7 @@ export interface Transacao {
   valor: number;
   metodo: 'Dinheiro' | 'Cartão' | 'Pix';
   data: string; // ISO String
-  conta: 'Empresa' | 'Particular';
+  conta: string;
 }
 
 export interface DespesaFixa {
@@ -18,7 +18,7 @@ export interface DespesaFixa {
   valor: number;
   categoria: string;
   vencimento: number;
-  conta: 'Empresa' | 'Particular';
+  conta: string;
 }
 
 interface FinanceiroStore {

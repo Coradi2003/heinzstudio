@@ -20,13 +20,12 @@ import { useFinanceiroStore } from "@/store/useFinanceiroStore";
 import { calculateDashboardData } from "@/lib/dashboard/dashboardCalculations";
 import { useDashboardStore } from "@/store/dashboard/useDashboardStore";
 import { DashboardCard } from "./DashboardCard";
-import { ExpenseDonutChart } from "./ExpenseDonutChart";
 import { ClientRetentionGauge } from "./ClientRetentionGauge";
 import { RevenueChart } from "./RevenueChart";
 import { UtilizationChart } from "./UtilizationChart";
 
 interface DashboardSectionProps {
-  contaVisao: "Empresa" | "Particular";
+  contaVisao: string;
   onClose: () => void;
 }
 
@@ -148,7 +147,7 @@ export function DashboardSection({ contaVisao, onClose }: DashboardSectionProps)
 
       {/* 3. Charts Area */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <ExpenseDonutChart data={data.expenses} />
+        <RevenueChart data={data.revenueHistory} />
         <ClientRetentionGauge data={data.clients} />
       </div>
 
@@ -162,27 +161,24 @@ export function DashboardSection({ contaVisao, onClose }: DashboardSectionProps)
           </h4>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <DashboardCard
-              title="Lucro Médio"
-              value={data.metrics.lucroMedio.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })}
-              icon={<DollarSign size={20} className="text-purple-400" />}
-              subtitle="Por sessão concluída"
+              title="Faturamento do Mês"
+              value={data.metrics.faturamento.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })}
+              icon={<DollarSign size={20} className="text-emerald-500" />}
+              subtitle="Entradas acumuladas"
             />
             <DashboardCard
-              title="Salário por Hora"
-              value={data.metrics.salarioHora.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })}
-              icon={<Hourglass size={20} className="text-yellow-400" />}
-              subtitle="Lucro / Horas trabalhadas"
+              title="Horas Trabalhadas"
+              value={`${data.metrics.horasTrabalhadas}h`}
+              icon={<Hourglass size={20} className="text-blue-500" />}
+              subtitle={`Taxa de ocupação: ${data.metrics.taxaUtilizacao}%`}
             />
-          </div>
-          <div className="h-full">
-            <RevenueChart data={data.revenueHistory} />
           </div>
         </div>
 
         {/* Right column - Utilization */}
         <div className="flex flex-col">
           <h4 className="text-xs font-black text-gray-500 uppercase tracking-widest pl-1 mb-2">
-            Utilização
+            Meta de Horas
           </h4>
           <div className="flex-1">
             <UtilizationChart

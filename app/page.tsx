@@ -5,7 +5,7 @@ import { useFinanceiroStore } from "@/store/useFinanceiroStore";
 import { useProdutosStore } from "@/store/useProdutosStore";
 import { useServicosStore } from "@/store/useServicosStore";
 import { useClientesStore } from "@/store/useClientesStore";
-import { Users, FileText, Wrench, Box, TrendingUp, TrendingDown, BarChart2, CheckCircle2, Clock, XCircle, QrCode, Banknote, CreditCard, Calendar, Gift, AlertTriangle, X, MessageCircle } from "lucide-react";
+import { Users, FileText, Wrench, Box, TrendingUp, TrendingDown, BarChart2, CheckCircle2, Clock, XCircle, QrCode, Banknote, CreditCard, Calendar, Gift, AlertTriangle, X, MessageCircle, Plus } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { startOfMonth, endOfMonth, isWithinInterval, parseISO, format } from "date-fns";
@@ -13,6 +13,7 @@ import { ptBR } from "date-fns/locale";
 import dynamic from "next/dynamic";
 import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
 import { parseLocalDate } from "@/lib/dashboard/dashboardCalculations";
+import { ModalTransacao } from "@/components/financeiro/ModalTransacao";
 
 const DashboardSection = dynamic(
   () => import("@/components/dashboard/DashboardSection").then((mod) => mod.DashboardSection),
@@ -51,10 +52,11 @@ export default function DashboardPage() {
   const hoje = new Date();
   const [mesGrafico, setMesGrafico] = useState<number>(hoje.getMonth() + 1);
   const [anoGrafico, setAnoGrafico] = useState<number>(hoje.getFullYear());
-  const [contaVisao, setContaVisao] = useState<'Empresa' | 'Particular'>('Empresa');
+  const contaVisao = 'Empresa';
   const [mostrarAnalitico, setMostrarAnalitico] = useState(false);
   const [modalListaStatus, setModalListaStatus] = useState<'pendente' | 'concluido' | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isModalEntradaOpen, setIsModalEntradaOpen] = useState(false);
 
 
   // -- LOGICA DE FILTRO DE DATA POR MÊS/ANO SELECIONADO --
@@ -140,21 +142,6 @@ export default function DashboardPage() {
   });
   
   const receitas = baseTrans.filter(t => t.tipo === 'receita');
-
-  // -- DÉBITOS GERAIS (Sempre pelo mês atual inteiro, visíveis independente do filtro de período) --
-  const debitoParticular = transacoes
-    .filter(t => {
-      const d = parseLocalDate(t.data);
-      return t.tipo === 'despesa' && t.conta === 'Particular' && d.getFullYear() === hoje.getFullYear() && (d.getMonth() + 1) === (hoje.getMonth() + 1);
-    })
-    .reduce((a,b) => a + b.valor, 0);
-  
-  const debitoEmpresarial = transacoes
-    .filter(t => {
-      const d = parseLocalDate(t.data);
-      return t.tipo === 'despesa' && t.conta === 'Empresa' && d.getFullYear() === hoje.getFullYear() && (d.getMonth() + 1) === (hoje.getMonth() + 1);
-    })
-    .reduce((a,b) => a + b.valor, 0);
 
   // -- EVOLUÇÃO (Agendamentos - Gráfico usa o período fechado) --
   const agndsPeriodo = agendamentos.filter(a => {
@@ -269,18 +256,26 @@ export default function DashboardPage() {
              </div>
              
              <div className="flex flex-col gap-2">
-                <button
-                  onClick={() => setMostrarAnalitico(true)}
-                  className="w-full bg-gradient-to-r from-primary to-secondary text-white p-4 rounded-2xl flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest hover:opacity-90 transition shadow-lg active:scale-95 pointer-events-auto"
-                >
-                  <BarChart2 size={16} /> Painel Analítico Geral 📊
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setIsModalEntradaOpen(true)}
+                    className="flex-1 bg-emerald-600 text-white p-3.5 rounded-2xl flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest hover:bg-emerald-700 transition shadow-lg active:scale-95 pointer-events-auto"
+                  >
+                    <Plus size={16} /> Nova Entrada 📈
+                  </button>
+                  <button
+                    onClick={() => setMostrarAnalitico(true)}
+                    className="flex-1 bg-gradient-to-r from-primary to-secondary text-white p-3.5 rounded-2xl flex items-center justify-center gap-2 text-xs font-black uppercase tracking-widest hover:opacity-90 transition shadow-lg active:scale-95 pointer-events-auto"
+                  >
+                    <BarChart2 size={16} /> Painel Analítico 📊
+                  </button>
+                </div>
                 <div className="flex gap-2">
                    <Link 
                      href={`/relatorio?tipo=mensal&mes=${new Date().getMonth() + 1}&ano=${new Date().getFullYear()}&metodo=${metodoRelatorio}&conta=${contaVisao}`}
                      className="flex-1 bg-gray-900 text-white p-3.5 rounded-2xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest hover:bg-black transition shadow-lg active:scale-95"
                    >
-                     <FileText size={14} /> Relatório Mensal
+                     <FileText size={14} /> Relatórios & Clientes
                    </Link>
                    <Link 
                      href={`/relatorio?tipo=anual&ano=${new Date().getFullYear()}&metodo=${metodoRelatorio}&conta=${contaVisao}`}
@@ -292,28 +287,12 @@ export default function DashboardPage() {
              </div>
           </div>
 
-        {/* 0.5 Seletor de Conta */}
-        <div className="flex bg-gray-100 p-1 rounded-2xl w-full no-print">
-          <button 
-            onClick={() => setContaVisao('Empresa')}
-            className={`flex-1 py-3 px-4 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition ${contaVisao === 'Empresa' ? 'bg-primary text-white shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}
-          >
-            Empresa
-          </button>
-          <button 
-            onClick={() => setContaVisao('Particular')}
-            className={`flex-1 py-3 px-4 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition ${contaVisao === 'Particular' ? 'bg-primary text-white shadow-lg' : 'text-gray-400 hover:text-gray-600'}`}
-          >
-            Particular
-          </button>
-        </div>
-      
-      {/* 1. Header Card (Saldo) */}
+      {/* 1. Header Card (Faturamento) */}
       <div className="bg-gradient-to-br from-primary to-secondary p-6 rounded-[28px] shadow-lg text-white relative overflow-hidden">
         <div className="absolute -right-4 -top-8 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
         
-        <p className="text-sm font-medium opacity-80 mb-1 z-10 relative">Saldo do Mês ({contaVisao})</p>
-        <h2 className="text-4xl font-bold mb-6 z-10 relative">{saldo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL'})}</h2>
+        <p className="text-sm font-medium opacity-80 mb-1 z-10 relative">Faturamento do Mês</p>
+        <h2 className="text-4xl font-bold mb-6 z-10 relative">{faturamento.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL'})}</h2>
         
         <div className="flex items-center gap-6 relative z-10">
           <div className="flex items-center gap-3">
@@ -321,36 +300,10 @@ export default function DashboardPage() {
               <TrendingUp size={18} />
             </div>
             <div>
-              <p className="text-[10px] uppercase font-bold opacity-80 tracking-wider">Entradas</p>
+              <p className="text-[10px] uppercase font-bold opacity-80 tracking-wider">Total de Entradas</p>
               <p className="text-sm font-bold">{faturamento.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL'})}</p>
             </div>
           </div>
-
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-              <TrendingDown size={18} />
-            </div>
-            <div>
-              <p className="text-[10px] uppercase font-bold opacity-80 tracking-wider">Saídas</p>
-              <p className="text-sm font-bold">{despesas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL'})}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* 1.1 Resumo de Débitos e Pendentes */}
-      <div className="grid grid-cols-3 gap-2">
-        <div className="bg-white rounded-2xl p-3 border border-gray-100 flex flex-col items-center justify-center text-center">
-          <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Pendentes</p>
-          <p className="text-[10px] md:text-sm font-black text-yellow-600 truncate w-full">{pendentesTot.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0})}</p>
-        </div>
-        <div className="bg-white rounded-2xl p-3 border border-gray-100 flex flex-col items-center justify-center text-center">
-          <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Déb. Part.</p>
-          <p className="text-[10px] md:text-sm font-black text-red-500 truncate w-full">{debitoParticular.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0})}</p>
-        </div>
-        <div className="bg-white rounded-2xl p-3 border border-gray-100 flex flex-col items-center justify-center text-center">
-          <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Déb. Empr.</p>
-          <p className="text-[10px] md:text-sm font-black text-red-500 truncate w-full">{debitoEmpresarial.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0})}</p>
         </div>
       </div>
 
@@ -370,27 +323,6 @@ export default function DashboardPage() {
             </div>
             <div className="px-3 py-1 bg-white/20 rounded-full text-[10px] font-bold uppercase tracking-widest whitespace-nowrap">
               Ver lista
-            </div>
-          </div>
-        </Link>
-      )}
-
-      {/* 1.3 Alerta de Despesas Fixas Pendentes */}
-      {despesasFixasPendentes.length > 0 && (
-        <Link href="/financeiro" className="block">
-          <div className="bg-gradient-to-r from-orange-500 to-red-600 p-4 rounded-[24px] shadow-md text-white flex items-center gap-4 hover:scale-[1.02] transition pointer-events-auto">
-            <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center shrink-0">
-              <AlertTriangle size={24} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-bold uppercase tracking-wider opacity-90">{despesasFixasPendentes.length} conta(s) pendente(s)!</p>
-              <h3 className="font-bold truncate">
-                Contas do Mês
-              </h3>
-              <p className="text-[10px] opacity-80 mt-0.5 whitespace-nowrap uppercase font-black">O mês virou! Clique aqui para lançar as despesas.</p>
-            </div>
-            <div className="px-3 py-1 bg-white/20 rounded-full text-[10px] font-bold uppercase tracking-widest whitespace-nowrap">
-              Lançar Agora
             </div>
           </div>
         </Link>
@@ -670,6 +602,8 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
+
+      <ModalTransacao isOpen={isModalEntradaOpen} onClose={() => setIsModalEntradaOpen(false)} />
     </div>
   );
 }

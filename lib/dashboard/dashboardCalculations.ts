@@ -4,7 +4,6 @@ import { Transacao } from "@/store/useFinanceiroStore";
 import { 
   DashboardData, 
   DashboardMetrics, 
-  ExpenseBreakdown, 
   ClientClassification, 
   ChartDataPoint 
 } from "@/types/dashboard";
@@ -99,7 +98,7 @@ export function calculateDashboardData(
   mes: number, // 1-12
   ano: number,
   horasMeta: number = 150,
-  conta: "Empresa" | "Particular" = "Empresa"
+  conta: string = "Empresa"
 ): DashboardData {
   // 1. FILTER APPOINTMENTS FOR THE SELECTED MONTH/YEAR
   const agendamentosMes = agendamentos.filter(a => {
@@ -166,49 +165,13 @@ export function calculateDashboardData(
     projetadosPorcentagem: Math.round(projetadosPorcentagem),
     cancelamentos: cancelamentosValor,
     cancelamentosPorcentagem: Math.round(cancelamentosPorcentagem),
-    lucroLiquido,
     faturamento,
-    despesas,
-    lucroMedio: Math.round(lucroMedio),
-    salarioHora: Math.round(salarioHora),
     horasTrabalho: horasMeta,
     horasTrabalhadas: parseFloat(horasTrabalhadas.toFixed(2)),
     taxaUtilizacao: parseFloat(taxaUtilizacao.toFixed(2)),
   };
 
-  // 4. EXPENSE BREAKDOWN
-  const expenseSums: Record<string, number> = {
-    "Suprimentos": 0,
-    "Materiais": 0,
-    "Ferramentas e equipamentos": 0,
-    "Aluguel": 0,
-    "Anúncios e promoções": 0,
-    "Outras categorias": 0,
-  };
-
-  despesasMes.forEach(t => {
-    const catName = mapToExpenseCategory(t.categoria, t.descricao);
-    expenseSums[catName] = (expenseSums[catName] || 0) + t.valor;
-  });
-
-  const categories = Object.keys(expenseSums).map(name => ({
-    name,
-    value: expenseSums[name],
-    color: CATEGORY_COLORS[name] || "#6B7280",
-  }));
-
-  const expenses: ExpenseBreakdown = {
-    suprimentos: expenseSums["Suprimentos"],
-    materiais: expenseSums["Materiais"],
-    ferramentas: expenseSums["Ferramentas e equipamentos"],
-    aluguel: expenseSums["Aluguel"],
-    marketing: expenseSums["Anúncios e promoções"],
-    outros: expenseSums["Outras categorias"],
-    total: despesas,
-    categories,
-  };
-
-  // 5. CLIENT CLASSIFICATION
+  // 4. CLIENT CLASSIFICATION
   let novo = 0;
   let regular = 0;
   let inativo = 0;
@@ -296,7 +259,7 @@ export function calculateDashboardData(
     total: clientes.length,
   };
 
-  // 6. REVENUE HISTORY (Daily totals for the selected month to render the chart)
+  // 5. REVENUE HISTORY (Daily totals for the selected month to render the chart)
   // Create an array for all days of the selected month
   const daysInMonth = new Date(ano, mes, 0).getDate();
   const dailyRevenues: Record<number, number> = {};
@@ -323,7 +286,6 @@ export function calculateDashboardData(
 
   return {
     metrics,
-    expenses,
     clients,
     revenueHistory,
   };
