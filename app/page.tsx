@@ -67,44 +67,17 @@ export default function DashboardPage() {
     return null;
   };
 
-  // Faturamento de um mês (mesma lógica do card superior): receitas do financeiro
-  // + sinais/recebimentos de agendamentos do mês que ainda não foram lançados
+  // Faturamento recebido no mês: usa exclusivamente os lançamentos financeiros.
+  // Sinais e valores restantes já geram transações ao serem recebidos. Somar
+  // também os agendamentos faria o mesmo pagamento aparecer no mês do recebimento
+  // e novamente no mês em que a sessão foi marcada.
   const calcularFaturamentoMes = (mes: number, ano: number): number => {
     const receitasMesLoc = transacoes.filter(t => {
       const d = parseLocalDate(t.data);
       return d.getFullYear() === ano && (d.getMonth() + 1) === mes && t.conta === contaVisao && t.tipo === 'receita';
     });
 
-    let total = receitasMesLoc.reduce((acc, t) => acc + t.valor, 0);
-
-    const agndsMesLoc = agendamentos.filter(a => {
-      const d = parseLocalDate(a.dataInicio);
-      return d.getFullYear() === ano && (d.getMonth() + 1) === mes;
-    });
-
-    agndsMesLoc.forEach(a => {
-      // Sinal do agendamento
-      if (a.valorSinal && a.valorSinal > 0) {
-        const jaNoFinanceiro = receitasMesLoc.some(t =>
-          (t.descricao.toLowerCase().includes((a.clienteNome || '').toLowerCase()) || t.categoria === 'Sinal de Tatuagem') &&
-          Math.abs(t.valor - a.valorSinal) < 0.01
-        );
-        if (!jaNoFinanceiro) total += a.valorSinal;
-      }
-      // Restante de agendamento concluído
-      if (a.status === 'concluido') {
-        const valorRestante = a.valorTotal - (a.valorSinal || 0);
-        if (valorRestante > 0) {
-          const jaNoFinanceiro = receitasMesLoc.some(t =>
-            t.descricao.toLowerCase().includes((a.clienteNome || '').toLowerCase()) &&
-            Math.abs(t.valor - valorRestante) < 0.01
-          );
-          if (!jaNoFinanceiro) total += valorRestante;
-        }
-      }
-    });
-
-    return total;
+    return receitasMesLoc.reduce((acc, t) => acc + t.valor, 0);
   };
 
   // 1. Somar por método a partir das transações do financeiro
@@ -117,44 +90,6 @@ export default function DashboardPage() {
     if (norm === 'Pix') porPix += t.valor;
     else if (norm === 'Dinheiro') porDinheiro += t.valor;
     else if (norm === 'Cartão') porCartao += t.valor;
-  });
-
-  // 2. Incluir sinais ou recebimentos de agendamentos que estejam no mês/ano selecionado
-  const agndMesAtual = agendamentos.filter(a => {
-    const d = parseLocalDate(a.dataInicio);
-    return d.getFullYear() === anoGrafico && (d.getMonth() + 1) === mesGrafico;
-  });
-
-  agndMesAtual.forEach(a => {
-    // Sinal do agendamento
-    if (a.valorSinal && a.valorSinal > 0) {
-      const jaNoFinanceiro = receitasMes.some(t => 
-        (t.descricao.toLowerCase().includes((a.clienteNome || '').toLowerCase()) || t.categoria === 'Sinal de Tatuagem') && 
-        Math.abs(t.valor - a.valorSinal) < 0.01
-      );
-      if (!jaNoFinanceiro) {
-        const norm = getMetodoNorm(a.metodoSinal) || 'Pix';
-        if (norm === 'Pix') porPix += a.valorSinal;
-        else if (norm === 'Dinheiro') porDinheiro += a.valorSinal;
-        else if (norm === 'Cartão') porCartao += a.valorSinal;
-      }
-    }
-    // Restante de agendamento concluído
-    if (a.status === 'concluido') {
-      const valorRestante = a.valorTotal - (a.valorSinal || 0);
-      if (valorRestante > 0) {
-        const jaNoFinanceiro = receitasMes.some(t => 
-          t.descricao.toLowerCase().includes((a.clienteNome || '').toLowerCase()) && 
-          Math.abs(t.valor - valorRestante) < 0.01
-        );
-        if (!jaNoFinanceiro) {
-          const norm = getMetodoNorm(a.metodoSinal) || 'Pix';
-          if (norm === 'Pix') porPix += valorRestante;
-          else if (norm === 'Dinheiro') porDinheiro += valorRestante;
-          else if (norm === 'Cartão') porCartao += valorRestante;
-        }
-      }
-    }
   });
 
   const totalMetodos = Math.max(porPix + porDinheiro + porCartao, 1);
@@ -190,7 +125,7 @@ export default function DashboardPage() {
   const agndsRejeitados = agndsPeriodo.filter(a => a.status === 'cancelado');
   const rejeitadosTot = agndsRejeitados.reduce((acc, curr) => acc + curr.valorTotal, 0);
 
-  // -- GRÁFICO ANUAL: faturamento (mesma regra do card) por mês do ano selecionado --
+  // -- GRÁFICO ANUAL: receitas financeiras por mês do ano selecionado --
   const vendasPorMes = MESES.map(m => {
     return {
       mes: m.label.substring(0, 3),
