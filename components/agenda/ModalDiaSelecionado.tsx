@@ -3,7 +3,7 @@
 import { Modal } from "@/components/ui/Modal";
 import { format, isToday, parseISO, isSameDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { User, CheckCircle2, MessageCircle, Trash2, Pencil, Image as ImageIcon, X, RotateCcw } from "lucide-react";
+import { User, CheckCircle2, MessageCircle, CalendarClock, Trash2, Pencil, Image as ImageIcon, X, RotateCcw } from "lucide-react";
 import { Agendamento, useAgendaStore } from "@/store/useAgendaStore";
 import { useState } from "react";
 import { ModalAgendamento } from "./ModalAgendamento";
@@ -26,6 +26,34 @@ export function ModalDiaSelecionado({ isOpen, onClose, selectedDate, agendamento
   const agendamentosDia = agendamentos
     .filter(a => isSameDay(parseISO(a.dataInicio), selectedDate))
     .sort((a,b) => parseISO(a.dataInicio).getTime() - parseISO(b.dataInicio).getTime());
+
+  const formatWhatsappNumber = (telefone?: string) => {
+    const digits = (telefone || '').replace(/\D/g, '');
+    if (!digits) return '';
+    return digits.length >= 12 ? digits : `55${digits}`;
+  };
+
+  const enviarWhatsApp = (agendamento: Agendamento, mensagem: string) => {
+    const numero = formatWhatsappNumber(agendamento.telefone);
+    if (!numero) {
+      alert('Este cliente não possui telefone cadastrado no agendamento.');
+      return;
+    }
+
+    window.open(`https://wa.me/${numero}?text=${encodeURIComponent(mensagem)}`, '_blank');
+  };
+
+  const criarMensagemLembrete = (agendamento: Agendamento, antecedencia: 'dia' | 'hora') => {
+    const inicio = parseISO(agendamento.dataInicio);
+    const data = format(inicio, "dd/MM/yyyy", { locale: ptBR });
+    const hora = format(inicio, "HH:mm", { locale: ptBR });
+
+    if (antecedencia === 'dia') {
+      return `Oi, ${agendamento.clienteNome}! Passando para lembrar que sua sessão é amanhã, dia ${data}, às ${hora}. Te esperamos!`;
+    }
+
+    return `Oi, ${agendamento.clienteNome}! Tudo pronto? Sua sessão começa daqui a 1 hora, às ${hora}. Te esperamos!`;
+  };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={isToday(selectedDate) ? "Hoje" : format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}>
@@ -83,15 +111,28 @@ export function ModalDiaSelecionado({ isOpen, onClose, selectedDate, agendamento
                 )}
               </div>
               
-                  <div className="flex flex-wrap md:flex-nowrap gap-2 pl-3 border-t border-gray-50 pt-3 mt-3">
+                  <div className="pl-3 border-t border-gray-50 pt-3 mt-3 space-y-2">
+                    {agendamento.status !== 'concluido' && agendamento.status !== 'cancelado' && (
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          onClick={() => enviarWhatsApp(agendamento, criarMensagemLembrete(agendamento, 'dia'))}
+                          className="flex justify-center items-center gap-1.5 text-xs font-bold text-primary bg-primary/10 hover:bg-primary/20 p-2.5 rounded-lg transition"
+                        >
+                          <CalendarClock size={14} /> Lembrete 1 dia
+                        </button>
+                        <button
+                          onClick={() => enviarWhatsApp(agendamento, criarMensagemLembrete(agendamento, 'hora'))}
+                          className="flex justify-center items-center gap-1.5 text-xs font-bold text-orange-600 bg-orange-50 hover:bg-orange-100 p-2.5 rounded-lg transition"
+                        >
+                          <CalendarClock size={14} /> Lembrete 1 hora
+                        </button>
+                      </div>
+                    )}
+
+                    <div className="flex flex-wrap md:flex-nowrap gap-2">
                     <button 
                       onClick={() => {
-                        const numberOnly = (agendamento.telefone || '').replace(/\D/g, '');
-                        if (numberOnly) {
-                          window.open(`https://wa.me/55${numberOnly}`, '_blank');
-                        } else {
-                          alert('Este cliente não possui telefone cadastrado.');
-                        }
+                        enviarWhatsApp(agendamento, 'Olá!');
                       }}
                       className="flex-1 flex justify-center items-center gap-1.5 text-xs font-bold text-green-600 bg-green-50 hover:bg-green-100 p-2.5 rounded-lg transition"
                     >
@@ -173,6 +214,7 @@ export function ModalDiaSelecionado({ isOpen, onClose, selectedDate, agendamento
                       >
                         <Trash2 size={16} />
                       </button>
+                    </div>
                     </div>
                   </div>
             </div>
