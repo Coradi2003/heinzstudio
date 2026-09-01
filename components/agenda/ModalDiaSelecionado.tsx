@@ -43,16 +43,16 @@ export function ModalDiaSelecionado({ isOpen, onClose, selectedDate, agendamento
     window.open(`https://wa.me/${numero}?text=${encodeURIComponent(mensagem)}`, '_blank');
   };
 
-  const criarMensagemLembrete = (agendamento: Agendamento, antecedencia: 'dia' | 'hora') => {
-    const inicio = parseISO(agendamento.dataInicio);
-    const data = format(inicio, "dd/MM/yyyy", { locale: ptBR });
-    const hora = format(inicio, "HH:mm", { locale: ptBR });
+  const criarMensagemLembrete = (agendamento: Agendamento) => {
+    // O horário do agendamento representa a hora escolhida pelo usuário. Ler os
+    // componentes diretamente evita que timestamps com "Z" sejam convertidos
+    // para o fuso local (por exemplo, 07:00 virar 04:00 em Brasília).
+    const [dataISO = '', horarioISO = ''] = agendamento.dataInicio.split('T');
+    const [ano = '', mes = '', dia = ''] = dataISO.split('-');
+    const hora = horarioISO.substring(0, 5) || '—';
+    const data = dia && mes && ano ? `${dia}/${mes}/${ano}` : dataISO;
 
-    if (antecedencia === 'dia') {
-      return `Oi, ${agendamento.clienteNome}! Passando para lembrar que sua sessão é amanhã, dia ${data}, às ${hora}. Te esperamos!`;
-    }
-
-    return `Oi, ${agendamento.clienteNome}! Tudo pronto? Sua sessão começa daqui a 1 hora, às ${hora}. Te esperamos!`;
+    return `Oi, ${agendamento.clienteNome}! Passando para lembrar do seu horário no dia ${data}, às ${hora}. Te esperamos!`;
   };
 
   return (
@@ -113,18 +113,12 @@ export function ModalDiaSelecionado({ isOpen, onClose, selectedDate, agendamento
               
                   <div className="pl-3 border-t border-gray-50 pt-3 mt-3 space-y-2">
                     {agendamento.status !== 'concluido' && agendamento.status !== 'cancelado' && (
-                      <div className="grid grid-cols-2 gap-2">
+                      <div>
                         <button
-                          onClick={() => enviarWhatsApp(agendamento, criarMensagemLembrete(agendamento, 'dia'))}
-                          className="flex justify-center items-center gap-1.5 text-xs font-bold text-primary bg-primary/10 hover:bg-primary/20 p-2.5 rounded-lg transition"
+                          onClick={() => enviarWhatsApp(agendamento, criarMensagemLembrete(agendamento))}
+                          className="w-full flex justify-center items-center gap-1.5 text-xs font-bold text-primary bg-primary/10 hover:bg-primary/20 p-2.5 rounded-lg transition"
                         >
-                          <CalendarClock size={14} /> Lembrete 1 dia
-                        </button>
-                        <button
-                          onClick={() => enviarWhatsApp(agendamento, criarMensagemLembrete(agendamento, 'hora'))}
-                          className="flex justify-center items-center gap-1.5 text-xs font-bold text-orange-600 bg-orange-50 hover:bg-orange-100 p-2.5 rounded-lg transition"
-                        >
-                          <CalendarClock size={14} /> Lembrete 1 hora
+                          <CalendarClock size={14} /> Enviar lembrete
                         </button>
                       </div>
                     )}
